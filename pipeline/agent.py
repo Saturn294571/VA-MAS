@@ -58,7 +58,9 @@ class BaseAgent:
         if self.RL_mode == "PPO":
             self.rl_env = rl_env
             self.rl_model = rl_model
-        
+
+        self.instruction_history = []  # 新增：保存历史指令
+        self.state_history = []        # 新增：保存历史状态
 
     def update_reflect(self, system_prompt, user_prompt, response):
         if type(user_prompt) == str:
@@ -111,117 +113,118 @@ class BaseAgent:
             return self.normal_step(task)    
         
     def rl_step(self, task:Task) -> (str, dict):
-        if len(task._agent) == 1:
-            task_str = format_string(agent_prompt, {"task_description": task.description, "milestone_description": task.milestones, 
-                                    "env": self.data_manager.query_env_with_task(task.description),
-                                    "relevant_data": smart_truncate(task.content, max_length=4096), # TODO: change to "relevant_data": task.content
-                                    "agent_name": self.name,
-                                    "agent_state": self.data_manager.query_history(self.name),
-                                    "other_agents": self.other_agents(),
-                                    "agent_action_list": self.history_action_list,
-                                    "minecraft_knowledge_card": minecraft_knowledge_card})
-        else:
-            task_str = format_string(agent_cooper_prompt, {"task_description": task.description, "milestone_description": task.milestones, 
-                                    "env": self.data_manager.query_env_with_task(task.description),
-                                    "relevant_data": smart_truncate(task.content, max_length=4096), # TODO: change to "relevant_data": task.content
-                                    "agent_name": self.name,
-                                    "agent_state": self.data_manager.query_history(self.name),
-                                    "other_agents": self.other_agents(),
-                                    "agent_action_list": self.history_action_list,
-                                    "team_members": ", ".join(task._agent),
-                                    "minecraft_knowledge_card": minecraft_knowledge_card})
-            
-        self.logger.debug("="*20 + " Agent Step " + "="*20)
-        self.logger.info(f"{self.name} try task:\n {task.description}")
-        self.logger.info(f"{self.history_action_list}")
-        self.logger.info(f"other agents: {self.other_agents()}")
-        self.logger.info(f"{self.name} status:\n {self.data_manager.query_history(self.name)}")
-        
-        
+        # 构建基础提示和状态
         instruction = format_string(task_prompt, {
             "task_description": task.description,
             "milestone_description": task.milestones,
         })
+        
         basic_state = format_string(state_prompt, {
             "env": self.data_manager.query_env_with_task(task.description),
             "relevant_data": smart_truncate(task.content, max_length=4096), 
         })
-        if self.RL_mode == "DQN":
-            self.rl_env.set_current_state(
-                instrucition=task_str,
-                state=task_str,
-            )
-        elif self.RL_mode == "PPO":
-            instr_token, basic_state_token = self.rl_env.token_current_state(instruction, basic_state)
-            
+
         max_rl_steps = 5
         actions = []
         observations = []
-        act_obs_state_token = None
+        current_state = basic_state
         task_status = False
 
-        while max_rl_steps > 0 and not task_status:
-            transition_dict = {}
-            if self.RL_mode == "PPO":
-                if act_obs_state_token is None:
-                    state_token = basic_state_token
-                else:
-                    state_token = np.concatenate([basic_state_token, next_act_obs_state_token], axis=0)
+        while max_rl_steps > 0:
+            # 构建当前状态字符串
+            current_context = f"{instruction}\n{current_state}"
+            if actions and observations:
+                action_history = "\n".join([f"Action: {a}\nObservation: {o}" for a, o in zip(actions, observations)])
+                current_context += f"\nHistory:\n{action_history}"
 
-                state_token = np.concatenate([instr_token, state_token], axis=0)
-            else:
-                raise NotImplementedError
-            # print(state_token)
-            rl_action = self.rl_model.take_action(state_token)
-            assert rl_action < len(self.rl_env.available_actions) and rl_action >= 0, f"{rl_action} must in 0-{len(self.rl_env.available_actions)}"
-            rl_api = self.rl_env._get_available_actions()[rl_action]
-            print(f"{rl_action} - {rl_api}")
-            # input("press")
-            (act, obs), detail = self.env.rl_step(self.name, task_str, actions=actions, observations=observations, recommended_actions=[rl_api])
-            next_act_obs_state_token = self.rl_env.token_current_action_observation(act, obs)
-            # ts = torch.tensor(next_act_obs_state_token, dtype=torch.float32)
-            # print(ts.shape)
-            # input("press")
-            if act == None:
-                continue
-            actions.append(act)
-            observations.append(obs)
+            if self.env.agents_ping()["status"] == False:
+                self.logger.info("Some agents are offline!")
+                break 
+            
+            best_act, best_obs = None, None
+            best_reward = -np.inf
+            print(f"# max_rl_steps: {max_rl_steps}")
+            k_step = 30
+            while k_step > 0:
+                # 获取模型动作
+                # try:
+                if self.env.agents_ping()["status"] == False:
+                    self.logger.info("Some agents are offline!")
+                    break 
+                rl_action = self.rl_model.take_action(current_context)
+                assert rl_action < len(self.rl_env.available_actions) and rl_action >= 0, f"{rl_action} must in 0-{len(self.rl_env.available_actions)}"
+                rl_api = self.rl_env._get_available_actions()[rl_action]
+                print(f"{rl_action} - {rl_api}")
+                
+                
+                (act, obs), detail = self.env.rl_step(self.name, current_context + "You need try to use the tool, do not use Final Answer.", 
+                                                    actions=actions, 
+                                                    observations=observations, 
+                                                    recommended_actions=[rl_api])
+                if act is None:
+                    continue
+                    
+                # 更新状态
+                current_state = f"{basic_state}\nLast Action: {act}\nLast Observation: {obs}"
+                
+                # 计算奖励和任务状态
+                reward, task_status = self.rl_one_step_reflect(
+                    task.description, 
+                    task.milestones,
+                    actions=actions,
+                    observations=observations,
+                    act=act,
+                    obs=obs,
+                )
+
+                # 构建转换字典
+                transition_dict = {
+                    "states": current_context,
+                    "actions": rl_action,
+                    "rewards": reward,
+                    "next_states": f"{instruction}\n{current_state}",
+                    "dones": task_status
+                }
+
+                # 更新模型
+                self.rl_model.update(transition_dict)
+                
+                if self.RL_mode == "PPO":
+                    self.rl_model.train_step()
+
+                if reward > best_reward:
+                    best_reward = reward
+                    best_act, best_obs = act, obs
+
+                k_step -= 1
+
+                # except KeyboardInterrupt:
+                #     self.logger.info("KeyboardInterrupt")
+                #     raise KeyboardInterrupt
+                # except ConnectionError:
+                #     self.logger.error("ConnectionError")
+                #     raise ConnectionError
+                # except ConnectionRefusedError:
+                #     self.logger.error("ConnectionRefusedError")
+                #     raise ConnectionRefusedError
+                # except Exception as e:
+                #     self.logger.error(f"Error: {e}")
+
+            actions.append(best_act)
+            observations.append(best_obs)
             max_rl_steps -= 1
 
-
-            reward, task_status, summary = self.rl_one_step_reflect(task.description, task.milestones, actions=actions, observations=observations, rl_action=rl_api)
-
-            if self.RL_mode == "PPO":
-                if act_obs_state_token is None:
-                    state_token = basic_state_token
-                else:
-                    state_token = np.concatenate([basic_state_token, next_act_obs_state_token], axis=0)
-                next_state_token = next_act_obs_state_token
-
-                state_token = np.concatenate([instr_token, state_token], axis=0)
-                next_state_token = np.concatenate([instr_token, next_state_token], axis=0)
-            else:
-                raise NotImplementedError
-            
-            transition_dict["states"] = state_token
-            transition_dict["next_states"] = next_state_token
-            transition_dict["actions"] = rl_action
-            transition_dict["rewards"] = reward
-            transition_dict["dones"] = task_status
-
-            act_obs_state_token = next_act_obs_state_token
-            self.rl_model.update(transition_dict)
-
-            if self.RL_mode == "PPO":
-                self.rl_model.train_step()
-              
         status = self.env.agent_status(self.name)
         self.data_manager.update_database(AgentFeedback(task, detail, status).to_json())
-
-        # self.data_manager.save()
+        
+        if task_status:
+            summary = f"successfully done {task.description}."
+            task.status = Task.success
+        else:
+            summary = f"failed to do {task.description}."
+            task.status = Task.failure
         return summary, detail
     
-
     def normal_step(self, task:Task) -> (str, dict):
         if len(task._agent) == 1:
             task_str = format_string(agent_prompt, {"task_description": task.description, "milestone_description": task.milestones, 
@@ -296,7 +299,7 @@ class BaseAgent:
         action_str = '''{{message}}'''
         return format_string(action_str, action["feedback"])
     
-    def rl_one_step_reflect(self, task_description, milestone_description, actions, observations, rl_action):
+    def rl_one_step_reflect(self, task_description, milestone_description, actions, observations, act, obs):
         '''
         One step reflect
         '''
@@ -304,21 +307,26 @@ class BaseAgent:
         for act, obs in zip(actions, observations):
             act_obs += f"\n{act['log']}\n{obs}"
         
+        if obs["status"] == False:
+            return -1, False
+
         prompt = format_string(one_step_reflect_prompt,
             {
                 "task_description": task_description,
                 "milestone_description": milestone_description,
                 "action_observation": act_obs,
-                "rl_action": rl_action
+                "act": act,
+                "obs": obs,
             })
         
-        response = self.llm.few_shot_generate_thoughts(reflect_system_prompt, prompt, cache_enabled=False, max_tokens=256, json_check=True)
+        response = self.llm.few_shot_generate_thoughts(reflect_system_prompt, prompt, cache_enabled=False, max_tokens=256, json_check=True,
+                                                    check_tags=["task_status", "reward"])
         print(response)
         result = extract_info(response)[0]
-        summary = result["summary"]
-        reward = result["reward"]
         task_status = result["task_status"]
-        return reward, task_status, summary
+        reward = result["reward"]
+        print(f"rl_action: {act}, reward: {reward}")
+        return reward, task_status
     
     def reflect(self, task: Task, detail) -> bool:
         '''
