@@ -20,6 +20,14 @@ import random
 import platform
 import sys
 
+from model.google_model import (
+    DEFAULT_GEMINI_MODEL,
+    DEFAULT_GEMINI_THINKING_LEVEL,
+    GOOGLE_OPENAI_BASE_URL,
+    create_google_chat_model,
+    load_google_api_keys,
+)
+
 env = os.environ.copy()
 env["PYTHONIOENCODING"] = "utf-8"
 
@@ -176,11 +184,12 @@ class Agent():
 
     logging.basicConfig()
     logging.getLogger("langchain.retrievers.multi_query").setLevel(logging.INFO)
-    model = "gpt-4-1106-preview"
+    model = DEFAULT_GEMINI_MODEL
+    thinking_level = DEFAULT_GEMINI_THINKING_LEVEL
     temperature = 0
     max_tokens = 1024
     api_key_list = []
-    base_url = "https://api.chatanywhere.tech/v1"
+    base_url = GOOGLE_OPENAI_BASE_URL
     verbose = True
 
     name2port = {}
@@ -970,6 +979,14 @@ class Agent():
         elif "gpt" in self.model:
             from langchain.chat_models import ChatOpenAI
             self.llm = ChatOpenAI(model=self.model, temperature=0,  max_tokens=256, openai_api_key=random.choice(Agent.api_key_list), base_url=Agent.base_url)
+        elif "gemini" in self.model:
+            self.llm = create_google_chat_model(
+                api_model=self.model,
+                api_key_list=Agent.api_key_list,
+                api_base=Agent.base_url,
+                thinking_level=Agent.thinking_level,
+                temperature=0,
+            )
         elif "glm" in self.model:
             from zhipu import ChatZhipuAI
             self.llm = ChatZhipuAI(model_name=self.model, temperature=0.01, api_key=random.choice(Agent.api_key_list))
@@ -1069,8 +1086,13 @@ class Agent():
             from langchain.chat_models import ChatOpenAI
             self.llm = ChatOpenAI(model=self.model, temperature=0,  max_tokens=256, openai_api_key=random.choice(Agent.api_key_list), base_url=Agent.base_url)
         elif "gemini" in self.model:
-            from langchain_google_genai import ChatGoogleGenerativeAI
-            self.llm = ChatGoogleGenerativeAI(model=self.model, temperature=0, google_api_key=random.choice(Agent.api_key_list))
+            self.llm = create_google_chat_model(
+                api_model=self.model,
+                api_key_list=Agent.api_key_list,
+                api_base=Agent.base_url,
+                thinking_level=Agent.thinking_level,
+                temperature=0,
+            )
         elif "glm" in self.model:
             from zhipu import ChatZhipuAI
             self.llm = ChatZhipuAI(model_name=self.model, temperature=0.01, api_key=random.choice(Agent.api_key_list))
@@ -1193,12 +1215,13 @@ if __name__ == "__main__":
 
     # Agent.model = "gpt-4-1106-preview"
     # agent1 = Agent(name="Alice", local_port=5001, tools=[Agent.equipItem, Agent.startFishing])
-    # Agent.base_url = "https://api.chatanywhere.tech/v1"
+    # Agent.base_url = GOOGLE_OPENAI_BASE_URL
     # Agent.api_key_list = api_key_list
 
-    Agent.model = "deepseek-chat"
-    Agent.base_url =  "https://api.deepseek.com"
-    Agent.api_key_list = json.load(open("API_KEY_LIST", "r"))["AGENT_KEY"]
+    Agent.model = DEFAULT_GEMINI_MODEL
+    Agent.base_url = GOOGLE_OPENAI_BASE_URL
+    Agent.thinking_level = DEFAULT_GEMINI_THINKING_LEVEL
+    Agent.api_key_list = load_google_api_keys()
     agent1 = Agent(name="Alice", local_port=5001, tools=[])
     Agent.launch(host="10.214.180.148", port=25565)
     time.sleep(5)

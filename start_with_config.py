@@ -13,20 +13,27 @@ from pipeline.controller_tiny import GlobalController
 from pipeline.data_manager import DataManager
 from pipeline.task_manager import TaskManager
 import json
+from model.google_model import (
+    DEFAULT_GEMINI_MODEL,
+    DEFAULT_GEMINI_THINKING_LEVEL,
+    GOOGLE_OPENAI_BASE_URL,
+    load_google_api_keys,
+)
 
-api_key_list = json.load(open("API_KEY_LIST", "r"))["AGENT_KEY"]
-LLM_API_BASE = "https://dashscope.aliyuncs.com/compatible-mode/v1"
-LLM_API_MODEL = "qwen3-next-80b-a3b-instruct"
+LLM_API_BASE = GOOGLE_OPENAI_BASE_URL
+LLM_API_MODEL = DEFAULT_GEMINI_MODEL
+LLM_THINKING_LEVEL = DEFAULT_GEMINI_THINKING_LEVEL
 CONFIG_PATH = "base_agent_multi_test_config.json"
 
 print(f"pipeline Time taken: {time.time() - start_time}")
 start_time = time.time()
 
-def run(api_model: str, api_base: str, task_type: str, task_idx: int, agent_num: int, dig_needed: bool, max_task_num: int, task_goal: str, document_file: str, host: str, port: int, task_name: str, role: str = "same", document: dict = {}):
+def run(api_model: str, api_base: str, api_key_list: list, thinking_level: str, task_type: str, task_idx: int, agent_num: int, dig_needed: bool, max_task_num: int, task_goal: str, document_file: str, host: str, port: int, task_name: str, role: str = "same", document: dict = {}):
     start_time = time.time()
 
     Agent.base_url = api_base
     Agent.model = api_model
+    Agent.thinking_level = thinking_level
     Agent.api_key_list = api_key_list
 
     # Set env
@@ -110,6 +117,7 @@ def run(api_model: str, api_base: str, task_type: str, task_idx: int, agent_num:
             "api_key": api_key_list[0],
             "api_base": LLM_API_BASE,
             "api_model": LLM_API_MODEL,
+            "thinking_level": thinking_level,
             "api_key_list": api_key_list
         }
         tm_llm_config = llm_config
@@ -119,6 +127,7 @@ def run(api_model: str, api_base: str, task_type: str, task_idx: int, agent_num:
             "api_key": api_key_list[0],
             "api_base": LLM_API_BASE,
             "api_model": LLM_API_MODEL,
+            "thinking_level": thinking_level,
             "api_key_list": api_key_list
         }
 
@@ -157,6 +166,7 @@ def run(api_model: str, api_base: str, task_type: str, task_idx: int, agent_num:
 
 
 if __name__ == "__main__":
+    api_key_list = load_google_api_keys()
     with open(CONFIG_PATH, "r") as f:
         launch_config = json.load(f)
     # shuffle 
@@ -181,12 +191,15 @@ if __name__ == "__main__":
             "api_key": api_key_list[0],
             "api_base": LLM_API_BASE,
             "api_model": LLM_API_MODEL,
+            "thinking_level": LLM_THINKING_LEVEL,
             "api_key_list": api_key_list
         }
 
         process = multiprocessing.Process(target=run,
                                             args=(llm_config["api_model"],
                                                 llm_config["api_base"],
+                                                llm_config["api_key_list"],
+                                                llm_config["thinking_level"],
                                                 config["task_type"],
                                                 config["task_idx"],
                                                 config["agent_num"],

@@ -9,6 +9,12 @@ import logging
 from pipeline.utils import *
 from model.init_model import init_language_model
 from model.openai_models import OpenAILanguageModel
+from model.google_model import (
+    DEFAULT_GEMINI_MODEL,
+    DEFAULT_GEMINI_THINKING_LEVEL,
+    GOOGLE_OPENAI_BASE_URL,
+    load_google_api_keys,
+)
 from speaking_style import generate_conversation_prompt, generate_conversation_prompt_zh
 from datetime import datetime
 room_width = 25
@@ -23,18 +29,25 @@ task_number = 1
 
 logger = init_logger("TASK_GOAL", dump=False, level=logging.DEBUG, silent=False)
 
-api_key_list = json.load(open("API_KEY_LIST", "r"))["AGENT_KEY"]
-LLM_API_BASE = "https://dashscope.aliyuncs.com/compatible-mode/v1"
-LLM_API_MODEL = "qwen3-next-80b-a3b-instruct"
+LLM_API_BASE = GOOGLE_OPENAI_BASE_URL
+LLM_API_MODEL = DEFAULT_GEMINI_MODEL
+LLM_THINKING_LEVEL = DEFAULT_GEMINI_THINKING_LEVEL
+_llm = None
 
-llm_config = {
-    "api_key": api_key_list[0],
-    "api_base": LLM_API_BASE,
-    "api_model": LLM_API_MODEL,
-    "api_key_list": api_key_list
-}
 
-llm = init_language_model(llm_config)
+def get_llm():
+    """Create the task-rewording model only when generation actually needs it."""
+    global _llm
+    if _llm is None:
+        api_key_list = load_google_api_keys()
+        _llm = init_language_model({
+            "api_key": api_key_list[0],
+            "api_base": LLM_API_BASE,
+            "api_model": LLM_API_MODEL,
+            "thinking_level": LLM_THINKING_LEVEL,
+            "api_key_list": api_key_list,
+        })
+    return _llm
 # task_goal_prompt = "Randomly choose another way to express the following sentence. Try to change the sentence pattern instead of replacing words and try to avoid repetitive sentence patterns as much as possible. Making sure the meaning does not change: "
 task_goal_prompt = """
 I need you to rewrite the following sentence while keeping its original meaning intact. Your goal is to create sentence variations that are rich in structure and expression. Please follow these guidelines:
@@ -55,6 +68,7 @@ You should randomly select only one sentence from your rewritten version and ret
 template = {
     "api_model": LLM_API_MODEL,
     "api_base": LLM_API_BASE,
+    "thinking_level": LLM_THINKING_LEVEL,
     "task_type": "meta",
     "task_idx": 0,
     "agent_num": 1,
@@ -192,7 +206,7 @@ def generate_task_goal(task_scenario, arg_dict):
         task_goal = template_prompt
     else:
         template_prompt = "Original Sentence: " + template_prompt
-        task_goal = llm.few_shot_generate_thoughts(system_prompt=task_goal_prompt, example_prompt=template_prompt, temperature=0.2)
+        task_goal = get_llm().few_shot_generate_thoughts(system_prompt=task_goal_prompt, example_prompt=template_prompt, temperature=0.2)
     logger.warning(task_goal)
     logger.debug("-" * 50)
     return task_goal

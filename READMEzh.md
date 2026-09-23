@@ -61,17 +61,10 @@ Click here to view the [English version of the README](README.md).
    pip install -r requirements.txt
    ```
 4. 设置您的 API 密钥 🗝️：
-   - 创建一个名为 `API_KEY_LIST` 的文件，并按以下方式记录您的 API 密钥：
-   ```json
-   {
-      "OPENAI":["put your openai key here", ...],
-      "GEMINI":[...],
-      "GLM":[...],
-      ...
-   }
+   - 将付费层 Google Gemini API 密钥保存到环境变量中（不要提交密钥）：
+   ```bash
+   export GEMINI_API_KEY="your Google Gemini API key"
    ```
-   - 我们可能会尝试调用多个可用的API以突破访问上限。
-   - 将此文件放在项目的根目录。
 
 ## 快速启动 🚀
 
@@ -80,7 +73,7 @@ from env.env import VillagerBench, env_type, Agent
 from pipeline.controller import GlobalController
 from pipeline.data_manager import DataManager
 from pipeline.task_manager import TaskManager
-import json
+from model.google_model import DEFAULT_GEMINI_MODEL, GOOGLE_OPENAI_BASE_URL, load_google_api_keys
 
 if __name__ == "__main__":
 
@@ -88,15 +81,15 @@ if __name__ == "__main__":
     env = VillagerBench(env_type.construction, task_id=0, _virtual_debug=False, dig_needed=False)
 
     # 🤖 Set Agent
-    api_key_list = json.load(open("API_KEY_LIST", "r"))["OPENAI"]  # 🗝️ Use OPENAI as an example
-    base_url = "base url of the model"
+    api_key_list = load_google_api_keys()
+    base_url = GOOGLE_OPENAI_BASE_URL
     llm_config = {
-        "api_model": "fill in the model name here",  # For example, "gpt-4-1106-preview"
-        "api_base": base_url,  # 🔗 For example, "https://api.openai.com/v1"
+        "api_model": DEFAULT_GEMINI_MODEL,
+        "api_base": base_url,
         "api_key_list": api_key_list
     }
 
-    Agent.model = "fill in the agent model name here"  # 🛠️ Customize your agent model
+    Agent.model = DEFAULT_GEMINI_MODEL
     Agent.base_url = base_url
     Agent.api_key_list = api_key_list
 

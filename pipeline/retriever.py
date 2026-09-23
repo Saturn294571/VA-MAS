@@ -1,22 +1,23 @@
-from langchain.embeddings.openai import OpenAIEmbeddings
 import numpy as np
 import time
 from typing import List, Dict, Tuple, Union
 import sys
 import os
-import json
 sys.path.append(os.getcwd())
 import difflib
+from model.google_model import GoogleEmbeddingModel
 from pipeline.utils import document2string
 from concurrent.futures import ThreadPoolExecutor
-os.environ["OPENAI_API_KEY"] = json.load(open("API_KEY_LIST", "r"))["AGENT_KEY"][0]
-os.environ["OPENAI_API_BASE"] = "https://api.chatanywhere.tech/v1"
+
+
 class Retriever:
     '''
     This class is the retriever for the pipeline, it is used to retrieve the most similar data from the given data.
     '''
-    embeddings = OpenAIEmbeddings(model="text-embedding-ada-002")
-    def __init__(self):
+    def __init__(self, embeddings=None):
+        # The adapter resolves credentials lazily on the first semantic lookup.
+        # TaskManager construction therefore performs no external provider work.
+        self.embeddings = embeddings or GoogleEmbeddingModel()
         self.embedding_map = {}
 
     def string_similar(self, s1, s2):

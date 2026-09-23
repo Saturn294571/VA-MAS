@@ -164,13 +164,12 @@ Customize your private tasks in your Minecraft server with our VillagerAgent mul
    python js_setup.py
    ```
 4. Set up your API key 🗝️:
-   - Craft a file named `API_KEY_LIST` and inscribe your API key in this way:
-   ```json
-   {
-      "AGENT_KEY": ["put your qwen/dashscope api key here"]
-   }
+   - Export a paid-tier Google Gemini API key in your shell. Do not commit it:
+   ```bash
+   export GEMINI_API_KEY="your Google Gemini API key"
    ```
-   - Place this file in the root of the project directory.
+   - `GOOGLE_API_KEY` is accepted as a compatibility fallback, but
+     `GEMINI_API_KEY` is the documented project setting.
 
 ## QuickStart 🚀
 
@@ -187,9 +186,20 @@ Customize your private tasks in your Minecraft server with our VillagerAgent mul
 The default model settings are defined near the top of `tiny_start.py`:
 
 ```python
-LLM_API_BASE = "https://dashscope.aliyuncs.com/compatible-mode/v1"
-LLM_API_MODEL = "qwen3-next-80b-a3b-instruct"
+LLM_API_BASE = "https://generativelanguage.googleapis.com/v1beta/openai/"
+LLM_API_MODEL = "gemini-3.8-flash"
+LLM_THINKING_LEVEL = "low"
 ```
+
+Google-specific authentication, thinking configuration, token accounting and
+embeddings are isolated in `model/google_model.py`. The adapter uses Google's
+official OpenAI-compatible endpoint and the existing `openai` dependency; it
+does not require a separate Google model SDK.
+
+For an explicit run configuration, set `VILLAGER_LLM_MODEL`,
+`VILLAGER_LLM_THINKING_LEVEL`, `VILLAGER_ACTOR_MAX_TOKENS` and
+`VILLAGER_EMBEDDING_MODEL`. Their defaults are the values shown above, `512`
+and `gemini-embedding-001`, respectively.
 
 If your Minecraft server is not local, update `MINECRAFT_HOST` and `MINECRAFT_PORT` in `tiny_start.py`.
 

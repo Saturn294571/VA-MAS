@@ -42,6 +42,8 @@ class VillagerBench:
         self.task_name = task_name
         self.agent_pool = []
         self.log = {}
+        os.makedirs("data", exist_ok=True)
+        os.makedirs(".cache", exist_ok=True)
         self.reset_token()
         self.running = False
         self._virtual_debug = _virtual_debug
@@ -52,9 +54,6 @@ class VillagerBench:
         self.langchain_model = ""
         self.base_port = 5000
         self.op_path = ""
-        if not os.path.exists("data"):
-            os.mkdir("data")
-
         if not os.path.exists("data/history"):
             os.mkdir("data/history")
 
@@ -69,6 +68,8 @@ class VillagerBench:
 
         with open(".cache/state.json", "w") as f:
             json.dump({"state": "idle"}, f)
+        with open(".cache/load_status.cache", "w") as f:
+            json.dump({"status": "loading"}, f)
         
         # Delete previous log
         if os.path.exists("logs"):
@@ -283,9 +284,8 @@ class VillagerBench:
         if self._virtual_debug:
             return
         self.logger.info("resetting...")
-        if os.path.exists(".cache/load_status.cache"):
-            with open(".cache/load_status.cache", "w") as f:
-                json.dump({"status": "loading"}, f, indent=4)
+        with open(".cache/load_status.cache", "w") as f:
+            json.dump({"status": "loading"}, f, indent=4)
         self.logger.info("waiting for server to start...")
         agent_names = [agent.name for agent in self.agent_pool]
         agent_names_str = ",".join(agent_names)
@@ -315,6 +315,8 @@ class VillagerBench:
             subprocess.Popen(["python", "env/llm_gen_judger.py", "--host", self.host, "--port" , str(self.port), "--agent_num", str(len(self.agent_pool)), "--agent_names", agent_names_str, "--task_name", self.task_name], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
             self.logger.debug(f"python env/llm_gen_judger.py --host {self.host} --port {self.port} --agent_num {len(self.agent_pool)} --agent_names {agent_names_str} --task_name {self.task_name}")
         elif self.env_type == env_type.none:
+            with open(".cache/load_status.cache", "w") as f:
+                json.dump({"status": "loaded"}, f, indent=4)
             self.logger.info("no env type specified, only agent will be launched")
             return
         else:

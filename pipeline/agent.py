@@ -631,7 +631,7 @@ class BaseAgent:
                                    })
             prompt = self.filter_emoji(prompt)
             # print("before response")
-            response = self.llm.few_shot_generate_thoughts(reflect_system_prompt, prompt, cache_enabled=False, max_tokens=256, json_check=True)
+            response = self.llm.few_shot_generate_thoughts(reflect_system_prompt, prompt, cache_enabled=False, max_tokens=512, json_check=True)
         else:
             prompt = format_string(reflect_user_prompt,
                                    {
@@ -642,7 +642,7 @@ class BaseAgent:
                                    })
             prompt = self.filter_emoji(prompt)
             # print("before response")
-            response = self.llm.few_shot_generate_thoughts(reflect_system_prompt, prompt, cache_enabled=False, max_tokens=256, json_check=False)
+            response = self.llm.few_shot_generate_thoughts(reflect_system_prompt, prompt, cache_enabled=False, max_tokens=512, json_check=True)
         # print(response)
         # print("before filter emoji")
         response = self.filter_emoji(response)

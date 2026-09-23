@@ -67,17 +67,10 @@ VillagerAgentのマルチエージェントフレームワークを使用して�
    pip install -r requirements.txt
    ```
 4. APIキーを設定 🗝️：
-   - `API_KEY_LIST`という名前のファイルを作成し、以下のようにAPIキーを記述：
-   ```json
-   {
-      "OPENAI":["put your openai key here", ...],
-      "GEMINI":[...],
-      "GLM":[...],
-      ...
-   }
+   - 有料枠のGoogle Gemini APIキーを環境変数に設定します（コミットしないでください）：
+   ```bash
+   export GEMINI_API_KEY="your Google Gemini API key"
    ```
-   - アクセス制限を突破するために、複数の利用可能なAPIを呼び出すことがあります。
-   - このファイルをプロジェクトディレクトリのルートに配置します。
 
 ## クイックスタート 🚀
 
@@ -86,7 +79,7 @@ from env.env import VillagerBench, env_type, Agent
 from pipeline.controller import GlobalController
 from pipeline.data_manager import DataManager
 from pipeline.task_manager import TaskManager
-import json
+from model.google_model import DEFAULT_GEMINI_MODEL, GOOGLE_OPENAI_BASE_URL, load_google_api_keys
 
 if __name__ == "__main__":
 
@@ -94,15 +87,15 @@ if __name__ == "__main__":
     env = VillagerBench(env_type.construction, task_id=0, _virtual_debug=False, dig_needed=False)
 
     # 🤖 エージェントを設定
-    api_key_list = json.load(open("API_KEY_LIST", "r"))["OPENAI"]  # 🗝️ OPENAIを例として使用
-    base_url = "base url of the model"
+    api_key_list = load_google_api_keys()
+    base_url = GOOGLE_OPENAI_BASE_URL
     llm_config = {
-        "api_model": "fill in the model name here",  # 例："gpt-4-1106-preview"
-        "api_base": base_url,  # 🔗 例："https://api.openai.com/v1"
+        "api_model": DEFAULT_GEMINI_MODEL,
+        "api_base": base_url,
         "api_key_list": api_key_list
     }
 
-    Agent.model = "fill in the agent model name here"  # 🛠️ エージェントモデルをカスタマイズ
+    Agent.model = DEFAULT_GEMINI_MODEL
     Agent.base_url = base_url
     Agent.api_key_list = api_key_list
 

@@ -27,13 +27,11 @@ class OpenAILanguageModel(AbstractLanguageModel):
     
     # def __init__(self, api_key="", api_model="gpt-3.5-turbo-1106", evaluation_strategy="value", api_base="https://api.openai.com/v1/",
     #              enable_ReAct_prompting=True, strategy="cot", role_name="", api_key_list=[]):
-    def __init__(self, api_key="", api_model="qwen-max", evaluation_strategy="value", api_base="https://api.chatanywhere.tech/v1",
+    def __init__(self, api_key="", api_model="gpt-4o-mini", evaluation_strategy="value", api_base="https://api.openai.com/v1",
                  enable_ReAct_prompting=True, strategy="cot", role_name="", api_key_list=[]):
         if api_key == "" or api_key is None:
             api_key = os.environ.get("OPENAI_API_KEY", "")
-        if api_key != "":
-            openai.api_key = api_key
-        else:
+        if api_key == "":
             raise Exception("Please provide OpenAI API key")
         self.api_key = api_key
 
@@ -44,12 +42,8 @@ class OpenAILanguageModel(AbstractLanguageModel):
 
         if api_base == "" or api_base is None:
             api_base = os.environ.get(
-                "OPENAI_API_BASE", ""
+                "OPENAI_API_BASE", "https://api.openai.com/v1"
             )  # if not set, use the default base path of "https://api.openai.com/v1"
-        if api_base != "":
-            # e.g. https://api.openai.com/v1/ or your custom url
-            openai.api_base = api_base
-            # logger.info(f"Using custom api_base {api_base}")
         self.api_base = api_base
         if api_model == "" or api_model is None:
             api_model = os.environ.get("OPENAI_API_MODEL", "")
@@ -61,7 +55,7 @@ class OpenAILanguageModel(AbstractLanguageModel):
 
             self.api_model = api_model
         else:
-            self.api_model = "qwen-max"
+            self.api_model = "gpt-4o-mini"
         # logger.info(f"Using api_model {self.api_model}")
 
         self.use_chat_api = True

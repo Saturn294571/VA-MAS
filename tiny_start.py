@@ -7,14 +7,27 @@ from pipeline.controller import GlobalController
 from pipeline.data_manager import DataManager
 from pipeline.task_manager import TaskManager
 import json
+import os
+from model.google_model import (
+    DEFAULT_GEMINI_MODEL,
+    DEFAULT_GEMINI_THINKING_LEVEL,
+    GOOGLE_OPENAI_BASE_URL,
+    load_google_api_keys,
+)
 
-api_key_list = json.load(open("API_KEY_LIST", "r"))["AGENT_KEY"]
-LLM_API_BASE = "https://dashscope.aliyuncs.com/compatible-mode/v1"
-LLM_API_MODEL = "qwen3-next-80b-a3b-instruct"
+LLM_API_BASE = GOOGLE_OPENAI_BASE_URL
+LLM_API_MODEL = DEFAULT_GEMINI_MODEL
+LLM_THINKING_LEVEL = DEFAULT_GEMINI_THINKING_LEVEL
 MINECRAFT_HOST = "localhost"
 MINECRAFT_PORT = 25565
+TASK_NAME = "tiny_start_single_task"
+TASK_DESCRIPTION = "Alice talk with yubo"
 
 if __name__ == "__main__":
+    api_key_list = load_google_api_keys()
+    os.makedirs(".cache", exist_ok=True)
+    with open(".cache/meta_setting.json", "w", encoding="utf-8") as config_file:
+        json.dump({"task_name": TASK_NAME}, config_file, indent=4)
 
     # Set Environment
     env = VillagerBench(env_type.none, task_id=0, _virtual_debug=False, dig_needed=False, host=MINECRAFT_HOST, port=MINECRAFT_PORT)
@@ -23,11 +36,13 @@ if __name__ == "__main__":
     llm_config = {
         "api_model": LLM_API_MODEL,
         "api_base": LLM_API_BASE,
+        "thinking_level": LLM_THINKING_LEVEL,
         "api_key_list": api_key_list
     }
 
     Agent.model = LLM_API_MODEL
     Agent.base_url = LLM_API_BASE
+    Agent.thinking_level = LLM_THINKING_LEVEL
     Agent.api_key_list = api_key_list
 
     # more agent tools can be added here you can refer to the agent_tool in doc/api_library.md
@@ -51,9 +66,14 @@ if __name__ == "__main__":
 
         # Set Controller
         ctrl = GlobalController(llm_config, tm, dm, env)
+        ctrl.set_stop_condition(
+            max_execution_time=5 * 60,
+            stop_after_fail_times=1,
+            stop_after_success_times=1,
+        )
 
         # Set Task
-        tm.init_task("Alice talk with yubo", {})
+        tm.init_task(TASK_DESCRIPTION, {})
 
         # Run Controller
         ctrl.run()

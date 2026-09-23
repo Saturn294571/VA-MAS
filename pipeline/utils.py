@@ -6,7 +6,7 @@ import os
 import yaml
 import sys
 from langchain.docstore.document import Document
-from langchain.embeddings.openai import OpenAIEmbeddings
+from model.google_model import GoogleEmbeddingModel
 from langchain.text_splitter import RecursiveCharacterTextSplitter
 from langchain.retrievers.multi_query import MultiQueryRetriever
 from langchain.vectorstores.chroma import Chroma
@@ -362,7 +362,7 @@ def load_db_name(db_name, update=False, verbose=False, json_path="", query_type=
     else:
         if os.path.exists(f"db_{db_name}/") and not update:
             vectordb = Chroma(persist_directory=f"db_{db_name}/",
-                              embedding_function=OpenAIEmbeddings(openai_api_key=OPENAI_API_KEY))
+                              embedding_function=GoogleEmbeddingModel())
         else:
             if verbose:
                 print(f"Loading {db_name}...")
@@ -376,7 +376,7 @@ def load_db_name(db_name, update=False, verbose=False, json_path="", query_type=
             splits = text_splitter.split_documents(documents)
 
             # VectorDB
-            embedding = OpenAIEmbeddings(openai_api_key=OPENAI_API_KEY)
+            embedding = GoogleEmbeddingModel()
             vectordb = Chroma.from_documents(documents=splits, embedding=embedding,
                                              persist_directory=f"db_{db_name}/")
     return vectordb
@@ -408,7 +408,7 @@ def query_from_db(llm, db_dict, db_name, query="", verbose=False, query_type="")
         child_splitter = RecursiveCharacterTextSplitter(chunk_size=400)
         # The vectorstore to use to index the child chunks
         vectorstore = Chroma(
-            collection_name="full_documents", embedding_function=OpenAIEmbeddings(openai_api_key=OPENAI_API_KEY)
+            collection_name="full_documents", embedding_function=GoogleEmbeddingModel()
         )
         # The storage layer for the parent documents
         store = InMemoryStore()

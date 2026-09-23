@@ -4,19 +4,28 @@ from pipeline.agent import BaseAgent
 from pipeline.controller import GlobalController
 from pipeline.data_manager import DataManager
 from pipeline.task_manager import TaskManager
-from model.openai_models import OpenAILanguageModel
-import json
+from model.google_model import (
+    DEFAULT_GEMINI_MODEL,
+    DEFAULT_GEMINI_THINKING_LEVEL,
+    GOOGLE_OPENAI_BASE_URL,
+    GoogleLanguageModel,
+    load_google_api_keys,
+)
 
 if __name__ == "__main__":
 
 
-    # To speed up, we used multiple API KEYs and changed api_base to a domestic server
-    openai_key_list = json.load(open("API_KEY_LIST", "r"))["OPENAI"]
-    base_url = "https://api.chatanywhere.tech/v1"
-    llm = OpenAILanguageModel(api_model="gpt-4-1106-preview", api_base=base_url, api_key_list=openai_key_list)
-    Agent.model = "gpt-4-1106-preview"
-    Agent.base_url = base_url
-    Agent.api_key_list = openai_key_list
+    api_key_list = load_google_api_keys()
+    llm = GoogleLanguageModel(
+        api_model=DEFAULT_GEMINI_MODEL,
+        api_base=GOOGLE_OPENAI_BASE_URL,
+        thinking_level=DEFAULT_GEMINI_THINKING_LEVEL,
+        api_key_list=api_key_list,
+    )
+    Agent.model = DEFAULT_GEMINI_MODEL
+    Agent.base_url = GOOGLE_OPENAI_BASE_URL
+    Agent.thinking_level = DEFAULT_GEMINI_THINKING_LEVEL
+    Agent.api_key_list = api_key_list
 
     # llm = OpenAILanguageModel(api_model="gpt-3.5-turbo-1106")
 
