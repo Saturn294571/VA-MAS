@@ -65,12 +65,12 @@ class BaseAgent:
             self.rl_env = rl_env
             self.rl_model = rl_model
 
-        self.instruction_history = []  # 新增：保存历史指令
-        self.state_history = []        # 新增：保存历史状态
+        self.instruction_history = []  # New: save history instructions
+        self.state_history = []        # New: save history state
 
-        self.IDLE = True  # 控制是否处于 IDLE 状态
-        self.stop_event = threading.Event()  # 用于控制线程停止
-        # self.start_idle_thread()  # 启动 IDLE 线程
+        self.IDLE = True  # Control whether in IDLE state
+        self.stop_event = threading.Event()  # Used to control thread termination
+        # self.start_idle_thread()  # Start IDLE thread
 
         system_type = platform.system().lower()
         if system_type == "linux":
@@ -116,7 +116,7 @@ class BaseAgent:
                 return self.normal_step(task)
         
     def rl_step(self, task:Task) -> (str, dict):
-        # 构建基础提示和状态
+        # Build base prompt and status
         instruction = format_string(task_prompt, {
             "task_description": task.description,
             "milestone_description": task.milestones,
@@ -134,7 +134,7 @@ class BaseAgent:
         task_status = False
 
         while max_rl_steps > 0:
-            # 构建当前状态字符串
+            # Build current status string
             current_context = f"{instruction}\n{current_state}"
             if actions and observations:
                 action_history = "\n".join([f"Action: {a}\nObservation: {o}" for a, o in zip(actions, observations)])
@@ -149,7 +149,7 @@ class BaseAgent:
             print(f"# max_rl_steps: {max_rl_steps}")
             k_step = 30
             while k_step > 0:
-                # 获取模型动作
+                # Get model action
                 # try:
                 if self.env.agents_ping()["status"] == False:
                     self.logger.info("Some agents are offline!")
@@ -167,10 +167,10 @@ class BaseAgent:
                 if act is None:
                     continue
                     
-                # 更新状态
+                # Update state
                 current_state = f"{basic_state}\nLast Action: {act}\nLast Observation: {obs}"
                 
-                # 计算奖励和任务状态
+                # Calculate reward and task status
                 reward, task_status = self.rl_one_step_reflect(
                     task.description, 
                     task.milestones,
@@ -180,7 +180,7 @@ class BaseAgent:
                     obs=obs,
                 )
 
-                # 构建转换字典
+                # Build transformation dictionary
                 transition_dict = {
                     "states": current_context,
                     "actions": rl_action,
@@ -189,7 +189,7 @@ class BaseAgent:
                     "dones": task_status
                 }
 
-                # 更新模型
+                # Update model
                 self.rl_model.update(transition_dict)
                 
                 if self.RL_mode == "PPO":
@@ -239,8 +239,8 @@ class BaseAgent:
         '''
         Stop the idle_step thread.
         '''
-        self.stop_event.set()  # 设置停止信号
-        self.idle_thread.join()  # 等待线程结束
+        self.stop_event.set()  # Set stop signal
+        self.idle_thread.join()  # Wait for thread to finish
 
     def idle_step(self):
         '''
@@ -281,14 +281,14 @@ class BaseAgent:
         basic_state = ""
         current_state = basic_state
 
-        time.sleep(60) # 等待30秒 等待启动
-        while not self.stop_event.is_set():  # 主循环，直到收到退出信号
+        time.sleep(60) # Wait 30 seconds for startup
+        while not self.stop_event.is_set():  # Main loop, until exit signal is received
             if not self.IDLE:
-                # 如果不处于 IDLE 状态，进入等待
+                # If not in IDLE state, enter wait
                 time.sleep(1)
                 continue
 
-            # 构建当前状态字符串
+            # Build current status string
             current_context = f"{task_str}\n{current_state}"
             if actions and observations:
                 action_history = "\n".join([f"Action: {a}\nObservation: {o}" for a, o in zip(actions, observations)])
@@ -311,20 +311,20 @@ class BaseAgent:
                 if act is None:
                     continue
                     
-                # 更新状态
+                # Update state
                 current_state = f"{basic_state}\nLast Action: {act}\nLast Observation: {obs}"
 
             except KeyboardInterrupt:
                 self.logger.info("KeyboardInterrupt")
-                self.stop_event.set()  # 设置停止信号
+                self.stop_event.set()  # Set stop signal
                 raise KeyboardInterrupt
             except ConnectionError:
                 self.logger.error("ConnectionError")
-                self.stop_event.set()  # 设置停止信号
+                self.stop_event.set()  # Set stop signal
                 raise ConnectionError
             except ConnectionRefusedError:
                 self.logger.error("ConnectionRefusedError")
-                self.stop_event.set()  # 设置停止信号
+                self.stop_event.set()  # Set stop signal
                 raise ConnectionRefusedError
             except Exception as e:
                 self.logger.error(f"Error: {e}")
@@ -412,7 +412,7 @@ class BaseAgent:
         
         self.IDLE = True
 
-        # 耗时操作
+        # Time-consuming operation
         status = self.env.agent_status(self.name)
         self.data_manager.update_database(AgentFeedback(task, detail, status).to_json())
 
@@ -559,14 +559,14 @@ class BaseAgent:
     def action_format(self, action:dict) -> str:
         action_str = '''{{message}}'''
         feedback = action.get("feedback", {})
-        # 如果 feedback 是字符串，转换成 {"message": feedback}
+        # If feedback is a string, convert it to {"message": feedback}
         if isinstance(feedback, str):
             feedback = {"message": feedback}
-        # 否则确保 feedback 是字典，并设置默认 message
+        # Otherwise, ensure feedback is a dictionary and set a default message
         elif not isinstance(feedback, dict):
             feedback = {"message": ""}
         
-        # 如果 message 不存在，设置默认空字符串
+        # If message does not exist, set a default empty string
         if "message" not in feedback:
             feedback["message"] = ""
 

@@ -10,7 +10,7 @@ import json
 if __name__ == "__main__":
 
 
-    # 为了加速，我们使用了多个API KEY，同时api_base也改为了国内的服务器
+    # To speed up, we used multiple API KEYs and changed api_base to a domestic server
     openai_key_list = json.load(open("API_KEY_LIST", "r"))["OPENAI"]
     base_url = "https://api.chatanywhere.tech/v1"
     llm = OpenAILanguageModel(api_model="gpt-4-1106-preview", api_base=base_url, api_key_list=openai_key_list)
@@ -32,7 +32,7 @@ if __name__ == "__main__":
 
     env.agent_register(agent_tool=agent_tool, agent_number=2, name_list=["Amy","Andrew"])
     
-    with env.run(fast_api=False): # 新增加了一个参数，用于控制是否使用fastapi server
+    with env.run(fast_api=False): # Added a new parameter to control whether to use the fastapi server
 
         start_time = time.time()
         dm = DataManager()

@@ -70,7 +70,7 @@ class GlobalController:
         self.result_queue = []
 
         # init thread pool
-        self.executor = ThreadPoolExecutor(max_workers=max_workers)  # 可以根据需要调整max_workers的数量
+        self.executor = ThreadPoolExecutor(max_workers=max_workers)  # The number of max_workers can be adjusted as needed
 
         # init max task time
         self.max_task_time = 60 * 30 # 3min
@@ -248,13 +248,13 @@ class GlobalController:
                             _, detail = future.result()
                             self.update_feedback(task, agent, detail)
 
-                        except Exception as e: # 没有对于 collab 的处理 这个代码不正确
+                        except Exception as e: # No handling for collab; this code is incorrect
                             traceback.print_exception(type(e), e, e.__traceback__)
                             self.logger.error(f"Task {task.description} failed with exception: {e}\n{e.__traceback__}")
                             self.logger.exception(e)
                             self.update_task_status(task, Task.failure, f"Task {task.description} failed with exception: {e}\n{e.__traceback__}")                            
                     
-                    elif time.time() - start_time > self.max_task_time: # 没有对于 collab 的处理 这个代码不正确
+                    elif time.time() - start_time > self.max_task_time: # No handling for collab; this code is incorrect
                         self.logger.warning(f"Task {task.description} timeout!")
                         self.update_task_status(task, Task.failure, f"Task {task.description} timeout!")
                     
@@ -285,7 +285,7 @@ class GlobalController:
                 available_task_list.append(task)
         
         return available_task_list
-    # 生产者
+    # Producer
     def execute_tasks(self):
         try:
             while True:
@@ -303,7 +303,7 @@ class GlobalController:
                     self.logger.info("all assigned tasks are finished ...")
                     self.shutdown = True
                     break
-                # 写到 logs/task_list.json 中
+                # Write to logs/task_list.json
                 agent_states = []
                 for agent in self.agent_list:
                     if self.assignment.get(agent.name) is None:
@@ -329,7 +329,7 @@ class GlobalController:
                     continue
 
                 if len(self.assignment) == 0:
-                    # 如果 number == candidate_list 的长度，那么直接分配任务
+                    # If number == length of candidate_list, assign tasks directly
                     for task in self.task_list:
                         if task.number == len(task.candidate_list) and task.available and \
                             all([self.assignment.get(agent.name) is None for agent in self.agent_list if agent.name in task.candidate_list]):

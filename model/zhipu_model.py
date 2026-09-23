@@ -34,7 +34,7 @@ class ZhipuLanguageModel(AbstractLanguageModel):
 
         self.cache_path = "zhipu.cache"
 
-        # 统计相关
+        # Statistics related
         if not os.path.exists("data"):
             os.mkdir("data")
         if not os.path.exists("data/zhipu.logs"):

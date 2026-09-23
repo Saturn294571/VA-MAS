@@ -1,7 +1,7 @@
 # farm craft judger
-# 这个judger需要加载一个设定的农场地形，将Agent初始化到指定位置
-# json文件中包含了农场的地形，以及Agent的初始位置，以及最后的目标合成物品
-# 根据Agent的状态，环境的更新，结合json文件，给出累计得分
+# This judger needs to load a specified farm terrain and initialize the Agent at a specific position
+# The JSON file contains the farm terrain, the Agent's initial position, and the final target crafting item
+# Calculate cumulative score based on Agent state, environment updates, and the json file
 import shutil
 import threading
 import time
@@ -62,7 +62,7 @@ if __name__ == '__main__':
     assert args.idx < len(settings), "idx out of range, please make sure idx is in [0, 99]"
     task_data = settings[args.idx]
 
-    # 计算复杂度
+    # Calculate complexity
     complexity = 0
     if "cake" in task_data["name"]:
         for i in range(len(milk)):
@@ -332,7 +332,7 @@ if __name__ == '__main__':
     @On(bot, 'time')
     def handleTime(*args):
         def calculate_balance():
-            # 计算每个agent的时间
+            # Calculate time for each agent
             if not os.path.exists('data/action_log.json'):
                 return
             with open('data/action_log.json', 'r') as f:
@@ -347,10 +347,10 @@ if __name__ == '__main__':
                 agent_time.append(0)
             time_array = np.array(agent_time)
             
-            # 对时间进行归一化处理
+            # Normalize the time
             time_array = (time_array) / (np.max(time_array) + 1e-8)
             
-            # 计算并返回 Balanced Agent Utilization Score (BAUS)
+            # Calculate and return Balanced Agent Utilization Score (BAUS)
             return 1 - np.std(time_array)
 
         def calculate_action_time():
@@ -367,9 +367,9 @@ if __name__ == '__main__':
             if len(time_list) == 0:
                 return 0
 
-            # 计算覆盖的总时间
-            total_time = 0  # 单位：秒
-            time_list.sort(key=lambda x: x[0])  # 按照开始时间排序
+            # Calculate total coverage time
+            total_time = 0  # Unit: seconds
+            time_list.sort(key=lambda x: x[0])  # Sort by start time
             start, end = time_list[0]
             for i in range(1, len(time_list)):
                 if time_list[i][0] < end:
@@ -406,7 +406,7 @@ if __name__ == '__main__':
                     json.dump({"time": now_time}, f, indent=4)
                 if score == 100:
                     efficiency = max_action_time / calculate_action_time()
-                    # 给出结束信号和写入文件
+                    # Issue end signal and write to file
                     if not os.path.exists(os.path.join("result", task_name)):
                         os.mkdir(os.path.join("result", task_name))
                     # else:
@@ -486,7 +486,7 @@ if __name__ == '__main__':
     def handleChat(_, message, messagePosition, jsonMsg, sender, *args):
         def calculate_score(agent_name: str, inventory: list):
             global score_dict, own_dict
-            # 合并同类物品
+            # Merge similar items
             for i, item in enumerate(inventory):
                 for j in range(i + 1, len(inventory)):
                     if item["name"] == inventory[j]["name"]:
@@ -498,16 +498,16 @@ if __name__ == '__main__':
                 name = item["name"]
                 count = item["count"]
 
-                # 达成条件时，标记success
+                # Mark success when conditions are met
                 if name in score_dict.keys() and count >= score_dict[name]["count"]:
                     score_dict[name]["success"] = True
 
-                # 第一次拥有时，加入own_dict
+                # Add to own_dict upon first possession
                 if name in score_dict.keys() and not score_dict[name]["own"]:
                     score_dict[name]["own"] = True
                     own_dict[agent_name].append(name)
 
-            # 计算score
+            # Calculate score
             add_list = []
             for name in score_dict.keys():
                 if score_dict[name]["success"]:
@@ -530,23 +530,23 @@ if __name__ == '__main__':
                 if valid:
                     score += score_dict[name]["score"]
 
-            # 计算合作度
+            # Calculate cooperation level
             own = np.array([len(own_dict[name]) for name in own_dict.keys()])
             count = np.sum(own)
             if count == 0:
                 cooperation = 0
             else:
                 std = np.std(own)
-                # 计算最大的标准差，即当一个人拥有所有物品时，标准差最大
+                # Calculate maximum standard deviation, which occurs when one person holds all items
                 only_one_own = np.zeros_like(own)
                 only_one_own[0] = count
                 max_std = np.std(only_one_own)
-                # 计算最小的标准差，即当所有人拥有相同数量的物品时或相差不超过1时，标准差最小
+                # Calculate minimum standard deviation, which occurs when everyone has the same number of items or a difference of no more than 1
                 average_own = np.zeros_like(own) + count // len(own)
                 average_own[:count % len(own)] += 1
                 min_std = np.std(average_own)
 
-                if max_std == min_std:  # 防止除0
+                if max_std == min_std:  # Prevent division by zero
                     cooperation = 100
                 else:
                     cooperation = 100 * (1 - (std - min_std) / (max_std - min_std))
@@ -565,7 +565,7 @@ if __name__ == '__main__':
                 data_str = None
 
             if agent_name is not None and data_str is not None:
-                # 修复json字符串中的缺失的双引号，有小bug，但是不影响需要的字段
+                # Fix missing double quotes in JSON string; there is a small bug, but it does not affect required fields
                 splits = re.split(r'[\[\]{}]|,\s|:\s', data_str)
                 replace_dicts = []
                 for split in splits:
@@ -579,7 +579,7 @@ if __name__ == '__main__':
                     while True:
                         pos = data_str.find(replace_dict[0], start)
                         if pos == -1:
-                            break  # 其实不会发生
+                            break  # Actually won't happen
                         else:
                             if pos > 0 and data_str[pos - 1] == '"':
                                 start = pos + 1
@@ -596,7 +596,7 @@ if __name__ == '__main__':
                 inventory = data.get("Inventory", [])
                 for i, item in enumerate(inventory):
                     count = item.get("Count", 0)
-                    # 最后一个不是字母
+                    # Last character is not a letter
                     if count[-1].isalpha():
                         count = int(count[:-1])
                     else:

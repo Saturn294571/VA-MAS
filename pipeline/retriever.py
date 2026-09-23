@@ -155,7 +155,7 @@ class Retriever:
         return results[:max_results]
 
     def flatten_json(self, y, threshold=800):
-        # 这个函数是将任意的json文件转换为一维的dict 方便进行retreival search
+        # This function converts any JSON file into a 1D dict for easier retrieval search
         out = {}
 
         def flatten(x, name='', data=[]):

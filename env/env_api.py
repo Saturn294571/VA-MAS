@@ -69,9 +69,9 @@ def bfs_search_sample(bot, Vec3, bot_position, max_distance, sample_rate=0.1):
     visible_blocks = []
 
     while queue:
-        # 随机决定是否处理当前方块
+        # Randomly decide whether to process current block
         if random.random() > sample_rate:
-            queue.popleft()  # 直接丢弃
+            queue.popleft()  # Discard directly
             continue
             
         position, distance = queue.popleft()
@@ -93,7 +93,7 @@ def bfs_search_sample(bot, Vec3, bot_position, max_distance, sample_rate=0.1):
                 "face": block["_properties"]["face"],
                 "open": block["_properties"]["open"]
             }
-            # 去除None属性
+            # Remove None attributes
             block_info = {k: v for k, v in block_info.items() if v is not None}
             visible_blocks.append(block_info)
             
@@ -102,7 +102,7 @@ def bfs_search_sample(bot, Vec3, bot_position, max_distance, sample_rate=0.1):
 
         x, y, z = position
         
-        # 对相邻方块也进行随机采样
+        # Perform random sampling on adjacent blocks as well
         directions = [(1,0,0), (-1,0,0), (0,1,0), (0,-1,0), (0,0,1), (0,0,-1)]
         sampled_directions = random.sample(directions, 
                                         k=max(1, int(len(directions) * sample_rate)))
@@ -121,11 +121,11 @@ def bfs_search(bot, Vec3, bot_position, max_distance):
                    ((bot_position[0], bot_position[1]-1, bot_position[2]), 1),
                    ((bot_position[0], bot_position[1]+1, bot_position[2]), 1)])
 
-    visited = set()  # 用于跟踪已经访问过的位置
-    visible_blocks = []  # 用于存储可见方块的字典
+    visited = set()  # Used to track visited positions
+    visible_blocks = []  # Dictionary used to store visible blocks
 
     while queue:
-        position, distance = queue.popleft()  # 从队列的左侧弹出元素
+        position, distance = queue.popleft()  # Pop element from the left of the queue
         if distance > max_distance or position in visited:
             continue
         visited.add(position)
@@ -143,7 +143,7 @@ def bfs_search(bot, Vec3, bot_position, max_distance):
                 "face": block["_properties"]["face"],
                 "open": block["_properties"]["open"]}
                 )
-            # 去除 None属性
+            # Remove None attributes
             visible_blocks[-1] = {k: v for k, v in visible_blocks[-1].items() if v is not None}
             if "fence" not in block["name"]:
                 continue            
@@ -152,8 +152,8 @@ def bfs_search(bot, Vec3, bot_position, max_distance):
 
         for dx, dy, dz in [(1, 0, 0), (-1, 0, 0), (0, 1, 0), (0, -1, 0), (0, 0, 1), (0, 0, -1)]:
             next_position = (x + dx, y + dy, z + dz)
-            if next_position not in visited:  # 检查是否已访问
-                queue.append((next_position, distance + 1))  # 将新位置添加到队列的右侧
+            if next_position not in visited:  # Check if already visited
+                queue.append((next_position, distance + 1))  # Add new position to the right of the queue
 
     return visible_blocks
 
@@ -164,7 +164,7 @@ def BlocksNearby(bot, Vec3, mcData, RenderRange=5, max_time=3, max_same_block=3,
         # blocks = bfs_search(bot, Vec3, (anchor_pos.x, anchor_pos.y, anchor_pos.z), RenderRange)
         blocks = bfs_search_sample(bot, Vec3, (anchor_pos.x, anchor_pos.y, anchor_pos.z), RenderRange, sample_rate=sample_rate)
         
-        # 去除重复超过max_same_block次的方块
+        # Remove blocks that repeat more than max_same_block times
         new_blocks = []
         block_dict = {}
         for block in blocks:
@@ -187,7 +187,7 @@ def BlocksNearby(bot, Vec3, mcData, RenderRange=5, max_time=3, max_same_block=3,
             for x in range(-half_range, half_range):
                 for y in range(-half_range // 2, half_range // 2):
                     for z in range(-half_range, half_range):
-                        if random.random() > sample_rate: # 随机采样
+                        if random.random() > sample_rate: # Random sampling
                             continue
                         if abs(x) + abs(y) + abs(z) != total:
                             continue
@@ -567,7 +567,7 @@ def get_envs_info_dict(bot, RENDER_DISTANCE=32, same_entity_num=2):
     status_info['nearby_entities'] = status_info.pop('entities')
 
     if status_info['oxygen'] is None:
-        status_info['oxygen'] = 20  # 不在水下时，oxygen为None，这里设置为最大值20
+        status_info['oxygen'] = 20  # When not underwater, oxygen is None; set to maximum value 20 here
 
     return status_info
 
@@ -787,7 +787,7 @@ def find_nearest_(bot, Vec3, envs_info, mcData, name):  # X
         return None
     
 def is_entity_or_item(name):
-    # 已经确定是合法的名字但是不知道是实体还是方块
+    # Confirmed as a valid name, but unknown if it is an entity or a block
     with open('data/mcData.json', 'r', encoding='utf-8') as f:
         mc_data_json = json.load(f)
     for item in mc_data_json['entities']:
@@ -800,13 +800,13 @@ def is_entity_or_item(name):
     return 'error'
 
 def find_everything_(bot, Vec3, envs_info, mcData, name="", distance=32, count=1, optimize=False, visible_only=True):
-    # 第一步判断name是否存在，如果不存在或者all, everything,则直接返回数量允许的所有物体
-    # 第二步进行文本匹配，找到最相似的name
-    # 第三步如果是entity,则直接返回entity的位置
-    # 第四步如果是block,则进行搜索
+    # Step 1: Check if name exists; if not, or if it is all/everything, return all allowed objects directly
+    # Step 2: Perform text matching to find the most similar name
+    # Step 3: If it is an entity, return the entity's position directly
+    # Step 4: If it is a block, perform a search
 
     if name == "everything" or name == "all" or name == "":
-        # 返回所有物体
+        # Return all objects
         block_list = []
         try:
             blocks = bot.findBlocks(
@@ -819,7 +819,7 @@ def find_everything_(bot, Vec3, envs_info, mcData, name="", distance=32, count=1
             for block in blocks:
                 block_list.append(block)
 
-            # 去除相同名字超过三个的方块
+            # Remove blocks with more than three identical names
             new_blocks = []
             block_dict = {}
             for block in block_list:
@@ -837,9 +837,9 @@ def find_everything_(bot, Vec3, envs_info, mcData, name="", distance=32, count=1
     
     name_find, tag = findSimilarName(name)
     type_ = is_entity_or_item(name_find)
-    # 有可能是entity的名字
+    # Could be an entity name
     entities_pos = []
-    # 直接返回entity的位置
+    # Return the entity's position directly
     entities = get_entity_by('username', envs_info, name, bot.entity.username)
     if len(entities) > 0:
         pos = entities[0]['position']
@@ -861,7 +861,7 @@ def find_everything_(bot, Vec3, envs_info, mcData, name="", distance=32, count=1
         return "Cannot find any entity named " + name, []
     
     if type_ == "item":
-        # 直接返回item的位置
+        # Return the item's position directly
         block_list = []
         try:
             blocks = bot.findBlocks(
@@ -1051,7 +1051,7 @@ async def place_block_op(bot, mcData, pathfinder, Vec3, item_name, pos, axis=Non
         return False, f"can not place block without {item_name} in hand, you need to interact chest or your inventory to get item first."
     
     
-    # 检查 6 方位是否有可能的参考块
+    # Check if the 6 directions are possible reference blocks
     has_reference_block = False
     # for offset in [[0, -1, 0], [0, 1, 0], [-1, 0, 0], [1, 0, 0], [0, 0, -1], [0, 0, 1]]:
     #     if bot.blockAt(Vec3(pos[0] + offset[0], pos[1] + offset[1], pos[2] + offset[2]))['name'] != 'air':
@@ -1166,7 +1166,7 @@ async def place_block_op(bot, mcData, pathfinder, Vec3, item_name, pos, axis=Non
         has_reference_block = True
         
     if not has_reference_block:
-        # 找到正下方地面位置
+        # Find the ground position directly below
         ground_y = pos[1]
         while bot.blockAt(Vec3(pos[0], ground_y - 1, pos[2]))['name'] == 'air':
             ground_y -= 1
@@ -1181,7 +1181,7 @@ async def place_block_op(bot, mcData, pathfinder, Vec3, item_name, pos, axis=Non
     
     bot.unequip("hand")
     
-    # 检测能不能走到附近
+    # Detect if it is possible to walk nearby
     move_to(pathfinder, bot, Vec3, 1.4,Vec3(pos[0], pos[1], pos[2]))
     
     distance = distanceTo(bot.entity.position, Vec3(pos[0], pos[1], pos[2]))
@@ -1244,7 +1244,7 @@ async def place_axis(bot, mcData, pathfinder, Vec3, item_name, pos, axis=None):
         else:
             return False, "cannot place flower"
 
-    # 检查 6 方位是否有可能的参考块
+    # Check if the 6 directions are possible reference blocks
     has_reference_block = False
     for offset in [[0, -1, 0], [0, 1, 0], [-1, 0, 0], [1, 0, 0], [0, 0, -1], [0, 0, 1]]:
         if bot.blockAt(Vec3(pos[0] + offset[0], pos[1] + offset[1], pos[2] + offset[2]))['name'] != 'air':
@@ -1302,14 +1302,14 @@ async def place_axis(bot, mcData, pathfinder, Vec3, item_name, pos, axis=None):
             return False, f"cannot place the block at this position facing {axis}, no valid other block at {pos[0] + offset[0]} {pos[1] + offset[1]} {pos[2] + offset[2]} or {pos[0] + offset[0]} {pos[1] + offset[1]} {pos[2] - offset[2]}, maybe some other blocks (dirt) needed to be placed first?"
         
     if not has_reference_block:
-        # 找到正下方地面位置
+        # Find the ground position directly below
         ground_y = pos[1]
         while bot.blockAt(Vec3(pos[0], ground_y - 1, pos[2]))['name'] == 'air':
             ground_y -= 1
         return False, f"cannot place the block at this position, no valid other block can be found, the ground block is at {pos[0]} {ground_y-1} {pos[2]}, maybe some other blocks (dirt) needed to be placed first?"
 
     flag = False
-    offsets = {"y": [[0, -1, 0], [0, 1, 0]], "x": [[-1, 0, 0], [1, 0, 0]], "z": [[0, 0, -1], [0, 0, 1]]}  # 参考方块的位置偏移
+    offsets = {"y": [[0, -1, 0], [0, 1, 0]], "x": [[-1, 0, 0], [1, 0, 0]], "z": [[0, 0, -1], [0, 0, 1]]}  # Position offset of the reference block
     if axis == 'A' or axis is None or axis in ['x', 'y', 'z']:
         for x in range(0, T_RANGE * 2 + 1):
             if x % 2 == 0:
@@ -1355,7 +1355,7 @@ async def place_axis(bot, mcData, pathfinder, Vec3, item_name, pos, axis=None):
                                 putPos = (pos[0] + offset[0], pos[1] + offset[1], pos[2] + offset[2])
                                 faceVector = mulList(offset, -1)
                                 if not flag and (bot.blockAt(Vec3(putPos[0], putPos[1], putPos[2])))['name'] != 'air':
-                                    # 如果目标在站立的方块上，jump = True
+                                    # If the target is on a standing block, jump = True
                                     if x == 0 and z == 0:
                                         flag = await place_block(bot, Vec3, putPos, faceVector, True)
                                     else:
@@ -1400,7 +1400,7 @@ async def place_axis(bot, mcData, pathfinder, Vec3, item_name, pos, axis=None):
                     try:
                         if bot.blockAt(Vec3(pos[0] + x, pos[1] + y - 1, pos[2] + z))['name'] == 'air' or \
                                 bot.blockAt(Vec3(pos[0] + x, pos[1] + y, pos[2] + z))['name'] != 'air':
-                            # # bot.chat('#can not move to the position is not air') 机器人身高是2
+                            # # bot.chat('#can not move to the position is not air') The bot height is 2
                             continue
                         move_success = move_to(pathfinder, bot, Vec3, GoalRange,
                                                Vec3(pos[0] + x, pos[1] + y, pos[2] + z))
@@ -1410,8 +1410,8 @@ async def place_axis(bot, mcData, pathfinder, Vec3, item_name, pos, axis=None):
                             continue
                         for item in offsets.values():
                             for offset in item:
-                                putPos = (pos[0] + offset[0], pos[1] + offset[1], pos[2] + offset[2])  # putpos 参考方块
-                                faceVector = mulList(offset, -1)  # 放置朝向
+                                putPos = (pos[0] + offset[0], pos[1] + offset[1], pos[2] + offset[2])  # putpos reference block
+                                faceVector = mulList(offset, -1)  # Placement direction
                                 if not flag and (bot.blockAt(Vec3(putPos[0], putPos[1], putPos[2])))['name'] != 'air':
                                     flag = await place_block(bot, Vec3, putPos, faceVector)
                                     if bot.blockAt(Vec3(pos[0], pos[1], pos[2]))['name'] != origin_block_name:
@@ -1558,7 +1558,7 @@ def dig_check(bot,item_name):
         if item_name == item["name"]:
             if not item["diggable"]:
                 return False, "this block cannot dig"
-            # 确定手持物品
+            # Determine held item
             held_item = bot.heldItem
             if held_item is None and "tools" in item:
                 return False, "you need to hold a tool to dig this block, tools can be built by crafting table or try find it in chest"
@@ -1787,7 +1787,7 @@ async def interact_nearest(pathfinder, bot,  Vec3, envs_info, mcData, RANGE_GOAL
     if pos is None:
         return f"cannot find anything named {name}, try to get more infos or help", False, []
 
-    # 用 findSimilarName 处理一下 name get_item_name repair_item_name fuel_item_name
+    # Process name using findSimilarName: get_item_name, repair_item_name, fuel_item_name
     if get_item_name is not None:
         raw_get_item_name = get_item_name
         get_item_name = findSimilarName(get_item_name)[0]
@@ -1810,7 +1810,7 @@ async def interact_nearest(pathfinder, bot,  Vec3, envs_info, mcData, RANGE_GOAL
             name = raw_name
 
     mv_config = pathfinder.Movements(bot)
-    mv_config.canDig = False # 决定是否可以挖掘
+    mv_config.canDig = False # Decide whether mining is possible
     mv_config.allow1by1towers = False 
     mv_config.canOpenDoors = True
 
@@ -2363,7 +2363,7 @@ def useOnNearest(bot, Vec3, pathfinder, envs_info, mcData, blocks, item_name, na
     if not tag and (not bot.heldItem or bot.heldItem.name != item_name):
         return msg, tag
     try:
-        if item_name != "shears" and item_name != "saddle": #这两个一定是entity
+        if item_name != "shears" and item_name != "saddle": # These two must be entities
             for block in blocks:
                 # bot.chat(f"{block['name']}")
                 if block['name'] == name:
@@ -2396,15 +2396,15 @@ def useOnNearest(bot, Vec3, pathfinder, envs_info, mcData, blocks, item_name, na
             elif item_name == "bucket":
                 bot.activateItem()
                 bot.useOn(entity) 
-            else:  # 剩余未分类的进行多次尝试
+            else:  # Perform multiple attempts for the remaining unclassified items
                 bot.activateItem()
                 bot.useOn(entity) 
                 bot.activateEntity(entity)
 
         if item_name == "bucket" or item_name == "saddle" or "bucket" in item_name:
             bot.updateHeldItem()
-            time.sleep(1) # 必须要等到更新结果
-            if bot.heldItem and bot.heldItem.name == item_name: # 说明没有成功的施加作用
+            time.sleep(1) # Must wait for the update result
+            if bot.heldItem and bot.heldItem.name == item_name: # Indicates that no effect was successfully applied
                 return f" use {item_name} on {name} failed or the entity confused.", False
         return f" use {item_name} on {name}", True
     except Exception as e:
@@ -2480,24 +2480,24 @@ def findSimilarName(name):
     max_similar = 0
     similar_name = ""
 
-    # 预处理输入名称，分割成子字符串
+    # Preprocess input name by splitting into substrings
     name_parts = name.split('_')
 
-    # 加载数据
+    # Load data
     with open('data/mcData.json', 'r', encoding='utf-8') as f:
         mc_data_json = json.load(f)
 
-    # 如果本身就是一个合法的名字，直接返回
+    # If it is already a valid name, return directly
     if is_entity_or_item(name) != 'error':
         return name, f"find {name}"
     
-    # 遍历实体和物品
+    # Iterate through entities and items
     for item in mc_data_json['entities'] + mc_data_json['items']:
         try:
             item_name = item[0]
             item_parts = item_name.split('_')
 
-            # 计算所有子字符串的平均Levenshtein相似度
+            # Calculate the average Levenshtein similarity of all substrings
             total_similar = 0
             for part in name_parts:
                 part_similar = max([1 - Levenshtein.distance(part, item_part) / max(len(part), len(item_part)) for item_part in item_parts])
@@ -2509,10 +2509,10 @@ def findSimilarName(name):
                 max_similar = avg_similar
                 similar_name = item_name
         except Exception as e:
-            # 错误处理，这里简单忽略
+            # Error handling, simply ignore here
             pass
 
-    # 设置一个合理的相似度阈值
+    # Set a reasonable similarity threshold
     if max_similar > 0.55:
         return similar_name, f"find {similar_name}"
 

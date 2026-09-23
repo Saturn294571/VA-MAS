@@ -74,20 +74,20 @@ MineBlock: MineBlock(player_name: str, x: int, y: int, z: int, emotion: list, mu
 '''
 
 def shuffle_tool_list():
-    # 分割原始字符串为单独的工具行
+    # Split original string into individual tool lines
     tool_lines = [line.strip() for line in TOOL_LIST.split('\n') if line.strip()]
     
-    # 提取工具名称和完整行
+    # Extract tool name and full line
     tools = []
     for line in tool_lines:
-        # 获取工具名称（第一个冒号前的部分）
+        # Get tool name (part before the first colon)
         tool_name = line.split(':', 1)[0].strip()
         tools.append((tool_name, line))
     
-    # 随机打乱工具顺序
+    # Shuffle tool order
     random.shuffle(tools)
     
-    # 构建新的TOOL_LIST字符串和工具名称列表
+    # Build new TOOL_LIST string and tool name list
     shuffled_tool_list = '\n'.join([tool[1] for tool in tools])
     shuffled_order = ', '.join([tool[0] for tool in tools])
     
@@ -130,32 +130,32 @@ def raise_history_files():
 
 def replace_names_recursive(data, random_name_alice, random_name_bob):
     if isinstance(data, dict):
-        # 如果是字典，递归处理每个值
+        # If it is a dictionary, process each value recursively
         return {key: replace_names_recursive(value, random_name_alice, random_name_bob) 
                 for key, value in data.items()}
     elif isinstance(data, list):
-        # 如果是列表，递归处理每个元素
+        # If it is a list, process each element recursively
         return [replace_names_recursive(item, random_name_alice, random_name_bob) 
                 for item in data]
     elif isinstance(data, str):
-        # 如果是字符串，执行替换
+        # If it is a string, perform replacement
         data = data.replace("Alice", random_name_alice)
         data = data.replace("alice", random_name_alice.lower())
         data = data.replace("Bob", random_name_bob)
         data = data.replace("bob", random_name_bob.lower())
         return data
     else:
-        # 其他类型（数字、布尔值等）直接返回
+        # Return other types (numbers, booleans, etc.) directly
         return data
 
 def replace_names_in_action_history(action_history_files):
-    # 生成两个不同的随机名字
+    # Generate two different random names
     random_name_alice = get_first_name()
     random_name_bob = get_first_name()
     while random_name_bob == random_name_alice:
         random_name_bob = get_first_name()
     
-    # 递归处理整个数据结构
+    # Recursively process the entire data structure
     return replace_names_recursive(action_history_files, random_name_alice, random_name_bob)
 
 def filter_action(new_name_files):
@@ -182,13 +182,13 @@ def filter_action(new_name_files):
     return filtered_actions
 
 def format_string(template: str, data: dict) -> str:
-    # 检查template中的{{}}是否都在data中
+    # Check if all {{}} in the template are present in data
     keys = re.findall(r'{{(.*?)}}', template)
     for key in keys:
         if key not in data:
             raise ValueError(f'when format:\n{template} \nkey {key} not found in data')
 
-    # 替换{{}}为data中的值
+    # Replace {{}} with values from data
     for key, value in data.items():
         template = template.replace('{{' + key + '}}', str(value))
     return template

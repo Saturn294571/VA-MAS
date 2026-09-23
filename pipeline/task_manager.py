@@ -334,7 +334,7 @@ class TaskManager:
         for res in result:
             for key in keys:
                 if key[0] not in res.keys():
-                    # 从keys中找到最相近的key， 相似度大于0.8
+                    # Find the most similar key from keys, with similarity greater than 0.8
                     similar_key = None
                     similar_score = 0
                     for k in res.keys():

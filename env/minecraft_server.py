@@ -53,25 +53,25 @@ bot.loadPlugin(collectBlock.plugin)
 bot.loadPlugin(pvp)
 bot.loadPlugin(minecraftHawkEye)
 
-VISIBLE_ONLY = True # 是否只看到可见的方块 | False: 开金手指
+VISIBLE_ONLY = True # Whether to only see visible blocks | False: enable cheats
 
 mount_state = False
 
-# 定义修饰器
+# Define decorators
 def log_activity(bot):
     def decorator(func):
         @wraps(func)
         def wrapper(*call_args, **kwargs):
-            # 在函数执行前打印
+            # Print before function execution
             # bot.chat(f"{bot.username} is going to do task: {func.__name__}")
             try:
-                # 执行函数
-                result = func(*call_args, **kwargs) # 这里可以增加更多的反馈信息
-                # 在函数执行后打印(\1\n@log)
+                # Execute function
+                result = func(*call_args, **kwargs) # More feedback information can be added here
+                # Print after function execution(\1\n@log)
                 # bot.chat(f"{bot.username} has done task: {func.__name__}")
                 return result
             except Exception as e:
-                # 如果发生异常，打印异常信息
+                # Print exception info if an error occurs
                 # bot.chat(f"{bot.username} Error in task: {func.__name__} - {str(e)}")
                 # raise e
                 global bot
@@ -90,7 +90,7 @@ def log_activity(bot):
                 bot.loadPlugin(collectBlock.plugin)
                 bot.loadPlugin(pvp)
                 bot.loadPlugin(minecraftHawkEye)
-                # 这里改成重新启动bot
+                # Change this to restart the bot
                 return jsonify({'message': f"Exception in task {func.__name__}: {str(e)}", 'status': False, "new_events": []})
 
         return wrapper
@@ -135,7 +135,7 @@ def render_structure():
     return jsonify({'message': "render success", 'status': True, "new_events": events})
 
 # @app.route('/post_msg', methods=['POST'])
-# @log_activity(bot)  # 获取前端发来的消息
+# @log_activity(bot)  # Get message from frontend
 # def get_msg():
 #     """get_msg: get the message from the message queue."""
 #     events = info_bot.get_action_description_new()
@@ -143,7 +143,7 @@ def render_structure():
 
 
 @app.route('/post_time', methods=['POST'])
-@log_activity(bot)  # 获取前端的时间
+@log_activity(bot)  # Get time from frontend
 def get_time():
     return jsonify({'time': str(bot.time.timeOfDay), 'status': True, "new_events": []})
 
@@ -222,13 +222,13 @@ def erect():
     data = request.get_json()
     top_x, top_y, top_z = data.get('top_x'), data.get('top_y'), data.get('top_z')
     
-    # 计算top 和 bot 的距离
+    # Calculate distance between top and bot
     distance = ((top_x - bot.entity.position.x) ** 2 + (top_y - bot.entity.position.y) ** 2 + (top_z - bot.entity.position.z) ** 2) ** .5
     if distance > 32:
         events = info_bot.get_action_description_new()
         return jsonify({'message': "the distance is too far", 'status': False, "new_events": events})
 
-    # bottom 是遍历找到的最低的方块
+    # bottom is the lowest block found during traversal
     if bot.blockAt(Vec3(top_x, top_y, top_z)).name != "air":
         events = info_bot.get_action_description_new()
         return jsonify({'message': "the top is not air", 'status': False, "new_events": events})
@@ -239,7 +239,7 @@ def erect():
             bottom_y = y
             break
 
-    # 计算需要的方块数量
+    # Calculate the number of blocks needed
     need_dirt = (top_y - bottom_y) 
     need_ladder = (top_y - bottom_y)
     if countInventoryItems(bot, "dirt")[1] < need_dirt and countInventoryItems(bot, "ladder")[1] < need_ladder:
@@ -251,7 +251,7 @@ def erect():
     if countInventoryItems(bot, "ladder")[1] < need_ladder:
         events = info_bot.get_action_description_new()
         return jsonify({'message': f"Don't have enough ladder in inventory, have {countInventoryItems(bot, 'ladder')[1]}, need {need_ladder}", 'status': False, "new_events": events})
-    # 从低到高，放置方块
+    # Place blocks from low to high
     x = top_x
     z = top_z
     move_to(pathfinder, bot, Vec3, 3, Vec3(x, bottom_y, z+5))
@@ -280,18 +280,18 @@ def dismantle():
     """dismantle: dismantle the structure."""
     data = request.get_json()
     top_x, top_y, top_z = data.get('top_x'), data.get('top_y'), data.get('top_z')
-    # 计算top 和 bot 的距离
+    # Calculate distance between top and bot
     distance = ((top_x - bot.entity.position.x) ** 2 + (top_y - bot.entity.position.y) ** 2 + (top_z - bot.entity.position.z) ** 2) ** .5
     if distance > 32:
         events = info_bot.get_action_description_new()
         return jsonify({'message': "the distance is too far", 'status': False, "new_events": events})
-    # bottom 是遍历找到的最低的方块
+    # bottom is the lowest block found during traversal
     if bot.blockAt(Vec3(top_x, top_y, top_z)).name == "air" and bot.blockAt(Vec3(top_x, top_y-1, top_z)).name == "air":
         events = info_bot.get_action_description_new()
         return jsonify({'message': "the top is air", 'status': False, "new_events": events})
     bottom_y = top_y
     bottom_y = -59
-    # 从高到低，放置方块
+    # Place blocks from high to low
     x = top_x
     z = top_z
     for y in range(top_y, bottom_y, -1):
@@ -319,12 +319,12 @@ def find():
         
     origin_name = name
     center_pos = bot.entity.position
-    # 随机移动一下 防止卡住
+    # Move randomly to prevent getting stuck
     random_x = randint(-4, 4)
     random_z = randint(-4, 4)
     move_to(pathfinder, bot, Vec3, 3, Vec3(center_pos.x+random_x, center_pos.y, center_pos.z+random_z))
 
-    distance = min(32, max(16, distance)) # 限制在16-32之间
+    distance = min(32, max(16, distance)) # Limit between 16-32
     envs_info = get_envs_info(bot, distance)
     if name == "":
         # bot.chat(f"can not find anything match '{data.get('name')}'")
@@ -339,7 +339,7 @@ def find():
         if os.path.exists(".cache/env.cache"):
             with open(".cache/env.cache", "r", encoding='utf-8') as f:
                 cache = json.load(f)
-            # 找到距离小于5的cache
+            # Find caches with distance less than 5
             for c in cache:
                 pos = c["center"]
                 if (pos[0] - bot.entity.position.x) ** 2 + (pos[1] - bot.entity.position.y) ** 2 + (
@@ -349,7 +349,7 @@ def find():
         return jsonify({'message': f"can not find anything match '{name}', environment: "+ msg, 'status': False, 'data':[], "new_events": events})
     
     observation = ""
-    # 耗时操作
+    # Time-consuming operation
     name, pos_list_raw = find_everything_(bot, Vec3, envs_info, mcData, name, distance, count, visible_only=VISIBLE_ONLY)
   
     # remove duplicate
@@ -664,7 +664,7 @@ def toss_():
 
 
 @app.route('/post_environment', methods=['POST'])
-@log_activity(bot)  # 获取环境信息
+@log_activity(bot)  # Get environment information
 def environment():
     """environment:  to get the environment info."""
     msg = get_envs_info2str(bot, RENDER_DISTANCE=32, same_entity_num=3)
@@ -685,7 +685,7 @@ def environment():
     if os.path.exists(".cache/env.cache"):
         with open(".cache/env.cache", "r", encoding='utf-8') as f:
             cache = json.load(f)
-        # 找到距离小于5的cache
+        # Find caches with distance less than 5
         for c in cache:
             pos = c["center"]
             if (pos[0] - bot.entity.position.x) ** 2 + (pos[1] - bot.entity.position.y) ** 2 + (
@@ -697,7 +697,7 @@ def environment():
     return jsonify({'message': msg, 'status': done, "new_events": events})
 
 @app.route('/post_environment_dict', methods=['POST'])
-@log_activity(bot)  # 获取环境信息
+@log_activity(bot)  # Get environment information
 def environment_info():
     """environment:  to get the environment info."""
     msg = get_envs_info_dict(bot, RENDER_DISTANCE=10, same_entity_num=3)
@@ -717,7 +717,7 @@ def environment_info():
     # if os.path.exists(".cache/env.cache"):
     #     with open(".cache/env.cache", "r") as f:
     #         cache = json.load(f)
-    #     # 找到距离小于5的cache
+    #     # Find caches with distance less than 5
     #     for c in cache:
     #         pos = c["center"]
     #         if (pos[0] - bot.entity.position.x) ** 2 + (pos[1] - bot.entity.position.y) ** 2 + (
@@ -951,7 +951,7 @@ def activate():
         item_name = item_past["name"]
         
         # face facing powered open
-        # 切换powered状态
+        # Switch powered status
         face, facing, open_ = None, None, None
         current_powered = item_past._properties["powered"]
         property_string = f"powered=true" if not current_powered else f"powered=false"
@@ -968,10 +968,10 @@ def activate():
             else:
                 property_string += f",open=false"
 
-        # 构建完整命令
+        # Construct the full command
         command = f"setblock {x} {y} {z} {item_name}[{property_string}]"
         
-        # 执行命令
+        # Execute command
         # bot.chat(f"{command}")
         # bot.chat(f"/{command}")
     tag, flag, data = asyncio.run(interact_nearest(pathfinder, bot,  Vec3, envs_info, mcData, 3, item_name, target_position=Vec3(x, y, z)))
@@ -1104,10 +1104,10 @@ def wait_for():
     data = request.get_json()
     entity_name, seconds = data.get('entity_name'), data.get('seconds')
 
-    # 首先提醒目标用户，然后等待回复
+    # Remind the target user first, then wait for a response
     chat_long(bot, entity_name, f"I am waiting for feedback, please reply in {seconds} seconds.", "talk")
 
-    # 等待回复
+    # Wait for response
     start_time = time.time()
     while time.time() - start_time < seconds:
         tag, message = info_bot.check_new_reply_from(entity_name)
@@ -1353,17 +1353,17 @@ def handleViewer(*args):
     @On(bot, 'chat')
     def handle(this, username, message, *args):
         try:
-            # 正则表达式匹配
-            # 例如: [Alice] --MSG-- [Bob] Hello
+            # Regex matching
+            # Example: [Alice] --MSG-- [Bob] Hello
             pattern = r"\[(.*?)\]\s*--(MSG|CHAT)--\s*\[(.*?)\]\s*(.*)"
             match = re.match(pattern, message)
             if match:
-                host_name = match.group(1)  # 第一个方括号内的内容
-                target_name = match.group(3)  # 第二个方括号内的内容
-                msg = match.group(4)  # 剩余的消息内容
+                host_name = match.group(1)  # Content within the first brackets
+                target_name = match.group(3)  # Content within the second brackets
+                msg = match.group(4)  # Remaining message content
                 # bot.chat(f"[DEBUG] Received a message from {host_name}: {msg}")
                 
-                # # 根据匹配的结果做处理
+                # # Process based on the match results
                 # print(f"Host: {host_name}, Target: {target_name}, Message: {msg}")
                 if target_name == bot.entity.username:
                     # bot.chat(f"[DEBUG] Received a message from {host_name}: {msg}")
@@ -1378,7 +1378,7 @@ def handleViewer(*args):
     def handle(this, username, message, *args):
         if message.startswith("TEST"):
             bot.chat("TEST received")
-            # 解析后续字段并分别反馈不同信息
+            # Parse subsequent fields and provide different feedback for each
             # TEST: type: move, x: 1, y: 2, z: 3
             try:
                 if "type" in message:
@@ -1432,7 +1432,7 @@ def handleViewer(*args):
     def playerCollect(this, collector, collected):
         if collector.type == "player":
             for raw in collected.metadata:
-                # 如果raw有itemId, 说明是物品
+                # If raw contains itemId, it indicates an item
                 try:
                     if type(raw) != int and "itemId" in raw:
                         item = Item.fromNotch(raw)
@@ -1640,7 +1640,7 @@ class Bot():
     def get_blocks_nearby(self):
         # convert to list
         list_blocks = sorted(self.block_map.items(), key=lambda x: x[0])
-        # 只要 value
+        # Only need value
         return [block[1] for block in list_blocks]
 
     def follow(self):
@@ -1649,7 +1649,7 @@ class Bot():
 
     def update_emojimurmur(self, emoji=[], murmur="Emmm..."):
         text_with_emoji = f"{bot.entity.username} {emoji} {murmur}"
-        # /data merge entity @e[type=armor_stand,tag=yubo,limit=1] {CustomName:'{"text":"新的名字"}'}
+        # /data merge entity @e[type=armor_stand,tag=yubo,limit=1] {CustomName:'{"text":"new name"}'}
         # bot.chat(f'/data merge entity @e[type=armor_stand,tag={bot.entity.username},limit=1] {{"CustomName":"{{\\"text\\":\\"{text_with_emoji}\\"}}","CustomNameVisible":1,"Invisible":1,"Marker":1,"NoGravity":1,"Tags":["{bot.entity.username}"]}}')
 
     def is_sleeping(self):
@@ -1710,7 +1710,7 @@ class Bot():
         return item_str
 
     def get_5x3x5_map(self):
-        # 获取3x3的地图, 第一个是方块的名字, 第二个是方块的相对高度
+        # Get a 3x3 map; the first is the block name, the second is the relative height of the block
         map_5x3x5 = []
         for i in range(-2, 3):
             for k in range(-2, 3):
@@ -1743,7 +1743,7 @@ class Bot():
         self.existing_time += 1
 
 info_bot = Bot()
-# app.run(port=local_port, debug=False)  # 等待bot加载完成 (bot加载完成后会发送spawn事件)
+# app.run(port=local_port, debug=False)  # Wait for bot to finish loading (a spawn event is sent after the bot finishes loading)
 # utility waitress-serve
 from waitress import serve
 serve(app, port=local_port)

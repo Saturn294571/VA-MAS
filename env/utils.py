@@ -44,7 +44,7 @@ def init_logger(name: str, level=logging.ERROR, dump=False, silent=False):
     logger.propagate = False
     logger.setLevel(level)
 
-    # 定义handler的输出格式
+    # Define the output format of the handler
     log_formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
     color_formatter = colorlog.ColoredFormatter(
         '%(log_color)s%(asctime)s - %(name)s - %(levelname)s - %(message)s',
@@ -58,7 +58,7 @@ def init_logger(name: str, level=logging.ERROR, dump=False, silent=False):
     )
 
     console_handler = logging.StreamHandler(
-        # 强制使用UTF-8编码，解决Windows下GBK编码问题
+        # Force UTF-8 encoding to resolve GBK encoding issues on Windows
         stream=open(sys.stdout.fileno(), 'w', encoding='utf-8', closefd=False)
     )
     console_handler.setLevel(level)
@@ -71,7 +71,7 @@ def init_logger(name: str, level=logging.ERROR, dump=False, silent=False):
         file_name = f"logs/{name}.log"
         file_handler = logging.FileHandler(
             file_name, 
-            encoding='utf-8'  # 明确指定UTF-8编码
+            encoding='utf-8'  # Explicitly specify UTF-8 encoding
         )
         file_handler.setLevel(level)
         file_handler.setFormatter(log_formatter)
@@ -81,7 +81,7 @@ def init_logger(name: str, level=logging.ERROR, dump=False, silent=False):
 
 
 def building_material_load(path,bot,dig_needed=False,inventory_load=False,agent_names=[]):
-    # 返回需要挖掘的方块数量
+    # Return the number of blocks to mine
     import json
     with open(path, 'r') as f:
         map = json.load(f)
@@ -166,7 +166,7 @@ def material_factory_load(path,bot,envs_info,mcData,center_pos=[0,-60,0],rate = 
             continue
         material_pairs.append(block)
     
-    # 计算一个金子塔形状的H
+    # Calculate a pyramid-shaped H
     h_ = 0
     volume = 0
     for i in range(1,100,2):
@@ -234,7 +234,7 @@ def split_structure(building):
 
     minecraftData = require('minecraft-data')
     mcData = minecraftData('1.19.2')
-    # 创建一个MinMaxScaler对象
+    # Create a MinMaxScaler object
     scaler = MinMaxScaler()
 
     building = building["blocks"]
@@ -276,14 +276,14 @@ def split_structure(building):
     for block in building:
         data.append([block["faceId"]] + block["position"] + [block["id"]] + block["embeddings"])
     data = np.array(data)
-    # 使用MinMaxScaler的fit_transform方法对数据进行归一化
+    # Normalize data using MinMaxScaler's fit_transform method
     data_normalized = scaler.fit_transform(data)
 
     hdb = HDBSCAN(min_cluster_size=2, min_samples=2, cluster_selection_epsilon=0.3, max_cluster_size=6)
     hdb.fit(data_normalized)
     labels = hdb.labels_
     data_clustered = []
-    for j in range(len(labels)): # 噪声项单独处理
+    for j in range(len(labels)): # Handle noise terms separately
         if labels[j] == -1:
             data_clustered.append([[data_normalized[j],building[j]]])
 
@@ -302,7 +302,7 @@ def split_structure(building):
         for i in range(len(data_clustered)):
             if len(data_clustered[i]) > 6 and solve_id < i:
                 solve_id = i
-                # 对较大的簇进行聚类
+                # Cluster larger clusters
                 hdb = HDBSCAN(min_cluster_size=3, min_samples=3, cluster_selection_epsilon=0.2, max_cluster_size=6)
                 data = [x[0] for x in data_clustered[i]]
                 hdb.fit(data)
@@ -325,7 +325,7 @@ def split_structure(building):
     return reorder_cluster(clusters=save_data)
 
 def reorder_cluster(clusters):
-    # 首先计算所有方块的坐标均值来确定中心点
+    # First calculate the mean coordinates of all squares to determine the center point
     total_x, total_y, total_z, total_count = 0, 0, 0, 0
     for cluster in clusters:
         for item in cluster:
@@ -338,19 +338,19 @@ def reorder_cluster(clusters):
     center_z = total_z / total_count
 
     clusters = [cluster for cluster in clusters if len(cluster) > 0]
-    # 对每个聚簇内部根据 y 坐标由低到高进行排序
+    # Sort within each cluster by y-coordinate from low to high
     for i, cluster in enumerate(clusters):
         clusters[i] = sorted(cluster, key=lambda item: item["position"][1])
 
     clusters = [cluster for cluster in clusters if len(cluster) > 0]
-    # 然后对整个聚簇列表进行排序
+    # Then sort the entire list of clusters
     clusters.sort(key=lambda cluster: (
-        min(item["position"][1] for item in cluster),  # 根据 y 坐标最小值排序
-        # 如果 y 坐标相同，则根据到中心点的距离排序
+        min(item["position"][1] for item in cluster),  # Sort by minimum y-coordinate
+        # If y-coordinates are the same, sort by distance to the center point
         min((item["position"][0] - center_x) ** 2 + (item["position"][1] - center_y) ** 2 + (item["position"][2] - center_z) ** 2 for item in cluster)
     ))
     
-    # 构建排序后的聚簇数据
+    # Construct sorted cluster data
     save_data = []
     for cluster in clusters:
         sorted_data = [{"position": item["position"], "name": item["name"], "facing": item["facing"]} for item in cluster]
@@ -431,21 +431,21 @@ def describe_map(building):
 
 def parse_token_text(text):
     text = str(text)
-    # 使用正则表达式匹配需要的信息
+    # Use regular expressions to match required information
     tokens_used = re.findall(r'Tokens Used: (\d+)', text)
     prompt_tokens = re.findall(r'Prompt Tokens: (\d+)', text)
     completion_tokens = re.findall(r'Completion Tokens: (\d+)', text)
     successful_requests = re.findall(r'Successful Requests: (\d+)', text)
     total_cost = re.findall(r'Total Cost \(USD\): (\$[\d\.]+)', text)
 
-    # 将提取的信息转换为整数或浮点数
+    # Convert extracted information to integer or float
     tokens_used = [int(i) for i in tokens_used]
     prompt_tokens = [int(i) for i in prompt_tokens]
     completion_tokens = [int(i) for i in completion_tokens]
     successful_requests = [int(i) for i in successful_requests]
-    total_cost = [float(i[1:]) for i in total_cost]  # 去掉美元符号
+    total_cost = [float(i[1:]) for i in total_cost]  # Remove dollar sign
 
-    # 返回一个字典，包含所有提取的信息
+    # Returns a dictionary containing all extracted information
     return {
         'tokens_used': tokens_used[0],
         'prompt_tokens': prompt_tokens[0],

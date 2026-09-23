@@ -70,17 +70,17 @@ class VillagerBench:
         with open(".cache/state.json", "w") as f:
             json.dump({"state": "idle"}, f)
         
-        # 删除之前的log
+        # Delete previous log
         if os.path.exists("logs"):
             for file in os.listdir("logs"):
                 file_path = os.path.join("logs", file)
-                for _ in range(3):  # 尝试3次
+                for _ in range(3):  # Try 3 times
                     try:
                         os.remove(file_path)
-                        break  # 成功删除，跳出循环
+                        break  # Successfully deleted, break loop
                     except Exception as e:
                         print(f"删除失败：{e}")
-                        time.sleep(1)  # 等待1秒再次尝试
+                        time.sleep(1)  # Wait 1 second and retry
                 else:
                     print(f"无法删除文件 {file_path}，可能仍然被锁定。")
           
@@ -214,10 +214,10 @@ class VillagerBench:
                 tool_list.append(tool.name)
             agent_dict[agent.name] = tool_list
         
-        # 分成共有和私有两部分，共有是所有agent tools的交集，私有是每个agent的独有tools
+        # Split into common and private parts: common is the intersection of all agent tools, private are tools unique to each agent
         public_tools = []
         private_tools = {}
-        # 交集
+        # Intersection
 
         for agent in self.agent_pool:
             if len(public_tools) == 0:
@@ -252,7 +252,7 @@ class VillagerBench:
             return {"message": "some agent not found", "status": False}
         return {"message": "all agents are online", "status": True}
 
-    def agent_status(self, agent_name: str):  # 返回一个dict
+    def agent_status(self, agent_name: str):  # Return a dict
         for agent in self.agent_pool:
             if agent.name == agent_name:
                return Agent.get_environment_info_dict(agent_name)

@@ -14,25 +14,25 @@ from rl_env.minecraft_rl_env import MinecraftRLEnv
 import re
 
 def convert_sign_command(command):
-    # 匹配两种可能的格式
+    # Match two possible formats
     pattern = r'/setblock\s+(-?\d+)\s+(-?\d+)\s+(-?\d+)\s+(\w+)\[facing=(\w+)\]{Text1:[\'\"]?(.*?)[\'\"]?,\s*Text2:[\'\"]?(.*?)[\'\"]?}'
     
     match = re.match(pattern, command)
     if match:
         x, y, z, block, facing, text1, text2 = match.groups()
         
-        # 移除可能存在的引号并清理空格
+        # Remove potential quotes and trim whitespace
         text1 = text1.strip('\'"').strip()
         text2 = text2.strip('\'"').strip()
         
-        # 构造新的命令格式
+        # Construct the new command format
         new_command = f'/setblock {x} {y} {z} {block}[facing={facing}]{{Text1:"{{\"text\":\"{text1}\"}}",Text2:"{{\"text\":\"{text2}\"}}"}}'
         return new_command
     else:
         return "Sign Command format not recognized"
 
 def save_task_to_json(task_description, task_milestones, agents, agent_tool_dict, op_command, op_filepath):
-    # 创建完整的任务数据结构
+    # Create the complete task data structure
     task_data = {
         "task_description": task_description,
         "task_milestones": task_milestones,
@@ -43,19 +43,19 @@ def save_task_to_json(task_description, task_milestones, agents, agent_tool_dict
         "timestamp": datetime.now().strftime("%Y%m%d%H%M%S")
     }
     
-    # 创建保存路径
+    # Create the save path
     task_filename = f"{task_data['timestamp']}_task.json"
     task_filepath = os.path.join("rl_env/tasks", task_filename)
     os.makedirs(os.path.dirname(task_filepath), exist_ok=True)
     
-    # 保存任务数据
+    # Save task data
     with open(task_filepath, 'w') as task_file:
         json.dump(task_data, task_file, indent=4)
     
     return task_filepath
 
 def load_random_task():
-    # 获取任务文件夹中的所有任务文件
+    # Get all task files in the task folder
     task_dir = "rl_env/tasks"
     if not os.path.exists(task_dir):
         return None
@@ -64,11 +64,11 @@ def load_random_task():
     if not task_files:
         return None
     
-    # 随机选择一个任务文件
+    # Randomly select a task file
     selected_file = random.choice(task_files)
     task_filepath = os.path.join(task_dir, selected_file)
     
-    # 加载任务数据
+    # Load task data
     with open(task_filepath, 'r') as task_file:
         task_data = json.load(task_file)
     
@@ -111,7 +111,7 @@ def auto_gen_one_task(use_existing_task=False):
     )
     
     if use_existing_task:
-        # 尝试加载现有任务
+        # Try to load existing tasks
         task_data = load_random_task()
         if task_data:
             task_description = task_data["task_description"]
@@ -385,6 +385,6 @@ def auto_gen_one_task(use_existing_task=False):
     rl_model.save_ckpt(actor_path="rl_env/ckpt/actor.pth", critic_path="rl_env/ckpt/critic.pth")
 
 if __name__ == "__main__":
-    # 随机决定是否使用现有任务
+    # Randomly decide whether to use an existing task
     use_existing = random.choice([True, True, True, False])
     auto_gen_one_task(use_existing_task=use_existing)

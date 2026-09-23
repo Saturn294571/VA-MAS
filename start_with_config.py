@@ -29,7 +29,7 @@ def run(api_model: str, api_base: str, task_type: str, task_idx: int, agent_num:
     Agent.model = api_model
     Agent.api_key_list = api_key_list
 
-    # 设置env
+    # Set env
     if task_type == "construction":
         env = VillagerBench(env_type=env_type.construction, task_id=task_idx, dig_needed=dig_needed, host=host, port=port, max_task_num=max_task_num, task_name=task_name, _virtual_debug=False)
     elif task_type == "farming":
@@ -43,7 +43,7 @@ def run(api_model: str, api_base: str, task_type: str, task_idx: int, agent_num:
     else:
         raise NotImplementedError
 
-    # 设置agent_tool
+    # Set agent_tool
     if task_type == "construction":
         agent_tool = [Agent.placeBlock, Agent.fetchContainerContents, Agent.MineBlock, Agent.scanNearbyEntities, Agent.equipItem,
                       Agent.navigateTo, Agent.withdrawItem, Agent.dismantleDirtLadder, Agent.erectDirtLadder, Agent.handoverBlock]
@@ -67,7 +67,7 @@ def run(api_model: str, api_base: str, task_type: str, task_idx: int, agent_num:
     print(f"VillagerBench Time taken: {time.time() - start_time}")
     start_time = time.time()
 
-    # 设置agent_pool
+    # Set agent_pool
     name_list = ["Alice", "Bob", "Cindy", "David", "Eve", "Frank", "Grace", "Helen", "Ivy", "Jack", "Kevin", "Lily",
                  "Mary", "Nancy", "Olivia", "Peter", "Queen", "Rose", "Sam", "Tom", "Umbrella", "Vivian", "Wendy",
                  "Xavier", "Yolanda", "Zoe"]
@@ -91,21 +91,21 @@ def run(api_model: str, api_base: str, task_type: str, task_idx: int, agent_num:
         else:
             env.agent_register(agent_tool=agent_tool, agent_number=agent_num, name_list=name_list[:agent_num])
 
-    with env.run(fast_api=False):  # 新增加了一个参数，用于控制是否使用fastapi server
-        # 启动DM
+    with env.run(fast_api=False):  # Added a new parameter to control whether to use the fastapi server
+        # Start DM
         dm = DataManager(silent=False)
         dm.update_database_init(env.get_init_state())
 
         print(f"DataManager Time taken: {time.time() - start_time}")
         start_time = time.time()
 
-        # 启动TM
+        # Start TM
         tm = TaskManager(silent=False, cache_enabled=False)
 
         print(f"TaskManager Time taken: {time.time() - start_time}")
         start_time = time.time()
 
-        # 设置llm
+        # Set LLM
         llm_config = {
             "api_key": api_key_list[0],
             "api_base": LLM_API_BASE,
@@ -130,7 +130,7 @@ def run(api_model: str, api_base: str, task_type: str, task_idx: int, agent_num:
                                 all_tools=agent_tool)
 
 
-        if task_type == "farming": #补充材料来源prompt
+        if task_type == "farming": # Supplement prompt for supplementary materials
             with open("data/farm_setting.json", "r") as f:
                 task_settings = json.load(f)
             task_data = task_settings[task_idx]
@@ -171,7 +171,7 @@ if __name__ == "__main__":
         with open(".cache/meta_setting.json", "w") as f:
             json.dump(config, f, indent=4)
         if config["task_type"] != "meta":
-            config.pop("evaluation_arg", None) # 避免evaluation_arg的相关信息影响执行
+            config.pop("evaluation_arg", None) # Avoid information from evaluation_arg affecting execution
         with open(".cache/load_status.cache", "w") as f:
             json.dump({"status": "start"}, f, indent=4)
         if os.path.exists(".cache/heart_beat.cache"):

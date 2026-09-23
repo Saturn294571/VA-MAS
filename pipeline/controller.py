@@ -192,7 +192,7 @@ class GlobalController:
             
             self.collab_list.append(tmp_collab)
             task_instance.status = Task.running
-    # 生产者
+    # Producer
     def assign_tasks_to_agents(self, result: [dict]):
         # self.logger.info("Start to assign tasks!")
         validated_assignments = self.validate_assignments(result)
@@ -379,7 +379,7 @@ class GlobalController:
 
                 self.collab_list.remove(collab)
 
-    # 消费者
+    # Consumer
     def process_completed_tasks(self):
         while True:
             if self.shutdown or time.time() - self.start_time > self.max_execution_time or self.stop_after_fail_times <= 0 or self.stop_after_success_times <= 0:
@@ -428,13 +428,13 @@ class GlobalController:
                             self.data_manager = None
                             self.executor.shutdown(wait=False)
                             raise Exception("ConnectionRefusedError")
-                        except Exception as e: # 没有对于 collab 的处理 这个代码不正确
+                        except Exception as e: # No handling for collab; this code is incorrect
                             traceback.print_exception(type(e), e, e.__traceback__)
                             self.logger.error(f"Task {task.description} failed with exception: {e}\n{e.__traceback__}")
                             self.logger.exception(e)
                             self.update_task_status(task, Task.failure, f"Task {task.description} failed with exception: {e}\n{e.__traceback__}")                            
                     
-                    elif time.time() - start_time > self.max_task_time: # 没有对于 collab 的处理 这个代码不正确
+                    elif time.time() - start_time > self.max_task_time: # No handling for collab; this code is incorrect
                         self.logger.warning(f"Task {task.description} timeout!")
                         self.update_task_status(task, Task.failure, f"Task {task.description} timeout!")
                     

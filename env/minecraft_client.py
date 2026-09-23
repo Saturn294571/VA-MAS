@@ -60,7 +60,7 @@ def timeit(func):
         start_time = time.time()
 
         ### SEND EMOTION AND MURMUR TO THE SERVER
-        agent_name = kwargs["player_name"] # 第一个参数是 agent_name
+        agent_name = kwargs["player_name"] # The first argument is agent_name
         emotion = kwargs.get("emotion", [])
         murmur = kwargs.get("murmur", "")
 
@@ -84,7 +84,7 @@ def timeit(func):
         result = func(*args, **kwargs_in)
         end_time = time.time()
         
-        # 确保data目录存在
+        # Ensure data directory exists
         if not os.path.exists("data"):
             os.makedirs("data")
         max_try = 3
@@ -97,22 +97,22 @@ def timeit(func):
                         action_log = json.load(f)
                 else:
                     action_log = {}
-                agent_name = kwargs["player_name"] # 第一个参数是 agent_name
+                agent_name = kwargs["player_name"] # The first argument is agent_name
                 if agent_name not in action_log:
                     action_log[agent_name] = []
                 
-                # 注意：args, kwargs 和 result 需要是可序列化的
+                # Note: args, kwargs and result must be serializable
                 action_log[agent_name].append({
                     "action": func.__name__,
                     # "time": datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
                     "start_time": time.strftime("%Y-%m-%d %H:%M:%S", time.localtime(start_time)),
                     "end_time": time.strftime("%Y-%m-%d %H:%M:%S", time.localtime(end_time)),
                     "duration": end_time - start_time,
-                    "kwargs": kwargs,  # kwargs 可能包含不可序列化的对象
-                    "result": result,  # result 可能包含不可序列化的对象
+                    "kwargs": kwargs,  # kwargs may contain non-serializable objects
+                    "result": result,  # result may contain non-serializable objects
                 })
                 
-                # 写入文件
+                # Write to file
                 with open(action_log_path, "w", encoding='utf-8') as f:
                     json.dump(action_log, f, indent=4)
                 break
@@ -145,24 +145,24 @@ class LLMHandler(BaseCallbackHandler):
 
         
     def on_llm_end(self, llm_result: LLMResult, **kwargs):
-        # 强制使用UTF-8编码打印
+        # Force print using UTF-8 encoding
         print("x" * 30 + "llm_end called" + "x" * 30)
         
-        # 安全处理llm_output（可能包含Unicode字符）
+        # Safely handle llm_output (may contain Unicode characters)
         if llm_result.llm_output is not None:
             try:
-                # 如果是字典形式（如OpenAI返回的token_usage等）
+                # If it is in dictionary format (e.g., token_usage returned by OpenAI, etc.)
                 llm_result.llm_output = filter_emoji(llm_result.llm_output)
                 if isinstance(llm_result.llm_output, dict):
                     import json
-                    # 将字典转为JSON字符串确保UTF-8编码
+                    # Convert dictionary to JSON string to ensure UTF-8 encoding
                     output_str = json.dumps(llm_result.llm_output, ensure_ascii=False)
                     self.llm_out.append(output_str)
                 else:
-                    # 其他情况直接存储，确保是Unicode字符串
+                    # Store other cases directly, ensuring it is a Unicode string
                     self.llm_out.append(str(llm_result.llm_output))
             except UnicodeEncodeError:
-                # 如果仍有编码问题，强制UTF-8编码
+                # If encoding issues persist, force UTF-8 encoding
                 self.llm_out.append(llm_result.llm_output.encode('utf-8', errors='replace').decode('utf-8'))
         
 
@@ -828,7 +828,7 @@ class Agent():
     def talkTo(player_name: str, entity_name: str, message: str, emotion: list = ["😊"]):
         """Talk to the Entity with Emojis, entity_name is the name of other player.
         """
-        # Agent._lookAt(player_name, entity_name) # 容易出现问题
+        # Agent._lookAt(player_name, entity_name) # Prone to errors
 
         if entity_name == "nobody" or entity_name == "anyone" or entity_name == "everyone" or entity_name == "all" \
             or entity_name == "somebody" or entity_name == "some" or entity_name == "any" or entity_name == ""\
@@ -999,7 +999,7 @@ class Agent():
                 agent=AgentType.STRUCTURED_CHAT_ZERO_SHOT_REACT_DESCRIPTION,
                 return_intermediate_steps=True,
                 max_execution_time=120,  # seconds
-                max_iterations=1,  # 决定了最大的迭代次数
+                max_iterations=1,  # Determines the maximum number of iterations
                 callback_manager=BaseCallbackManager(handlers=[llmhandler]),
             )
             agent.handle_parsing_errors = True
@@ -1079,7 +1079,7 @@ class Agent():
             self.llm = ChatOpenAI(model=self.model, temperature=0,  max_tokens=256, openai_api_key=random.choice(Agent.api_key_list), base_url=Agent.base_url)
         else:
             raise NotImplementedError(f"Model {self.model} not implemented.")
-        # 这个地方是定义的agent的类型，初始化位置的agent没有被使用
+        # This part defines the agent type; the agent at the initialization position is not used
         while max_try_turn > 0:
             random.shuffle(self.tools)
             llmhandler = LLMHandler()
@@ -1090,7 +1090,7 @@ class Agent():
                 agent=AgentType.STRUCTURED_CHAT_ZERO_SHOT_REACT_DESCRIPTION,
                 return_intermediate_steps=True,
                 max_execution_time=120,  # seconds
-                max_iterations=max_iterations,  # 决定了最大的迭代次数
+                max_iterations=max_iterations,  # Determines the maximum number of iterations
                 callback_manager=BaseCallbackManager(handlers=[llmhandler]),
             )
             agent.handle_parsing_errors = True

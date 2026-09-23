@@ -88,14 +88,14 @@ def handleViewer(*args):
             if b.get("type") == "cube":
                 x_0, y_0, z_0 = b["from"][0] + x_bias, b["from"][1] + y_bias, b["from"][2] + z_bias
                 x_1, y_1, z_1 = b["to"][0] + x_bias, b["to"][1] + y_bias, b["to"][2] + z_bias
-                # fill: 用于填充一个区域。
-                # 例如：/fill 1 2 3 4 5 6 stone
+                # fill: Used to fill an area.
+                # Example: /fill 1 2 3 4 5 6 stone
                 bot.chat(f'/fill {x_0} {y_0} {z_0} {x_1} {y_1} {z_1} {b["name"]}')
                 time.sleep(.1)
             
             elif b.get("type") == "tree":
-                # tree: 用于生成树木。
-                # 例如：/tree oak 1 2 3
+                # tree: Used to generate trees.
+                # Example: /tree oak 1 2 3
                 x, y, z = b["position"][0] + x_bias, b["position"][1] + y_bias, b["position"][2] + z_bias
                 bot.chat(f'/place feature {b["name"]} {x} {y} {z}')
                 time.sleep(.1)
@@ -140,8 +140,8 @@ def handleViewer(*args):
                         item_count = item["count"]
                         if item_name == "milk_bucket" or item_name == "bucket":
                             for j in range(item_count):
-                                # item	用于修改方块或实体的物品栏。
-                                # 替换方块（箱子、熔炉等）或实体（玩家或生物）物品栏内的物品。
+                                # item	Used to modify the inventory of a block or entity.
+                                # Replace items within the inventory of blocks (chests, furnaces, etc.) or entities (players or mobs).
                                 bot.chat(f'/item replace block {x} {y} {z} container.{next_slot} with {item_name}')
                                 next_slot += 1
                         else:
@@ -150,14 +150,14 @@ def handleViewer(*args):
 
             else:
                 bot.chat("/tellraw @a {\"text\":\"INVALID BLOCK TYPE!\", \"color\":\"red\"}")
-            # 生成环境中的实体
+            # Spawn entities in the environment
         for e in entities:
             time.sleep(.1)
             x, y, z = e["position"][0] + x_bias, e["position"][1] + y_bias, e["position"][2] + z_bias
-            # summon: 生成一个实体。
+            # summon: Spawns an entity.
             bot.chat(f'/summon {e["name"]} {x} {y} {z}')
         
-        # strategy = "random" # 决定如何在agent之间分初始资源
+        # strategy = "random" # Determines how initial resources are distributed among agents
         strategy = "slot_based"
 
         for i in init_items:
@@ -167,12 +167,12 @@ def handleViewer(*args):
                 partitions = []
                 remaining = cnt
                 for _ in range(agent_num - 1):
-                    # 随机生成一个数，范围是 [0, remaining]
+                    # Randomly generate a number in the range [0, remaining]
                     num = random.randint(0, remaining)
                     partitions.append(num)
                     remaining -= num
                 
-                partitions.append(remaining)  # 最后一个数直接取剩余值
+                partitions.append(remaining)  # The last number directly takes the remaining value
                 random.shuffle(partitions)
                 for agent_name, num in zip(agent_names, partitions):
                     if num > 0:
@@ -184,7 +184,7 @@ def handleViewer(*args):
                 bot.chat(f"/give {agent_name} {i['name']} {cnt}")
                 time.sleep(.2)
 
-    # render 函数是这段代码中用于动态生成 Minecraft 建筑结构的核心函数，它负责根据任务配置（task_data）在游戏世界中渲染各种建筑、方块和实体。
+    # The render function is the core function in this code for dynamically generating Minecraft structures; it is responsible for rendering various buildings, blocks, and entities in the game world based on task configuration (task_data).
     def reset():
         bot.chat("/gamemode spectator")
         time.sleep(.2)

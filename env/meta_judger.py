@@ -1,6 +1,6 @@
-# 这个judger需要根据json文件加载一个地形，将Agent初始化到指定位置
-# 根据Agent的状态，环境的更新，结合json文件，给出累计得分
-# optional 可能需要根据Agent的状态，judger更新环境
+# This judger needs to load a terrain from a json file and initialize the Agent at a specified position
+# Calculate cumulative score based on Agent state, environment updates, and the json file
+# optional: The judger may need to update the environment based on the Agent's state
 import shutil
 import threading
 from utils import *
@@ -103,7 +103,7 @@ efficiency = 0
 balance = 0
 
 
-def aligned_item_name(item): #去掉可能的物品名前缀
+def aligned_item_name(item): # Remove possible item name prefixes
     if item.startswith("minecraft:"):
         aligned_goal_item = item[len("minecraft:"):]
         return aligned_goal_item
@@ -144,7 +144,7 @@ def handleViewer(*args):
                     continue
                 if height_vis[nx][nz] == -1:
                     neighbor_count, neighbor_height = 0, 0
-                    for dx2, dz2 in neighbor_list:  # 避免出现坑洼的地形
+                    for dx2, dz2 in neighbor_list:  # Avoid uneven terrain
                         nnx, nnz = nx + dx2, nz + dz2
                         if nnx <= orx or nnx > orx + room_width or nnz <= orz or nnz > orz + room_width:
                           continue
@@ -155,7 +155,7 @@ def handleViewer(*args):
                         next_height = round(neighbor_height / neighbor_count)
                     else:
                         if current_height > 1:
-                            next_height = current_height + random.choices([-1, 0], weights=[58, 42])[0] #-1的权重越大，越陡峭，但是-1的权重不宜太小
+                            next_height = current_height + random.choices([-1, 0], weights=[58, 42])[0] # The larger the weight of -1, the steeper it is, but the weight of -1 should not be too small
                         else:
                             next_height = current_height + random.choices([-1, 0], weights=[75, 25])[0]
                     if next_height == 0:
@@ -173,7 +173,7 @@ def handleViewer(*args):
                     if flag:
                         return y - 1
                     else:
-                        flag = True # 至少连续两格为空气才认为是surface
+                        flag = True # At least two consecutive blocks must be air to be considered surface
                 else:
                     flag = False
             else:
@@ -202,7 +202,7 @@ def handleViewer(*args):
         randy = sur_y + random.randint(1 , y_range) - 1
         return randx, randy, randz
     
-    def generate_recipe_hint(goal_item): # 为了避免recipe_hint太长，已弃用
+    def generate_recipe_hint(goal_item): # Deprecated to avoid recipe_hint being too long
         recipe_hint = []
         with open("data/recipes.json", "r") as f:
             recipes = json.load(f)
@@ -247,10 +247,10 @@ def handleViewer(*args):
     
     # peakx, peakz = random.randint(orx + wall_width, orx + room_width + wall_width - 1), random.randint(orz + wall_width, orx + room_width + wall_width - 1)
     # hill_height = 3
-    # bot.chat(f"/tp @e[gamemode=survival] {orx + room_width + 100} {ory + 4} {orz + room_width + 100} 0 0") #tp走防止在生成的地形里窒息
+    # bot.chat(f"/tp @e[gamemode=survival] {orx + room_width + 100} {ory + 4} {orz + room_width + 100} 0 0") # Use tp to prevent suffocation in generated terrain
     # generate_hill(peakx, peakz, hill_height)
 
-    # bot.chat(f"/tp {agent_name} {orx - 10} {ory + 4} {orz - 10} 0 0") #tp走防止在生成的地形里窒息
+    # bot.chat(f"/tp {agent_name} {orx - 10} {ory + 4} {orz - 10} 0 0") # Use tp to prevent suffocation in generated terrain
     time.sleep(.2)
 
     with open(".cache/meta_setting.json", "r") as f:
@@ -271,9 +271,9 @@ def handleViewer(*args):
         invalid_pos.append((arg_dict['x'], arg_dict['y'], arg_dict['z']))
     
     crx, cry, crz = random_position(orx + wall_width + 3, orz + wall_width + 3, orx + room_width + wall_width - 3, orz + room_width + wall_width - 3, 1, invalid_pos)
-    # 建筑位置
+    # Building position
     tx, ty, tz = random_position(orx + wall_width + 3, orz + wall_width + 3, orx + room_width + wall_width - 3, orz + room_width + wall_width - 3, 1, invalid_pos)
-    # 树位置
+    # Tree position
 
     for i in range(4):
         bot.chat(f"/fill {orx + wall_width + room_width // 2 - clear_w} {ory + clear_h * i + 1} {orz + wall_width + room_width // 2 - clear_w} {orx + wall_width + room_width // 2 + clear_w} {ory + clear_h * (i+1) + 1} {orz + wall_width + room_width // 2 + clear_w} air")
@@ -288,15 +288,15 @@ def handleViewer(*args):
     # bot.chat(f"/fill {orx + wall_width + room_width // 2 - clear_w} {ory + clear_h * 3 + 2} {orz + wall_width + room_width // 2 - clear_w} {orx + wall_width + room_width // 2 + clear_w} {ory + clear_h * 4 + 1} {orz + wall_width + room_width // 2 + clear_w} air")
     # time.sleep(.2)
     # bot.chat("/kill @e[type=!minecraft:player]")
-    # 清空 史莱姆
+    # Clear slimes
     # bot.chat(f"/kill @e[type=minecraft:slime]")
     # time.sleep(.2)
-    # 清空原来的环境
+    # Clear the original environment
 
     # peakx, peakz = random.randint(orx + wall_width, orx + room_width + wall_width - 1), random.randint(orz + wall_width, orx + room_width + wall_width - 1)
     # hill_height = 3
     # generate_hill(peakx, peakz, hill_height)
-    # 生成土丘
+    # Generate mounds
 
     feature = random.choice(feature_list)
     with open("data/template_houses.json", "r") as f:
@@ -308,13 +308,13 @@ def handleViewer(*args):
     time.sleep(.2)
     bot.chat(f"/fill {orx} {ory} {orz} {orx + room_width + wall_width} {ory + room_height + wall_width} {orz + room_width + wall_width} air replace jigsaw")
     time.sleep(.2)
-    bot.chat(f"/fill {orx} {ory} {orz} {orx + room_width + wall_width} {ory + room_height + wall_width} {orz + room_width + wall_width} air replace chest") # 去掉房屋中原本可能存在的箱子
+    bot.chat(f"/fill {orx} {ory} {orz} {orx + room_width + wall_width} {ory + room_height + wall_width} {orz + room_width + wall_width} air replace chest") # Remove chests that might already exist in the house
     time.sleep(.2)
     bot.chat(f"/tp {tx} {get_surface_y(tx, tz)} {tz}")
     time.sleep(.2)
     bot.chat(f"/place feature {random.choices(tree_list, tree_weight)[0]}")
     time.sleep(.2)
-    # 生成房屋和树
+    # Generate house and trees
 
     bot.chat(f"/fill {orx} {ory} {orz} {orx + room_width + wall_width} {ory + room_height + wall_width} {orz} glass")
     time.sleep(.2)
@@ -329,7 +329,7 @@ def handleViewer(*args):
     bot.chat(f"/fill {orx} {ory} {orz} {orx + room_width + wall_width} {ory} {orz + room_width + wall_width} grass_block")
     bot.chat(f"/fill {orx} {ory - 1} {orz} {orx + room_width + wall_width} {ory - 2} {orz + room_width + wall_width} grass_block")
     time.sleep(.2)
-    # 生成一个内部空间width*width*height，五面玻璃一面草方块的封闭空间
+    # Generate an enclosed space of width*width*height with five glass sides and one grass block side
     bot.chat(f"/gamemode survival {agent_name}")
     time.sleep(.2)
     bot.chat("/clear @a[gamemode=survival]")
@@ -385,16 +385,16 @@ def handleViewer(*args):
                 break
         random.shuffle(ingredients_list)
         
-        if arg_dict["step"] == 2: # 两步合成长度        
+        if arg_dict["step"] == 2: # Two-step crafting length        
             rm_flag, rm_ingredient = False, {}
             for ingredients in ingredients_list:
                 if rm_flag:
                     break
                 for recipe in recipes:
-                    if recipe["result"]["name"] == ingredients["name"]: #找到第一个可以合成的材料
+                    if recipe["result"]["name"] == ingredients["name"]: # Find the first craftable material
                         ing_flag = True
                         for ing2 in recipe["ingredients"]:
-                            if ing2["name"] == goal_item:  #这个材料的配料中不应该有目标物品，防止出现互相合成时直接获得goal_item
+                            if ing2["name"] == goal_item:  # The ingredients for this material should not contain the target item, to prevent directly obtaining goal_item during mutual crafting
                                 ing_flag = False
                                 break
                         if ing_flag:
@@ -413,15 +413,15 @@ def handleViewer(*args):
         craft_pos = []
         for _ in range(craft_num):
             craft_x, craft_y, craft_z = random_position(orx + wall_width, orz + wall_width, orx + wall_width + room_width - 1, orz + wall_width + room_width - 1, 1) 
-            while craft_y > ory + 3 or (craft_x, craft_y, craft_z) in craft_pos:    # 避免生成在太高的地方
+            while craft_y > ory + 3 or (craft_x, craft_y, craft_z) in craft_pos:    # Avoid generating at too high an altitude
                 craft_x, craft_y, craft_z = random_position(orx + wall_width, orz + wall_width, orx + wall_width + room_width - 1, orz + wall_width + room_width - 1, 1) 
             craft_pos.append((craft_x, craft_y, craft_z))
             bot.chat(f"/setblock {craft_x} {craft_y} {craft_z} crafting_table")
             time.sleep(.2)
 
-        if arg_dict["item_position"] == "chest": # 材料在随机位置的箱子里
+        if arg_dict["item_position"] == "chest": # Material is in a chest at a random location
             set_chest(craft_pos, ingredients_list, 3)
-        elif arg_dict["item_position"] == "inventory": # 材料在Agent身上
+        elif arg_dict["item_position"] == "inventory": # Materials are on the Agent
             for ingredients in ingredients_list:
                 bot.chat(f"/give {agent_name} {ingredients['name']} {ingredients['count']}")
         else:
@@ -578,7 +578,7 @@ def handleViewer(*args):
             bed_pos = []
             for _ in range(bed_num):
                 bed_x, bed_y, bed_z = random_position(orx + wall_width + 1, orz + wall_width + 1, orx + wall_width + room_width - 2, orz + wall_width + room_width - 2, 1) 
-                while bed_y > ory + 3 or (bed_x, bed_y, bed_z) in bed_pos:    # 避免生成在太高的地方
+                while bed_y > ory + 3 or (bed_x, bed_y, bed_z) in bed_pos:    # Avoid generating at too high an altitude
                     bed_x, bed_y, bed_z = random_position(orx + wall_width + 1, orz + wall_width + 1, orx + wall_width + room_width - 2, orz + wall_width + room_width - 2, 1) 
                 bed_pos.append((bed_x, bed_y, bed_z))
                 facing = random.choice(["west", "east", "north", "south"])
@@ -623,7 +623,7 @@ def handleViewer(*args):
             furnace_pos = []
             for _ in range(furnace_num):
                 furnace_x, furnace_y, furnace_z = random_position(orx + wall_width, orz + wall_width, orx + wall_width + room_width - 1, orz + wall_width + room_width - 1, 1) 
-                while furnace_y > ory + 3 or (furnace_x, furnace_y, furnace_z) in furnace_pos:    # 避免生成在太高的地方
+                while furnace_y > ory + 3 or (furnace_x, furnace_y, furnace_z) in furnace_pos:    # Avoid generating at too high an altitude
                     furnace_x, furnace_y, furnace_z = random_position(orx + wall_width, orz + wall_width, orx + wall_width + room_width - 1, orz + wall_width + room_width - 1, 1) 
                 furnace_pos.append((furnace_x, furnace_y, furnace_z))
                 bot.chat(f"/setblock {furnace_x} {furnace_y} {furnace_z} furnace")
@@ -685,7 +685,7 @@ def handleViewer(*args):
 @On(bot, "time")
 def handle(this):
     def calculate_balance():
-        # 计算每个agent的时间
+        # Calculate time for each agent
         if not os.path.exists('data/action_log.json'):
             return 0
         with open('data/action_log.json', 'r') as f:
@@ -700,10 +700,10 @@ def handle(this):
             agent_time.append(0)
         time_array = np.array(agent_time)
         
-        # 对时间进行归一化处理
+        # Normalize the time
         time_array = (time_array) / (np.max(time_array) + 1e-8)
         
-        # 计算并返回 Balanced Agent Utilization Score (BAUS)
+        # Calculate and return Balanced Agent Utilization Score (BAUS)
         return 1 - np.std(time_array)
 
     def calculate_action_time():
@@ -720,9 +720,9 @@ def handle(this):
         if len(time_list) == 0:
             return 0
 
-        # 计算覆盖的总时间
-        total_time = 0  # 单位：秒
-        time_list.sort(key=lambda x: x[0])  # 按照开始时间排序
+        # Calculate total coverage time
+        total_time = 0  # Unit: seconds
+        time_list.sort(key=lambda x: x[0])  # Sort by start time
         start, end = time_list[0]
         for i in range(1, len(time_list)):
             if time_list[i][0] < end:
@@ -766,7 +766,7 @@ def handle(this):
                 bot.chat(f'score: {score}')
 
             if config["task_scenario"] in ["craft", "move"] or (config["task_scenario"] == "useitem" and "sign" not in arg_dict["target"]):
-                bot.chat(f'/recipe take {agent_name} *') # 去除合成表中的所有合成
+                bot.chat(f'/recipe take {agent_name} *') # Remove all recipes from the recipe book
                 bot.chat(f'/data get entity {agent_name}')
 
             elif config["task_scenario"] == "useitem":
@@ -797,27 +797,27 @@ def handle(this):
                 target = aligned_item_name(arg_dict["target"]) 
 
                 if arg_dict["action"] == "bed":
-                    bot.chat(f'/recipe take {agent_name} *') # 去除合成表中的所有合成
+                    bot.chat(f'/recipe take {agent_name} *') # Remove all recipes from the recipe book
                     bot.chat(f'/data get entity {agent_name}')                  
 
                 if arg_dict["action"] == "sign":
-                    bot.chat(f'/recipe take {agent_name} *') # 去除合成表中的所有合成
+                    bot.chat(f'/recipe take {agent_name} *') # Remove all recipes from the recipe book
                     bot.chat(f'/data get entity {agent_name}') 
 
                 if arg_dict["action"] == "bone_meal":
-                    bot.chat(f'/recipe take {agent_name} *') # 去除合成表中的所有合成
+                    bot.chat(f'/recipe take {agent_name} *') # Remove all recipes from the recipe book
                     bot.chat(f'/data get entity {agent_name}')
 
                 if arg_dict["action"] in ["minecart", "boat", "saddle"]:
-                    bot.chat(f'/recipe take {agent_name} *') # 去除合成表中的所有合成
+                    bot.chat(f'/recipe take {agent_name} *') # Remove all recipes from the recipe book
                     bot.chat(f'/data get entity {agent_name}')
 
                 if arg_dict["action"] == "fishing":
-                    bot.chat(f'/recipe take {agent_name} *') # 去除合成表中的所有合成
+                    bot.chat(f'/recipe take {agent_name} *') # Remove all recipes from the recipe book
                     bot.chat(f'/data get entity {agent_name}')
 
                 if arg_dict["action"] == "till":
-                    bot.chat(f'/recipe take {agent_name} *') # 去除合成表中的所有合成
+                    bot.chat(f'/recipe take {agent_name} *') # Remove all recipes from the recipe book
                     bot.chat(f'/data get entity {agent_name}')
                 
                 if arg_dict["action"] == "toggle":
@@ -827,31 +827,31 @@ def handle(this):
                     if block["name"] == target and block._properties["open"]:
                         score = 100         
                 if arg_dict["action"] == "water":
-                        bot.chat(f'/recipe take {agent_name} *') # 去除合成表中的所有合成
+                        bot.chat(f'/recipe take {agent_name} *') # Remove all recipes from the recipe book
                         bot.chat(f'/data get entity {agent_name}')
                 if arg_dict["action"] == "cook":
-                    bot.chat(f'/recipe take {agent_name} *') # 去除合成表中的所有合成
+                    bot.chat(f'/recipe take {agent_name} *') # Remove all recipes from the recipe book
                     bot.chat(f'/data get entity {agent_name}')
                 if arg_dict["action"] == "store":
                     bot.chat(f"/data get block {arg_dict['x']} {arg_dict['y']} {arg_dict['z']}")
                 if arg_dict["action"] == "feed":
-                    bot.chat(f'/recipe take {agent_name} *') # 去除合成表中的所有合成
+                    bot.chat(f'/recipe take {agent_name} *') # Remove all recipes from the recipe book
                     bot.chat(f'/data get entity {agent_name}')
                 if arg_dict["action"] in ["shear", "milk"]:
                     if arg_dict["action"] in ["shear"]:
-                        bot.chat(f'/recipe take {agent_name} *') # 去除合成表中的所有合成
+                        bot.chat(f'/recipe take {agent_name} *') # Remove all recipes from the recipe book
                         bot.chat(f"/data get entity @e[type={target},limit=1,sort=nearest]")
                     if arg_dict["action"] == "milk":
-                        bot.chat(f'/recipe take {agent_name} *') # 去除合成表中的所有合成
+                        bot.chat(f'/recipe take {agent_name} *') # Remove all recipes from the recipe book
                         bot.chat(f'/data get entity {agent_name}')
                 if arg_dict["action"] == "handover":
                     if arg_dict["action"] == "handover":
-                        bot.chat(f'/recipe take {agent_name} *') # 去除合成表中的所有合成
+                        bot.chat(f'/recipe take {agent_name} *') # Remove all recipes from the recipe book
                         bot.chat(f'/data get entity {arg_dict["target"]}')
 
             if score == 100:# and os.path.exists("result/" + task_name + "/Alice_history.json"):
                 # time.sleep(10)
-                # 至少得等到所有的action都执行完了，有记录了再结束吧
+                # Wait until all actions are completed and recorded before ending
                 if not os.path.exists("result/" + task_name):
                     os.mkdir(os.path.join("result/", task_name))
                 with open(os.path.join(os.path.join("result", task_name), "score.json"), "w") as f:
@@ -883,7 +883,7 @@ def handle(this):
             #         pass
             # if calculate_action_time() > max_action_time or failed_action > 5:
             #     efficiency = 1
-            #     # 给出结束信号和写入文件
+            #     # Provide end signal and write to file
             #     if not os.path.exists("result/" + task_name):
             #         os.mkdir(os.path.join("result/", task_name))
             #     with open(os.path.join(os.path.join("result", task_name), "score.json"), "w") as f:
@@ -900,7 +900,7 @@ def handle(this):
             #     with open(".cache/load_status.cache", "w") as f:
             #         json.dump({"status": "end"}, f, indent=4)
             
-            # max_iter作为超时退出条件
+            # max_iter as the timeout exit condition
             action_log_root = os.path.join(os.path.join("result", task_name), "Alice_history.json")
 
             if os.path.exists(action_log_root):
@@ -917,7 +917,7 @@ def handle(this):
                         efficiency = 1
                     else:
                         efficiency = max_action_time / action_time
-                    # 给出结束信号和写入文件
+                    # Issue end signal and write to file
                     if not os.path.exists("result/" + task_name):
                         os.mkdir(os.path.join("result", task_name))
                     with open(os.path.join(os.path.join("result", task_name), "score.json"), "w") as f:
@@ -936,13 +936,13 @@ def handle(this):
                 if now_iter >= max_iter: 
                     max_iter_flag += 1
 
-            # if now_time - start_time > max_time: # max_time作为超时退出条件
+            # if now_time - start_time > max_time: # max_time as the timeout exit condition
             #     action_time = calculate_action_time()
             #     if action_time == 0:
             #         efficiency = 1
             #     else:
             #         efficiency = max_action_time / action_time
-            #     # 给出结束信号和写入文件
+            #     # Provide end signal and write to file
             #     if not os.path.exists("result/" + task_name):
             #         os.mkdir(os.path.join("result", task_name))
             #     with open(os.path.join(os.path.join("result", task_name), "score.json"), "w") as f:
@@ -991,7 +991,7 @@ def handleChat(_, message, messagePosition, jsonMsg, sender, *args):
         elif config["task_scenario"] == "interact":
             if arg_dict["action"] == "cook":
                 if aligned_item_name(arg_dict["other_arg"][-1]) != "potato":
-                    goal_item = "cooked_" + aligned_item_name(arg_dict["other_arg"][-1])  # 设置最后一个位置是放置需要烤的东西
+                    goal_item = "cooked_" + aligned_item_name(arg_dict["other_arg"][-1])  # Set the last position to place items that need baking
                 else:
                     goal_item = "baked_" + aligned_item_name(arg_dict["other_arg"][-1])   
             elif arg_dict["action"] == "handover":
@@ -1023,16 +1023,16 @@ def handleChat(_, message, messagePosition, jsonMsg, sender, *args):
         chat_pattern = r"\[(.*?)\]\s*--(MSG|CHAT)--\s*\[(.*?)\]\s*(.*)"
         chat_match = re.search(chat_pattern, message)
         if chat_match:
-            host_name = chat_match.group(1)  # 第一个方括号内的内容
-            target_name = chat_match.group(3)  # 第二个方括号内的内容
-            msg = chat_match.group(4)  # 剩余的消息内容
+            host_name = chat_match.group(1)  # Content within the first brackets
+            target_name = chat_match.group(3)  # Content within the second brackets
+            msg = chat_match.group(4)  # Remaining message content
         else:
             host_name = None
             target_name = None
             msg = None
 
         if entity_name is not None and data_str is not None and block_entity is not None:
-            # 修复json字符串中的缺失的双引号，有小bug，但是不影响需要的字段
+            # Fix missing double quotes in JSON string; there is a small bug, but it does not affect required fields
             splits = re.split(r'[\[\]{}]|,\s|:\s', data_str)
             replace_dicts = []
             for split in splits:
@@ -1046,7 +1046,7 @@ def handleChat(_, message, messagePosition, jsonMsg, sender, *args):
                 while True:
                     pos = data_str.find(replace_dict[0], start)
                     if pos == -1:
-                        break  # 其实不会发生
+                        break  # Actually won't happen
                     else:
                         if pos > 0 and data_str[pos - 1] == '"':
                             start = pos + 1
@@ -1069,22 +1069,22 @@ def handleChat(_, message, messagePosition, jsonMsg, sender, *args):
             # if not os.path.exists(cache_dir):
             #     os.makedirs(cache_dir)
         
-            # # 初始化消息列表
+            # # Initialize message list
             # messages = []
             
-            # # 如果文件存在，读取已有内容
+            # # If file exists, read existing content
             # if os.path.exists(file_path):
             #     with open(file_path, 'r', encoding='utf-8') as f:
             #         try:
             #             messages = json.load(f)
             #         except json.JSONDecodeError:
-            #             # 文件可能为空或格式不正确，忽略读取错误
+            #             # File might be empty or incorrectly formatted, ignore reading errors
             #             pass
             
-            # # 添加新消息到消息列表
+            # # Add new message to the message list
             # messages.append(data)
             
-            # # 将消息列表写回文件
+            # # Write the message list back to the file
             # with open(file_path, 'w', encoding='utf-8') as f:
             #     json.dump(messages, f, ensure_ascii=False, indent=4)
 
@@ -1192,22 +1192,22 @@ def handleChat(_, message, messagePosition, jsonMsg, sender, *args):
             # if not os.path.exists(cache_dir):
             #     os.makedirs(cache_dir)
         
-            # # 初始化消息列表
+            # # Initialize message list
             # messages = []
             
-            # # 如果文件存在，读取已有内容
+            # # If file exists, read existing content
             # if os.path.exists(file_path):
             #     with open(file_path, 'r', encoding='utf-8') as f:
             #         try:
             #             messages = json.load(f)
             #         except json.JSONDecodeError:
-            #             # 文件可能为空或格式不正确，忽略读取错误
+            #             # File might be empty or incorrectly formatted, ignore reading errors
             #             pass
             
-            # # 添加新消息到消息列表
+            # # Add new message to the message list
             # messages.append(msg)
             
-            # # 将消息列表写回文件
+            # # Write the message list back to the file
             # with open(file_path, 'w', encoding='utf-8') as f:
             #     json.dump(messages, f, ensure_ascii=False, indent=4)
             

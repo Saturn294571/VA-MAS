@@ -188,7 +188,7 @@ def generate_task_goal(task_scenario, arg_dict):
     template_prompt = template_prompt.replace("the inventory", "your inventory")
 
     task_goal = template_prompt
-    if random.randint(1, 8) == 1: # 有小概率直接用原始的prompt
+    if random.randint(1, 8) == 1: # Small probability of using the original prompt directly
         task_goal = template_prompt
     else:
         template_prompt = "Original Sentence: " + template_prompt
@@ -472,13 +472,13 @@ def generate_config(task, api_model, host, port, agent_num=2):
                 # action_list = ["attack", "feed", "cook", "handover", "store", "shear", "milk"] # water not supported
                 additional_task_list = ["till", "fishing", "bone_meal", "chat", "sign", "toggle", "saddle", "boat", "minecart", "bed"]
 
-                # 额外的几个任务 1. 耕地-并加种子 2. 钓鱼 3.作物加骨粉催熟 4. 小花园 5. 建造一个矩形的栅栏 6. 聊天对话 7. 读写牌子上面的内容
-                # 8. 由一个红石线，一个（门/灯）和一个开关组成的电路，要求开关能控制门/灯的开关
-                # 9. 给马加上马鞍，并且给马喂食，骑马，下马 / 给猪背上胡萝卜杆，骑猪
-                # 10. 乘船，下船。乘矿车，下矿车
-                # 11. 建造一面墙
-                # 12. 放置床睡觉，然后起床 
-                # 13. 搭梯子
+                # A few extra tasks: 1. Plowing-and-seeding 2. Fishing 3. Using bone meal on crops 4. Small garden 5. Build a rectangular fence 6. Chatting 7. Reading/writing on signs
+                # 8. A circuit consisting of one redstone line, one (door/lamp), and one switch, where the switch controls the door/lamp
+                # 9. Saddle a horse, feed it, ride it, and dismount / Put a carrot on a pig, ride the pig
+                # 10. Board a boat, exit a boat. Board a minecart, exit a minecart
+                # 11. Build a wall
+                # 12. Place a bed to sleep, then wake up
+                # 13. Place ladder
 
 
                 for i in range(task_number):
@@ -563,10 +563,10 @@ def generate_config(task, api_model, host, port, agent_num=2):
                             arg_dict["z"] = random.randint(orz + wall_width, orz + room_width + wall_width - 1)
                             arg_dict["y"] = ory + 1
                             origin_block = random.choice(["dirt", "grass_block", "coarse_dirt", "podzol", "dirt_path"])
-                            # 作物列表
+                            # List of crops
                             crops = ["wheat_seeds", "beetroot_seeds", "melon_seeds", "pumpkin_seeds", "carrot", "potato"]
 
-                            # 锄头列表
+                            # List of hoes
                             hoes = ["wooden", "stone", "iron", "golden", "diamond"]
                             arg_dict["tool"] = f"{random.choice(hoes)}_hoe"
 

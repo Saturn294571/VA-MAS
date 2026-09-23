@@ -34,7 +34,7 @@ class GoogleLanguageModel(AbstractLanguageModel):
         self.api_key_list = api_key_list if api_key_list else [self.api_key]
         self.cache_path = "google.cache"
 
-        # 统计相关
+        # Statistics related
         if not os.path.exists("data"):
             os.mkdir("data")
         if not os.path.exists("data/google.logs"):

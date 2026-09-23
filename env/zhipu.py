@@ -325,7 +325,7 @@ class ChatZhipuAI(BaseChatModel):
                 )
 
             self.client = ZhipuAI(
-                api_key=self.zhipuai_api_key,  # 填写您的 APIKey
+                api_key=self.zhipuai_api_key,  # Enter your APIKey
             )
         except ImportError:
             raise RuntimeError(

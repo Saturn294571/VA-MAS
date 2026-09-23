@@ -269,7 +269,7 @@ topics_zh = [
 
 def generate_conversation_prompt():
     topic = random.choice(topics)
-    # 随机选择两个不同的说话风格
+    # Randomly select two different speaking styles
     style1, style2 = random.sample(list(speaking_styles.keys()), 2)
     
     template_prompt = f"""Alice and Bob should start a chat together. They should have different speaking style. 
@@ -283,7 +283,7 @@ def generate_conversation_prompt():
 
 def generate_conversation_prompt_zh():
     topic = random.choice(topics_zh)
-    # 随机选择两个不同的说话风格
+    # Randomly select two different speaking styles
     style1, style2 = random.sample(list(speaking_styles_zh.keys()), 2)
     
     template_prompt = f"""Alice and Bob should start a chat **in Chinese** together. They should have different speaking style. 

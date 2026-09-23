@@ -52,13 +52,13 @@ def timed_cache(max_age):
 
 
 def format_string(template: str, data: dict) -> str:
-    # 检查template中的{{}}是否都在data中
+    # Check if all {{}} in the template are present in data
     keys = re.findall(r'{{(.*?)}}', template)
     for key in keys:
         if key not in data:
             raise ValueError(f'when format:\n{template} \nkey {key} not found in data')
 
-    # 替换{{}}为data中的值
+    # Replace {{}} with values from data
     for key, value in data.items():
         template = template.replace('{{' + key + '}}', str(value))
     return template
@@ -86,29 +86,29 @@ def document2string(document: Union[dict, list[dict]], MAX_LENGTH=2048, MIN_VALU
 
 
 def find_correct_data(dict_data, guard_keys=[]):
-    # 如果当前层包含正确的key，返回当前层
+    # If the current layer contains the correct key, return the current layer
     hit = True
     for key in guard_keys:
         if key not in dict_data.keys():
             hit = False
     if hit:
         return dict_data
-    # 否则，遍历当前层的每一个key
+    # Otherwise, iterate through every key in the current layer
     for key in dict_data:
-        # 如果当前key的值是字典，递归查找
+        # If the current key's value is a dictionary, search recursively
         if isinstance(dict_data[key], dict):
             result = find_correct_data(dict_data[key], guard_keys)
-            # 如果找到了包含正确key的层，返回结果
+            # If a layer containing the correct key is found, return the result
             if result is not None:
                 return result
-        # 如果当前key的值是列表，遍历列表中的每一个元素
+        # If the current key's value is a list, iterate through each element in the list
         elif isinstance(dict_data[key], list):
             result_list = []
             for item in dict_data[key]:
-                # 如果列表中的元素是字典，递归查找
+                # If an element in the list is a dictionary, search recursively
                 if isinstance(item, dict):
                     result = find_correct_data(item, guard_keys)
-                    # 如果找到了包含正确key的层，返回结果
+                    # If a layer containing the correct key is found, return the result
                     if result is not None:
                         if isinstance(result, list):
                             result_list += result
@@ -116,7 +116,7 @@ def find_correct_data(dict_data, guard_keys=[]):
                             result_list.append(result)
             if len(result_list) > 0:
                 return result_list
-    # 如果没有找到，返回None
+    # If not found, return None
     return None
 
 def _fix_missing_commas_in_object(s: str) -> str:
@@ -129,8 +129,8 @@ def _fix_missing_commas_in_object(s: str) -> str:
     就在它前面插入逗号。
     """
     return re.sub(
-        # (?="[^"]+"\s*:)  这段确保后面确实是 "key":
-        # 前面的 lookbehind 约束：前一个字符像 value 的结束符
+        # (?="[^"]+"\s*:)  This ensures that a "key": actually follows
+        # Lookbehind constraint: the previous character resembles a value terminator
         r'(?<=[0-9"\}\]])\s*(?="[^"]+"\s*:)',
         ', ',
         s
@@ -161,9 +161,9 @@ def extract_info(text: str, guard_keys=[]) -> [dict]:
                 # json False -> false True -> true None -> null
                 dict_text = dict_text.replace("False", "false").replace("True", "true").replace("None", "null")
 
-                # 处理注释 string // annotation
+                # Handle annotation string // annotation
                 dict_text = re.sub(r'//.*?\n', '\n', dict_text)
-                # 逗号修复
+                # Comma fix
                 dict_text = _fix_missing_commas_in_object(dict_text)
 
                 try:
@@ -174,15 +174,15 @@ def extract_info(text: str, guard_keys=[]) -> [dict]:
                     dict_data = None
 
                 if dict_data is None:
-                    # ✅【修改 2】给 yaml.load 加 try/except，避免 yaml 也失败时函数直接崩溃
+                    # ✅【Modification 2】Add try/except to yaml.load to prevent function crash if yaml loading fails
                     try:
                         dict_data = yaml.load(dict_text, Loader=yaml.FullLoader)
                     except Exception as e2:
                         print(f"extract with yaml error\n{e2}\nerror text:\n{dict_text}")
                         dict_data = None
-                # 存在一种情况 llm 对 数据进行了包裹，导致数据格式为 {"data":{...}} 或者 {"task":{...}}
-                # 这种情况下，我们需要将数据提取出来
-                # 假设第一层正确的key为 description
+                # There is a case where the llm wraps the data, resulting in a format like {"data":{...}} or {"task":{...}}
+                # In this case, we need to extract the data
+                # Assume the correct key for the first layer is description
                 correct_data = find_correct_data(dict_data, guard_keys)
                 if correct_data is not None:
                     if isinstance(correct_data, list):
@@ -277,7 +277,7 @@ def init_logger(name: str, level=logging.ERROR, dump=False, silent=False):
     logger.propagate = False
     logger.setLevel(level)
 
-    # 定义handler的输出格式
+    # Define the output format of the handler
     log_formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
     color_formatter = colorlog.ColoredFormatter(
         '%(log_color)s%(asctime)s - %(name)s - %(levelname)s - %(message)s',
@@ -291,7 +291,7 @@ def init_logger(name: str, level=logging.ERROR, dump=False, silent=False):
     )
 
     console_handler = logging.StreamHandler(
-        # 强制使用UTF-8编码，解决Windows下GBK编码问题
+        # Force UTF-8 encoding to resolve GBK encoding issues on Windows
         stream=open(sys.stdout.fileno(), 'w', encoding='utf-8', closefd=False)
     )
     console_handler.setLevel(level)
@@ -304,7 +304,7 @@ def init_logger(name: str, level=logging.ERROR, dump=False, silent=False):
         file_name = f"logs/{name}.log"
         file_handler = logging.FileHandler(
             file_name, 
-            encoding='utf-8'  # 明确指定UTF-8编码
+            encoding='utf-8'  # Explicitly specify UTF-8 encoding
         )
         file_handler.setLevel(level)
         file_handler.setFormatter(log_formatter)
@@ -437,7 +437,7 @@ def query_from_db(llm, db_dict, db_name, query="", verbose=False, query_type="")
 
 
 def flatten_json(y, threshold=200):
-    # 这个函数是将任意的json文件转换为一维的dict 方便进行retreival search
+    # This function converts any JSON file into a 1D dict for easier retrieval search
     out = {}
 
     def flatten(x, name=''):

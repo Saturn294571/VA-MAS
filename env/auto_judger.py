@@ -1,6 +1,6 @@
-# 这个judger需要根据json文件加载一个地形，将Agent初始化到指定位置
-# 根据Agent的状态，环境的更新，结合json文件，给出累计得分
-# optional 可能需要根据Agent的状态，judger更新环境
+# This judger needs to load a terrain from a json file and initialize the Agent at a specified position
+# Calculate cumulative score based on Agent state, environment updates, and the json file
+# optional: The judger may need to update the environment based on the Agent's state
 import shutil
 import threading
 from utils import *
@@ -74,12 +74,12 @@ if not os.path.exists("result"):
 import re
 
 def process_quotes_regex(s):
-    # 找到所有的 \"
+    # Find all \"
     s = s.replace('"','\\\"')
     matches = list(re.finditer(r'\\\"', s))
     print(s)
     if matches:
-        # 替换第一个和最后一个
+        # Replace the first and last
         s = s[:matches[0].start()] + '"' + s[matches[0].end():]
         s = s[:matches[-1].start()-1] + '"' + s[matches[-1].end()-1:]
     print(s)

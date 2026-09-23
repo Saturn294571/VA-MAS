@@ -6,58 +6,58 @@ import re
 from openpyxl.styles import Font, Alignment
 import shutil
 
-# 定义路径
+# Define path
 base_dir = './'
 # base_dir = './../processed_result/base_agent_multi/qwen2.5-7B-Instruct/supplement/2/'
 output_excel_path = 'SFT base agent.xlsx'
 
 def base_agent_filter():
 
-    # 初始化统计数据
-    score_100_distribution = defaultdict(int)  # score 为 100 的文件夹数量
+    # Initialize statistics
+    score_100_distribution = defaultdict(int)  # Number of folders with score of 100
 
-    # 遍历当前路径下的所有文件夹
+    # Traverse all folders in the current path
     for folder_name in os.listdir(base_dir):
         if os.path.isdir(os.path.join(base_dir, folder_name)):
-            # 解析文件夹名称
+            # Parse folder name
             parts = folder_name.split('_')
             category = parts[0]
 
-            # 如果是 interact 类别，进一步解析子类别
+            # If it is the interact category, further parse the subcategory
             if category == 'interact' and len(parts) > 1:
                 subcategory = parts[1]
-                category = f"interact_{subcategory}"  # 使用 interact_子类别 作为类别名
+                category = f"interact_{subcategory}"  # Use interact_subcategory as the category name
 
-            # 检查 score.json 文件
+            # Check score.json file
             score_json_path = os.path.join(base_dir, folder_name, 'score.json')
             folder_path = os.path.join(base_dir, folder_name)
             if os.path.exists(score_json_path):
                 with open(score_json_path, 'r', encoding='utf-8') as f:
                         data = json.load(f)
-                # 检查是否有 score 字段且值为 100
+                # Check if 'score' field exists and equals 100
                 if data.get('score') == 100:
                     score_100_distribution[category] += 1
                 # else:
-                #     # 删除不为100的文件夹
-                #     shutil.rmtree(folder_path)  # <-- 修改：删除该文件夹
-                #     print(f"已删除文件夹：{folder_name}")  # <-- 修改：日志提示
+                #     # Delete folders where value is not 100
+                #     shutil.rmtree(folder_path)  # <-- Modified: delete this folder
+                #     print(f"Deleted folder: {folder_name}")  # <-- Modified: log message
             else:
-                shutil.rmtree(folder_path)  # <-- 修改：删除该文件夹
+                shutil.rmtree(folder_path)  # <-- Modified: delete this folder
                 print(f"已删除文件夹：{folder_name}")
 
-    # 创建 Excel 文件
+    # Create Excel file
     wb = openpyxl.Workbook()
     ws = wb.active
     ws.title = "QWEN"
 
-    # 写入表头
+    # Write header
     ws.append(["类别", "score 为 100 的文件夹数量"])
 
-    # 写入 score 为 100 的分布情况
+    # Write distribution for score of 100
     for category, count in score_100_distribution.items():
         ws.append([category, count])
 
-    # 保存 Excel 文件
+    # Save Excel file
     wb.save(output_excel_path)
 
     print(f"统计结果已保存到 {output_excel_path}")
@@ -68,7 +68,7 @@ def base_agent_multi_filter():
     construction_results = []
     farming_results = []
 
-    for folder in sorted(folders):  # 按字典序
+    for folder in sorted(folders):  # Lexicographical order
         score_path = os.path.join(folder, "score.json")
         if not os.path.exists(score_path):
             continue
@@ -96,8 +96,8 @@ def base_agent_multi_filter():
 
     wb = openpyxl.Workbook()
 
-    # 样式定义
-    font = Font(name="SimHei")  # 黑体
+    # Style definition
+    font = Font(name="SimHei")  # Bold
     align = Alignment(horizontal="center", vertical="center")
 
     # ===== Construction Sheet =====
@@ -127,7 +127,7 @@ def base_agent_multi_filter():
         avg_balance = sum(r["balance"] for r in farming_results) / len(farming_results)
         ws2.append(["Average", round(avg_score, 3), round(avg_cooperation, 3), round(avg_efficiency, 3), round(avg_balance, 3)])
 
-    # ===== 应用格式 =====
+    # ===== Apply format =====
     for ws in [ws1, ws2]:
         for row in ws.iter_rows():
             for cell in row:
@@ -137,7 +137,7 @@ def base_agent_multi_filter():
     wb.save(base_dir + "base agent multi.xlsx")
     print("✅ 结果已保存到 base agent multi.xlsx")
 
-# 运行
+# Run
 if __name__ == "__main__":
     # base_agent_filter()
     base_agent_multi_filter()

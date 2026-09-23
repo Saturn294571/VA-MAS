@@ -17,7 +17,7 @@ import uvicorn
 # sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf8')
 os.environ["REQ_TIMEOUT"] = "1800000"
 app = FastAPI()
-msg_list = []  # 用于存储消息队列，每次获取后清除当前的消息队列
+msg_list = []  # Used to store the message queue; clear the current queue after each retrieval
 # python minecraft_server_fast.py -U Tom
 parser = argparse.ArgumentParser()
 parser.add_argument('-P', '--port', type=int, default=25565)
@@ -95,7 +95,7 @@ async def render_structure(request: Request):
     
     return {"message": "render success", "status": True}
 
-@app.post('/post_msg')  # 获取前端发来的消息
+@app.post('/post_msg')  # Get messages sent from the frontend
 @timeout(10)
 async def get_msg(request: Request):
     """get_msg: get the message from the message queue."""
@@ -105,7 +105,7 @@ async def get_msg(request: Request):
     return JSONResponse({'message': msg, 'status': True})
 
 
-@app.post('/post_time')  # 获取前端的时间
+@app.post('/post_time')  # Get time from frontend
 async def get_time(request: Request):
     return JSONResponse({'time': str(bot.time.timeOfDay)})
 
@@ -298,7 +298,7 @@ async def toss_(request: Request):
 
 
 @app.post('/post_environment')
-@timeout(10)  # 获取环境信息
+@timeout(10)  # Get environment information
 async def environment(request: Request):
     """environment:  to get the environment info."""
     msg = get_envs_info2str(bot, RENDER_DISTANCE=32, same_entity_num=3)
@@ -314,7 +314,7 @@ async def environment(request: Request):
     if os.path.exists(".cache/env.cache"):
         with open(".cache/env.cache", "r") as f:
             cache = json.load(f)
-        # 找到距离小于5的cache
+        # Find caches with distance less than 5
         for c in cache:
             pos = c["center"]
             if (pos[0] - bot.entity.position.x) ** 2 + (pos[1] - bot.entity.position.y) ** 2 + (
@@ -324,7 +324,7 @@ async def environment(request: Request):
     return JSONResponse({'message': msg, 'status': done})
 
 @app.post('/post_environment_dict')
-@timeout(10)  # 获取环境信息
+@timeout(10)  # Get environment information
 async def environment_info(request: Request):
     """environment:  to get the environment info."""
     msg = get_envs_info_dict(bot, RENDER_DISTANCE=32, same_entity_num=3)
@@ -335,7 +335,7 @@ async def environment_info(request: Request):
     if os.path.exists(".cache/env.cache"):
         with open(".cache/env.cache", "r") as f:
             cache = json.load(f)
-        # 找到距离小于5的cache
+        # Find caches with distance less than 5
         for c in cache:
             pos = c["center"]
             if (pos[0] - bot.entity.position.x) ** 2 + (pos[1] - bot.entity.position.y) ** 2 + (
@@ -792,11 +792,11 @@ def handle(this, entity, *args):
 
 async def main():
     assert False, "This module needs to be rewrite"
-    # 配置 Uvicorn 服务器
+    # Configure Uvicorn server
     config = uvicorn.Config("minecraft_server_fast:app", port=local_port)
     server = uvicorn.Server(config)
 
-    # 启动服务器
+    # Start the server
     await server.serve()
     
 # The entry point for starting the application

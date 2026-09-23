@@ -91,7 +91,7 @@ class DataManager:
                     }
                     action_list.append(action_dict)
                 except:
-                    pass # 忽略action 生成失败的情况
+                    pass # Ignore cases where action generation fails
         except Exception as e:
             # self.logger.ERROR(info_copy)
             raise e        
@@ -155,7 +155,7 @@ class DataManager:
         position = info_copy["status"]["my_position"]
 
         nearby_name_list = info_copy["status"]["nearby_entities"]
-        # 过滤item
+        # Filter item
         for nearby_entity in nearby_name_list:
             is_creature = True
             for key in nearby_entity.keys():
@@ -171,7 +171,7 @@ class DataManager:
 
             entity_name = None
             for key in nearby_entity.keys():
-                # 如果对应的是一个长度为3的list，说明是名字
+                # If it corresponds to a list of length 3, it represents a name
                 if isinstance(nearby_entity[key], list) and len(nearby_entity[key]) == 3:
                     entity_name = key
                     break
@@ -425,7 +425,7 @@ class DataManager:
                                                              position=person["position"],
                                                              items=items_str)
         blocks_info_str = ""
-        flag = []  # 用于去重
+        flag = []  # Used for deduplication
         for i, block_info in enumerate(self._env_data["blocks_info"]):
             for j, (key, value) in enumerate(block_info.items()):
                 if key in flag:

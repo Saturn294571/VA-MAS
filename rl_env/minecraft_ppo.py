@@ -155,18 +155,18 @@ class PPO:
         self.critic.load_state_dict(torch.load(critic_path))
 
     def load_buffer(self, buffer_path):
-        # 读取压缩文件
+        # Read compressed file
         with gzip.open(buffer_path, 'rb') as f:
             buffer = pickle.load(f)
             self.replay_buffer.buffer = buffer
 
     def take_action(self, state, temperature=0.8):
         probs = self.actor(state)
-        # 添加小值避免概率为0
+        # Add a small value to avoid zero probability
         probs = probs + 1e-10
-        # 温度缩放
+        # Temperature scaling
         scaled_probs = (probs / temperature).softmax(dim=-1)
-        # 可以添加噪声
+        # Noise can be added
         noise = torch.rand_like(scaled_probs) * 0.1
         noisy_probs = (scaled_probs + noise).softmax(dim=-1)
         action_dist = torch.distributions.Categorical(noisy_probs)
@@ -192,12 +192,12 @@ class PPO:
         # print('dones:', dones)
         # print('states:', states)
 
-        # 直接将字符串输入传入模型
+        # Pass the string directly into the model
         actions = torch.tensor(actions, dtype=torch.int64).to(self.device)
         rewards = torch.tensor(rewards, dtype=torch.float).to(self.device)
         dones = torch.tensor(dones, dtype=torch.float).to(self.device)
 
-        # Critic 现在接受字符串输入并返回值
+        # Critic now accepts string input and returns a value
         current_values = self.critic(states)
         next_values = self.critic(next_states)
         
@@ -206,7 +206,7 @@ class PPO:
         advantage = compute_advantage(self.gamma, self.lmbda,
                                         td_delta.cpu()).to(self.device)
 
-        # Actor 现在接受字符串输入并返回动作概率
+        # Actor now accepts string input and returns action probabilities
         current_action_probs = self.actor(states)
         # print('current_action_probs:', current_action_probs.shape)
         # print('actions:', actions.shape)
@@ -218,8 +218,8 @@ class PPO:
         ratio = torch.exp(log_probs - old_log_probs)
         surr1 = ratio * advantage
         surr2 = torch.clamp(ratio, 1 - self.eps,
-                            1 + self.eps) * advantage  # 截断
-        actor_loss = torch.mean(-torch.min(surr1, surr2))  # PPO损失函数
+                            1 + self.eps) * advantage  # Truncation
+        actor_loss = torch.mean(-torch.min(surr1, surr2))  # PPO loss function
         critic_loss = torch.mean(
             F.mse_loss(current_values, td_target.detach()))
             
@@ -256,7 +256,7 @@ class PPO:
 
 
 
-        # 保存压缩文件
+        # Save compressed file
         with gzip.open('rl_env/replay_buffer/replay_buffer.pkl.gz', 'wb') as f:
             pickle.dump(self.replay_buffer.buffer, f)
 

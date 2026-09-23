@@ -65,7 +65,7 @@ class MinecraftBlockAttribute():
     def satisfy(self, condition:dict):
         # print(condition)
         # print(self._to_dict())
-        # 以位置为基准
+        # Position-based
         if "name" in condition.keys() and condition["name"] is not None:
             if condition["name"] != self.name:
                 return False
@@ -233,8 +233,8 @@ class MinecraftBlockAttribute():
 
 class MinecraftEvent():
     def __init__(self, bot, Vec3, condition:[dict], effect:[dict], wait_interval:float=-1, activate_duration:float=-1, type:str="and"):
-        # wait_interval: 与运算的每个激活等待时间
-        # activate_duration: 激活持续时间，-1为无限
+        # wait_interval: waiting time for each operation activation
+        # activate_duration: activation duration, -1 for infinite
         # type: and, or
         
         self.condition = condition
@@ -257,24 +257,24 @@ class MinecraftEvent():
             self.time_dict[str(condition["position"])] = time.time() - 600
         self.type = type
         
-        # add activate mode # 电平触发，边沿触发，脉冲触发
+        # add activate mode # level trigger, edge trigger, pulse trigger
         for condition in self.condition:
             if "activate_mode" not in condition.keys():
                 condition["activate_mode"] = "level"
             assert condition["activate_mode"] in ["level", "pulse"], "activate_mode must be one of level, pulse"
 
             if condition["activate_mode"] == "pulse":
-                # 设定持续判定时间
+                # Set the continuous judgment time
                 if "duration" not in condition.keys():
                     condition["duration"] = 3 
-                    # 这意味着对于边沿触发，切换后的3s内被认为是有效的
-                    # 对于脉冲触发，切换状态时间应该小于3s，切换后的1s内被认为是有效的
+                    # This means for edge triggering, it is considered valid within 3s after switching
+                    # For pulse triggering, the state change duration should be less than 3s, and it is considered valid within 1s after switching
 
-                condition["mid_time"] = time.time() - 600# 脉冲触发的中间状态
+                condition["mid_time"] = time.time() - 600# Intermediate state of pulse triggering
 
-            condition["last_time"] = time.time() - 600 # 上一次判定的时间
+            condition["last_time"] = time.time() - 600 # Time of the last determination
         
-        # 对影响对象存储原始状态
+        # Store the original state of the affected object
         for effect in self.effect:
             b = bot.blockAt(Vec3(effect["position"][0], effect["position"][1], effect["position"][2]))
             self.origin_state.append(MinecraftBlockAttribute(block=b)._to_dict())
@@ -350,7 +350,7 @@ class MinecraftEvent():
         
         else:
             for i, effect in enumerate(self.effect):
-                # 如果effect在条件中存在不允许直接修改
+                # If effect exists in the condition, direct modification is not allowed
                 if effect["position"] in [condition["position"] for condition in self.condition]:
                     continue
                 MinecraftBlockAttribute.modify_block(bot, Vec3, self.origin_state[i])
@@ -403,7 +403,7 @@ class AtomTask:
         self.done = False
         self.feedback = []
 
-        self._current_max_condition_num = 0 # 当前房间完成的最大条件数
+        self._current_max_condition_num = 0 # Maximum number of completed conditions in the current room
     
     def export_cache(self):
         return {
@@ -474,7 +474,7 @@ class AtomTask:
         else:
             cache = []
         
-        # 以center为key
+        # Using center as the key
         for i, item in enumerate(cache):
             if item["center"] == self.center:
                 cache[i] = self.export_cache()
@@ -544,9 +544,9 @@ class AtomTask:
         effect_data_list = []
         for init in self.init:
             if "random" in init.keys() and init["random"] != False:
-                # 分了两种情况，一个是 有值，一个是init["random"]不是bool 是 int
+                # Divided into two cases: one where there is a value, and one where init["random"] is an int instead of a bool
                 condition_repeat_num = init["random"] if type(init["random"]) == int else self.condition_repeat_num
-                # 如果 init["random"] 是 int 并且是负数，那么就是condition_repeat_num + init["random"]
+                # If init["random"] is a negative int, then it is condition_repeat_num + init["random"]
                 if condition_repeat_num < 0:
                     condition_repeat_num = self.condition_repeat_num + init["random"]
                 for i in range(condition_repeat_num):
@@ -593,7 +593,7 @@ class AtomTask:
                 for effect in self.effect:
                     if effect["position"] == init["position"]:
                         effect_data = effect.copy()
-                        # 将init_data中有而effect_data中没有的属性添加到effect_data中
+                        # Add attributes present in init_data but missing from effect_data to effect_data
                         effect_data["position"] = init_data["position"]
                         for key in init_data.keys():
                             if key not in effect_data.keys():
@@ -662,7 +662,7 @@ class AtomTask:
         # except Exception as e:
         #     print(e)
 
-        # 由于字数限制，改写到本地
+        # Rewrite to local due to character limit
 
 
         # print(f"/setblock {self.center[0]} {self.center[1] + self.room_height -1} {self.center[2]} jungle_wall_sign[facing=north]{{Text1:\"{{\\\"text\\\":\\\"{self.task_description}\\\"}}\",Text2:\"{{\\\"text\\\":\\\"{hint}\\\"}}\"}}")
@@ -699,7 +699,7 @@ class AtomTask:
 
     def event_update(self):
         if self.events is None:
-            #如果condition中存在sub_event字段，那么需要将condition中的subevent字段对应effect中的subevent字段转换为event
+            # If sub_event field exists in condition, convert the corresponding subevent field in effect to event
             sub_event_keys = []
             for condition in self.condition_data_list:
                 if "sub_event" in condition.keys():
@@ -746,7 +746,7 @@ class AtomTask:
             flag = self.final_event.event_update()
        
         if flag:
-            # 写入 data/score.json
+            # Write to data/score.json
             with open("data/score.json", "r") as f:
                 score_dict = json.load(f)
                 if str(self) not in score_dict.keys():
@@ -769,7 +769,7 @@ class AtomTask:
                 done_condition += sum([1 for state in self.final_event.state_dict.values() if state])
             score = (done_condition / total_condition)
             self.current_score = max(self.current_score, score)
-            # 写入 data/score.json
+            # Write to data/score.json
             with open("data/score.json", "r") as f:
                 score_dict = json.load(f)
                 if str(self) not in score_dict.keys():
@@ -822,7 +822,7 @@ class StateTree:
         random.seed(seed)
         while True:
             self.load_atom_task_from_json(file_path)
-            # 根据种子对任务重新排序
+            # Reorder tasks based on seed
             random.shuffle(self.atom_task_list)
             for _ in range(self.max_task_num):
                 self.generate()
@@ -883,8 +883,8 @@ class StateTree:
             self.atom_task_list.append(atom_task)
 
     def load(self, bot):
-        room_width = 15 # 固定值是为了统一清除
-        room_height = 6 # 固定值是为了统一清除
+        room_width = 15 # Fixed value is for unified clearing
+        room_height = 6 # Fixed value is for unified clearing
         wall_width = 1
         self.bot.chat("/kill @e[type=!minecraft:player]")
         self.bot.chat("/kill @e[type=!minecraft:player]")
@@ -953,7 +953,7 @@ class StateTree:
     def generate(self):
         candidate_agents = self.candidate_agent_group()
         spilt_merge_channel = 0
-        # 1 给候选agent 挑选 候选 task 如果 task 有 merge标签的话 必须存在两组相邻的候选agent位置只有p[0]不一致并且相邻 merge则要求存在一组agent在同一位置个数大于一
+        # 1 For candidate agents to pick candidate tasks: if a task has a merge tag, there must be two adjacent groups of candidate agent positions where only p[0] differs, and adjacent merges require at least one group of agents at the same position to have a count greater than one
         candidate_task_list = []
         candidate_agent_groups = []
         candidate_agent_groups_dict = {}
@@ -976,7 +976,7 @@ class StateTree:
                         candidate_agent_groups[-1].append(agent)
                 # Ensure each group has at least two different pos[0] positions
                 candidate_agent_groups = [group for group in candidate_agent_groups if len(set(agent.position[idx] for agent in group)) >= 2]
-                # 这样的组可以物理合并了
+                # Such groups can be physically merged
 
                 if len(candidate_agent_groups) == 0:
                     continue
@@ -1011,7 +1011,7 @@ class StateTree:
                     candidate_task_list.append(atom_task)
                     candidate_agent_groups_dict[str(atom_task)] = candidate_agent_groups
         
-        # 2 选择一个最合适的候选task
+        # 2 Select the most suitable candidate task
         if len(candidate_task_list) == 0:
             return
         print("seed", self.seed)
@@ -1044,7 +1044,7 @@ class StateTree:
         else:
             executable_agents = candidate_agents
 
-        # 3 如果选择的task带有  更新agent状态
+        # 3 If the selected task has  update agent status
         agent_num = 0
         if selected_task.same_room or selected_task.split or selected_task.merge:
             for agent in executable_agents:
@@ -1136,7 +1136,7 @@ class StateTree:
 
         else:
             # print("cross")
-            # 交叉着来，随机选两个房间，一个房间的机关触发另一个房间的效果
+            # Intertwined: randomly select two rooms, where a mechanism in one room triggers an effect in the other
             # Group agents by position
             position_to_agents = {}
             for agent in candidate_agents:
@@ -1250,9 +1250,9 @@ class StateTree:
         #     print(agent)
     
     def candidate_agent_group(self):
-        # 根据位置对代理进行排序
+        # Sort agents by position
         self.agents.sort(key=lambda agent: agent.position[2], reverse=True)
-        # 找出可以执行任务的代理组
+        # Find the group of agents capable of performing the task
         candidate_agents = []
         # print("candidate_agents:")
         for agent in self.agents:

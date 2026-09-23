@@ -1,6 +1,6 @@
-# 这个judger需要根据json文件加载一个地形，将Agent初始化到指定位置
-# 根据Agent的状态，环境的更新，结合json文件，给出累计得分
-# optional 可能需要根据Agent的状态，judger更新环境
+# This judger needs to load a terrain from a json file and initialize the Agent at a specified position
+# Calculate cumulative score based on Agent state, environment updates, and the json file
+# optional: The judger may need to update the environment based on the Agent's state
 import shutil
 import threading
 from utils import *
@@ -139,7 +139,7 @@ def handleViewer(*args):
     @On(bot, "time")
     def handle(this):
         def calculate_balance():
-            # 计算每个agent的时间
+            # Calculate time for each agent
             if not os.path.exists('data/action_log.json'):
                 return 0
             with open('data/action_log.json', 'r') as f:
@@ -154,10 +154,10 @@ def handleViewer(*args):
                 agent_time.append(0)
             time_array = np.array(agent_time)
             
-            # 对时间进行归一化处理
+            # Normalize the time
             time_array = (time_array) / (np.max(time_array) + 1e-8)
             
-            # 计算并返回 Balanced Agent Utilization Score (BAUS)
+            # Calculate and return Balanced Agent Utilization Score (BAUS)
             return 1 - np.std(time_array)
 
         def calculate_action_time():
@@ -174,9 +174,9 @@ def handleViewer(*args):
             if len(time_list) == 0:
                 return 0
 
-            # 计算覆盖的总时间
-            total_time = 0  # 单位：秒
-            time_list.sort(key=lambda x: x[0])  # 按照开始时间排序
+            # Calculate total coverage time
+            total_time = 0  # Unit: seconds
+            time_list.sort(key=lambda x: x[0])  # Sort by start time
             start, end = time_list[0]
             for i in range(1, len(time_list)):
                 if time_list[i][0] < end:
@@ -205,7 +205,7 @@ def handleViewer(*args):
                         efficiency = 1
                     else:
                         efficiency = max_action_time / calculate_action_time()
-                    # 给出结束信号和写入文件
+                    # Issue end signal and write to file
                     if not os.path.exists("result/" + task_name):
                         os.mkdir(os.path.join("result", task_name))
                     with open(os.path.join(os.path.join("result", task_name), "score.json"), "w") as f:
@@ -223,7 +223,7 @@ def handleViewer(*args):
 
                 if calculate_action_time() > max_action_time:
                     efficiency = 1
-                    # 给出结束信号和写入文件
+                    # Issue end signal and write to file
                     if not os.path.exists("result/" + task_name):
                         os.mkdir(os.path.join("result/", task_name))
                     with open(os.path.join(os.path.join("result", task_name), "score.json"), "w") as f:
@@ -244,7 +244,7 @@ def handleViewer(*args):
                         efficiency = 1
                     else:
                         efficiency = max_action_time / action_time
-                    # 给出结束信号和写入文件
+                    # Issue end signal and write to file
                     if not os.path.exists("result/" + task_name):
                         os.mkdir(os.path.join("result", task_name))
                     with open(os.path.join(os.path.join("result", task_name), "score.json"), "w") as f:

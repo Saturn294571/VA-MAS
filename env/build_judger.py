@@ -69,7 +69,7 @@ if not os.path.exists('data/blueprint_description_all.json'):
         json.dump({}, f, indent=4)
 
 def calculate_balance():
-    # 计算每个agent的时间
+    # Calculate time for each agent
     if not os.path.exists('data/action_log.json'):
         return
     with open('data/action_log.json', 'r') as f:
@@ -84,10 +84,10 @@ def calculate_balance():
         agent_time.append(0)
     time_array = np.array(agent_time)
     
-    # 对时间进行归一化处理
+    # Normalize the time
     time_array = (time_array) / (np.max(time_array) + 1e-8)
     
-    # 计算并返回 Balanced Agent Utilization Score (BAUS)
+    # Calculate and return Balanced Agent Utilization Score (BAUS)
     return 1 - np.std(time_array)
 
 def measure_complexity(data, height_weight=0.02, dig_needed=False):
@@ -318,14 +318,14 @@ def handleViewer(*args):
 
     def cal_view_hit_rate(data):
         hit_rate_list = []
-        # 从五个视角看，每个视角看到的方块与data中的方块的交并比
+        # From five perspectives, calculate the IoU between blocks seen in each perspective and the blocks in data
         x_min, y_min, z_min = 100000, 100000, 100000
         for block in data["blocks"]:
             x_min = min(x_min, block["position"][0])
             y_min = min(y_min, block["position"][1])
             z_min = min(z_min, block["position"][2])
 
-        # 正面
+        # Front
         view_blocks_map = []
         for delta_y in range(data['size'][1] + 1):
             view_blocks_line = []
@@ -358,7 +358,7 @@ def handleViewer(*args):
                     break
         hit_rate_list.append(hit_num * 1. / total_num)
 
-        # 右面
+        # Right
         view_blocks_map = []
         for delta_x in range(data['size'][0] + 1):
             view_blocks_line = []
@@ -391,7 +391,7 @@ def handleViewer(*args):
                     break
         hit_rate_list.append(hit_num * 1. / total_num)
 
-        # 左面
+        # Left
         view_blocks_map = []
         for delta_x in range(data['size'][0] + 1):
             view_blocks_line = []
@@ -424,7 +424,7 @@ def handleViewer(*args):
                     break
         hit_rate_list.append(hit_num * 1. / total_num)
 
-        # 背面
+        # Back
         view_blocks_map = []
         for delta_y in range(data['size'][1] + 1):
             view_blocks_line = []
@@ -457,7 +457,7 @@ def handleViewer(*args):
                     break
         hit_rate_list.append(hit_num * 1. / total_num)
 
-        # 上面
+        # Top
         view_blocks_map = []
         for delta_z in range(data['size'][2] + 1):
             view_blocks_line = []
@@ -518,7 +518,7 @@ def handleViewer(*args):
         bot.chat(f"/fill -2 {y} -19 -40 {y} 19 minecraft:air")
         time.sleep(.1)
 
-    # 更新地面
+    # Update ground
     bot.chat(f'/fill -19 {y_b - 1} -20 -5 {y_b - 1} 7 minecraft:stone_bricks')
     time.sleep(.1)
     bot.chat(f'/fill -19 {y_b - 2} -20 -5 {y_b - 4} 7 minecraft:dirt')
@@ -570,9 +570,9 @@ def handleViewer(*args):
             if len(time_list) == 0:
                 return 0
 
-            # 计算覆盖的总时间
-            total_time = 0  # 单位：秒
-            time_list.sort(key=lambda x: x[0])  # 按照开始时间排序
+            # Calculate total coverage time
+            total_time = 0  # Unit: seconds
+            time_list.sort(key=lambda x: x[0])  # Sort by start time
             start, end = time_list[0]
             for i in range(1, len(time_list)):
                 if time_list[i][0] < end:
@@ -595,7 +595,7 @@ def handleViewer(*args):
             if block_hit_rate == 1 and view_hit_rate == 1:
                 efficiency = max_action_time / calculate_action_time()
                 bot.chat(f"finish {efficiency}")
-                # 给出结束信号和写入文件
+                # Issue end signal and write to file
                 if not os.path.exists(os.path.join("result", task_name)):
                     os.mkdir(os.path.join("result", task_name))
                 # else:
@@ -619,7 +619,7 @@ def handleViewer(*args):
             if start_time and now_time and calculate_action_time() > max_action_time and task_data:
                 efficiency = 1
                 bot.chat(f'time out')
-                # 给出结束信号和写入文件
+                # Issue end signal and write to file
                 if not os.path.exists(os.path.join("result", task_name)):
                     os.mkdir(os.path.join("result", task_name))
                 # else:
@@ -645,7 +645,7 @@ def handleViewer(*args):
                 else:
                     efficiency = max_action_time / action_time
                 bot.chat(f'time out')
-                # 给出结束信号和写入文件
+                # Issue end signal and write to file
                 if not os.path.exists(os.path.join("result", task_name)):
                     os.mkdir(os.path.join("result", task_name))
                 # else:
@@ -671,7 +671,7 @@ def handleViewer(*args):
                 else:
                     efficiency = max_action_time / action_time
                 bot.chat(f'time out')
-                # 给出结束信号和写入文件
+                # Issue end signal and write to file
                 if not os.path.exists(os.path.join("result", task_name)):
                     os.mkdir(os.path.join("result", task_name))
                 # else:

@@ -3,7 +3,7 @@ import json
 import names
 
 def convert_to_llama_format(data):
-    # 构建基础模板
+    # Build base template
     template = {
         "instruction": "",
         "input": "",
@@ -11,7 +11,7 @@ def convert_to_llama_format(data):
     }
     dialog = template.copy()
 
-    # 构建instruction (包含系统消息和任务描述)
+    # Build instruction (includes system message and task description)
     instruction = "You are Minecraft BaseAgent. You need to complete the task by following the environment feedback.\n\n"
     instruction += data.get("instruction", "")
     dialog["instruction"] = instruction
@@ -45,14 +45,14 @@ def convert_to_llama_format(data):
 def convert_to_conversation_format(data):
     conversations = []
     
-    # 添加系统消息
+    # Add system message
     system_msg = {
         "role": "system",
         "content": "You are Minecraft BaseAgent. You need to complete the task by following the environment feedback."
     }
     conversations.append(system_msg)
     
-    # 添加初始任务指令
+    # Add initial task instructions
     instruction = data.get("instruction", "")
     user_msg = {
         "role": "user",
@@ -60,9 +60,9 @@ def convert_to_conversation_format(data):
     }
     conversations.append(user_msg)
     
-    # 处理行动和观察
+    # Process actions and observations
     for action_observation in data.get("input_action_observation", []):
-        # 助手的行动
+        # Assistant action
         action = action_observation.get("action", {})
         thought = action.get("log", "") if "Thought" in action.get("log", "")  else ""
         if "\n\nAction:\n```" in thought:
@@ -77,7 +77,7 @@ def convert_to_conversation_format(data):
         }
         conversations.append(assistant_msg)
         
-        # 环境反馈
+        # Environment feedback
         feedback = action_observation.get("feedback", {})
         user_msg = {
             "role": "user",
@@ -85,7 +85,7 @@ def convert_to_conversation_format(data):
         }
         conversations.append(user_msg)
     
-    # 最后的行动
+    # Final action
     if "due to iteration" not in str(data.get("output_action", {})):
         final_action = data.get("output_action", {})
         thought = final_action.get("log", "") if "Thought" in final_action.get("log", "")  else ""
@@ -192,7 +192,7 @@ def split_filtered_actions(filtered_actions):
         for action in action_history:
             if len(action['action_list']) == 0:
                 continue
-            # 构造多轮action
+            # Construct multi-round actions
             instruction = action['input']
             input_act_obs = []
             output_act = action['action_list'][0]['action']
