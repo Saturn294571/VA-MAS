@@ -54,6 +54,7 @@ class DataManager:
         self._logger.info("DataManager initialized")
 
         self.last_env_response = ""
+        self._experience_lookup_warned = False
 
     @staticmethod
     def _process_experience(info: dict) -> dict:
@@ -498,11 +499,13 @@ class DataManager:
         return response + "\nSign info: " + self._env_data["sign_info"]
 
     def query_task_list_experience(self, task_list: list[Task]) -> [str]:
-        result_list = []
-        for task in task_list:
-            result_list.append(self.query_task_experience(task.description))
-
-        return result_list
+        lookup = getattr(self, "query_task_experience", None)
+        if lookup is None:
+            if not self._experience_lookup_warned:
+                self._logger.warning("Task experience lookup is unavailable; Controller receives no past-task experience")
+                self._experience_lookup_warned = True
+            return []
+        return [lookup(task.description) for task in task_list]
 
     def query_history(self, name: str) -> str:
         # summarization from history to current state

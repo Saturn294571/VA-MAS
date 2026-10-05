@@ -102,41 +102,62 @@ class GlobalController:
 
     def validate_assignments(self, result: [dict]):
         validated_assignments = []
+        reserved_agents = set()
+        reserved_tasks = set()
+        if not isinstance(result, list):
+            self.logger.warning(f"Controller returned a non-list assignment: {result}")
+            return validated_assignments
 
         for assign in result:
-            task_id = assign["task_id"]
-            agent_names = assign["agent"]
+            try:
+                task_id = int(assign["task_id"])
+                agent_names = assign["agent"]
+            except (KeyError, TypeError, ValueError):
+                self.logger.warning(f"Invalid Controller assignment: {assign}")
+                continue
             if isinstance(agent_names, BaseAgent):
                 agent_names = [agent_names.name]
             elif not isinstance(agent_names, list):
                 agent_names = [agent_names]
+            agent_names = [agent.name if isinstance(agent, BaseAgent) else agent for agent in agent_names]
+            if not all(isinstance(agent_name, str) for agent_name in agent_names):
+                self.logger.warning(f"Controller returned invalid agent names for task {task_id}")
+                continue
 
-            # Check if task exists
             if task_id >= len(self.task_list) or task_id < 0:
-                self.logger.warning("Choose a non exist task!")
+                self.logger.warning(f"Controller selected nonexistent task {task_id}")
                 continue
 
             task_instance = self.task_list[task_id]
+            if not task_instance.available or task_id in reserved_tasks:
+                self.logger.warning(f"Controller selected unavailable or duplicate task {task_id}")
+                continue
+            if len(agent_names) != task_instance.number or len(set(agent_names)) != len(agent_names):
+                self.logger.warning(f"Controller selected the wrong number of agents for task {task_id}")
+                continue
             agent_instances = []
 
-            # Check if agents exist and are valid for the task
             for agent_name in agent_names:
                 agent = next((a for a in self.agent_list if a.name == agent_name), None)
                 if agent is None:
                     self.logger.warning(f"Agent {agent_name} does not exist!")
-                    continue
+                    break
 
-                if self.assignment.get(agent.name) is not None or agent_name not in task_instance.candidate_list:
+                if (self.assignment.get(agent.name) is not None or
+                        agent_name in reserved_agents or
+                        agent_name not in task_instance.candidate_list):
                     self.logger.warning(f"Agent {agent_name} is not valid for the task!")
-                    continue
+                    break
 
                 agent_instances.append(agent)
 
-            if agent_instances:
+            if len(agent_instances) == task_instance.number:
                 validated_assignments.append({
                     "task_instance": task_instance,
                     "agent_instances": agent_instances
                 })
+                reserved_tasks.add(task_id)
+                reserved_agents.update(agent_names)
 
         return validated_assignments
 
@@ -195,7 +216,9 @@ class GlobalController:
     # Producer
     def assign_tasks_to_agents(self, result: [dict]):
         # self.logger.info("Start to assign tasks!")
+        self.logger.info(f"Controller LLM proposed assignments: {result}")
         validated_assignments = self.validate_assignments(result)
+        self.logger.info(f"Controller LLM accepted assignments: {[(item['task_instance'].id, [agent.name for agent in item['agent_instances']]) for item in validated_assignments]}")
         self.execute_assignments(validated_assignments)
 
     def generate_prompt_and_get_response(self, env, experience, agent_state):

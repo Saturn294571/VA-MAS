@@ -31,7 +31,18 @@ class TaskManager:
     update_task: str = "update"
     merge_task: str = "merge"
 
-    def __init__(self, silent:bool = False, method:str = "update", cache_enabled:bool = False):
+    CONTROLLER_ASSIGNMENT_GUIDANCE = (
+        "\nFor this run, describe subtasks without naming an executor. "
+        "All registered agents have the same tools and materials; list every agent "
+        "as eligible in 'assigned agents'. The Controller will choose exactly one "
+        "agent for each ready subtask. Do not create observation or handover tasks "
+        "solely to occupy idle agents.\n"
+    )
+
+    def __init__(self, silent:bool = False, method:str = "update", cache_enabled:bool = False,
+                 assignment_policy: str = "decomposer"):
+        if assignment_policy not in ("decomposer", "controller"):
+            raise ValueError(f"Unsupported assignment_policy: {assignment_policy}")
         self.llm = None
         self.dm:DataManager = None
         self.graph:Graph = None
@@ -43,6 +54,7 @@ class TaskManager:
         self.task_document = None
         self.method = method
         self.cache_enabled = cache_enabled
+        self.assignment_policy = assignment_policy
         self.task_description = None
 
         self.task_trace = []
@@ -151,6 +163,14 @@ class TaskManager:
                     graph.add_edge(node, task)
         return graph
 
+    def set_task_candidates(self, subtask: Task, subtask_data: dict):
+        if self.assignment_policy == "controller":
+            subtask.candidate_list = [agent.name for agent in self.agent_list]
+            subtask.number = 1
+        else:
+            subtask.candidate_list = subtask_data["assigned agents"]
+            subtask.number = len(subtask_data["assigned agents"])
+
     def update_history(self, system_prompt, user_prompt, response):
         if type(user_prompt) == str:
             user_prompt = [user_prompt]
@@ -205,6 +225,8 @@ class TaskManager:
         else:
             self.logger.error("Task Manager Method Error.")
             assert False, "task manager method error"
+        if self.assignment_policy == "controller":
+            system_prompt += self.CONTROLLER_ASSIGNMENT_GUIDANCE
         # self.logger.warning("TM DEBUG:")
         # self.logger.warning(system_prompt)
         self.logger.warning(user_prompt)
@@ -228,8 +250,7 @@ class TaskManager:
             subtask.criticism = "omit"
             subtask.milestones = subtask_data["milestones"]
             if self.manage_method == "update":
-                subtask.candidate_list = subtask_data["assigned agents"]
-                subtask.number = len(subtask_data["assigned agents"])
+                self.set_task_candidates(subtask, subtask_data)
             else:
                 subtask.candidate_list = subtask_data["candidate list"]
                 subtask.number = int(subtask_data["minimum required agents"])
@@ -304,6 +325,12 @@ class TaskManager:
     
     def fill_agents(self, result:[dict], agents:list):
         self.logger.debug(f"fill agents:")
+        if self.assignment_policy == "controller":
+            # Keep one graph node per subtask; the Controller chooses one of the
+            # homogeneous agents when the node becomes ready.
+            for idx, res in enumerate(result):
+                res["id"] = idx + 1
+            return result
         for res in result:
             description = str(res["description"]) + str(res["milestones"])
             for agent in agents:
@@ -511,6 +538,8 @@ class TaskManager:
 
         # decompose the task to subtask DAG list
         system_prompt = REDECOMPOSE_SYSTEM_PROMPT
+        if self.assignment_policy == "controller":
+            system_prompt += self.CONTROLLER_ASSIGNMENT_GUIDANCE
         user_prompt = format_string(REDECOMPOSE_USER_PROMPT, {"task": {"description": self.task_description, 
                                                                      "meta-data": self.task_document},
                                                             "env": env_description, 
@@ -543,8 +572,7 @@ class TaskManager:
             subtask.goal = "omit"
             subtask.criticism = "omit"
             subtask.milestones = subtask_data["milestones"]
-            subtask.candidate_list = subtask_data["assigned agents"]
-            subtask.number = len(subtask_data["assigned agents"])
+            self.set_task_candidates(subtask, subtask_data)
             _pre_idxs = [int(idx) for idx in subtask_data["required subtasks"]]
             for idx in _pre_idxs:
                 if idx > 0 and idx < len(subtask_list):

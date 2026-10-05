@@ -29,8 +29,10 @@ CONFIG_PATH = os.environ.get("VILLAGER_BENCH_CONFIG_PATH", "base_agent_multi_tes
 print(f"pipeline Time taken: {time.time() - start_time}")
 start_time = time.time()
 
-def run(api_model: str, api_base: str, api_key_list: list, thinking_level: str, task_type: str, task_idx: int, agent_num: int, dig_needed: bool, max_task_num: int, task_goal: str, document_file: str, host: str, port: int, task_name: str, role: str = "same", document: dict = {}, controller_mode: str = "tiny"):
+def run(api_model: str, api_base: str, api_key_list: list, thinking_level: str, task_type: str, task_idx: int, agent_num: int, dig_needed: bool, max_task_num: int, task_goal: str, document_file: str, host: str, port: int, task_name: str, role: str = "same", document: dict = {}, controller_mode: str = "tiny", assignment_policy: str = "decomposer"):
     start_time = time.time()
+    if assignment_policy == "controller" and (controller_mode != "full" or task_type != "construction" or role != "same"):
+        raise ValueError("Controller assignment currently requires the full Controller and homogeneous Construction agents")
 
     Agent.base_url = api_base
     Agent.model = api_model
@@ -108,7 +110,7 @@ def run(api_model: str, api_base: str, api_key_list: list, thinking_level: str, 
         start_time = time.time()
 
         # Start TM
-        tm = TaskManager(silent=False, cache_enabled=False)
+        tm = TaskManager(silent=False, cache_enabled=False, assignment_policy=assignment_policy)
 
         print(f"TaskManager Time taken: {time.time() - start_time}")
         start_time = time.time()
@@ -143,7 +145,7 @@ def run(api_model: str, api_base: str, api_key_list: list, thinking_level: str, 
                                   all_tools=agent_tool)
         else:
             raise ValueError(f"Unsupported controller_mode: {controller_mode}")
-        print(f"Controller mode: {controller_mode}")
+        print(f"Controller mode: {controller_mode}; assignment policy: {assignment_policy}")
 
 
         if task_type == "farming": # Supplement prompt for supplementary materials
@@ -219,7 +221,8 @@ if __name__ == "__main__":
                                                 config["task_name"],
                                                 config.get("role", "same"),
                                                 config.get("evaluation_arg", {}),
-                                                config.get("controller_mode", "tiny")
+                                                config.get("controller_mode", "tiny"),
+                                                config.get("assignment_policy", "decomposer")
                                             )
                                           )
         process.start()
