@@ -59,7 +59,7 @@ Minecraft 질문에 답하거나 training loss가 감소하는 것은 Actor가 �
 ### 3. 교수 피드백과 현재 해석
 
 | 과거 피드백 | 현대화에 남긴 원칙 |
-|---|---|
+| --- | --- |
 | 환경 설정이 최우선 | model·분산 연구 전에 반복 가능한 executor와 state verification을 확보한다. |
 | 최소 dependency만 유지 | 기능을 삭제하지 않고 executor, retrieval, model, launcher, combat와 training profile을 분리한다. |
 | 작은 model의 성능이 부족할 수 있음 | local model은 자유 계획·code generation보다 bounded skill selector부터 평가한다. |
@@ -83,7 +83,7 @@ Model 없이도 기존 Odyssey skill이 modernized Mineflayer 환경에서 반�
 ### 5. 실행 계층에서 분리·해결한 결합
 
 | 문제 | 연구자가 이해할 한 줄 의미 | 처리 |
-|---|---|---|
+| --- | --- | --- |
 | Multiplayer Server Pause bundle | model 응답을 기다리는 동안 world를 멈추는 legacy 장치이며 raw skill 실행에는 필요하지 않음 | modernized executor 기본 경로에서 제외하고 Python legacy adapter에만 남김 |
 | global bot lifecycle | 이전 bot의 늦은 종료가 새 bot까지 종료해 서로 다른 request의 상태가 섞임 | request-local bot과 identity check 적용 |
 | non-finite motion | chunk 준비 전 physics가 잘못된 position packet을 보낼 수 있음 | chunk readiness와 finite-state guard 적용 |
@@ -141,7 +141,7 @@ E0~E4 gate는 dependency 결함을 격리하는 데 유용했지만, 각 gate의
 직접 Node dependency는 다음 조합으로 고정했다.
 
 | Dependency | Version |
-|---|---:|
+| --- | ---: |
 | mineflayer | 4.25.0 |
 | minecraft-data | 3.83.0 |
 | mineflayer-pathfinder | 2.4.2 |
@@ -159,7 +159,7 @@ E0~E4 gate는 dependency 결함을 격리하는 데 유용했지만, 각 gate의
 #### 2.1 기존 optional mod bundle snapshot
 
 | JAR | Version | SHA-256 |
-|---|---:|---|
+| --- | ---: | --- |
 | Multiplayer Server Pause | 1.3.1 | `fe6fe7e5c398415578f2be355de4bcd74ed5f11ebb5929d1aa91381fa8074d24` |
 | CompleteConfig | 2.3.1 | `f7d5c7c82df363305b726f6fad651a68dad8404322d4b7a0f46d948882affcc2` |
 | Fabric API | 0.87.2+1.19.4 | `a92650d48a9f672dc74e8b1eaefedb28dc83a13a80431215900181aa3a8675d8` |
@@ -184,7 +184,7 @@ Modded fixture에서 bot 연결과 finite position을 0·5·10·15·20·25·30�
 매회 hard reset과 empty inventory로 두 raw skill을 각각 10회 실행했다.
 
 | Raw skill | 반복 | Before | After | State-based success | Error |
-|---|---:|---|---|---|---|
+| --- | ---: | --- | --- | --- | --- |
 | `mineWoodLog` | 10/10 | `{}` | `spruce_log: 1` | log delta `+1` | `onError: []` |
 | `craftCraftingTable` | 10/10 | `{}` | `crafting_table: 1` | table delta `+1` | `onError: []` |
 
@@ -210,7 +210,7 @@ Modded fixture에서 bot 연결과 finite position을 0·5·10·15·20·25·30�
 ### 6. Latency 관찰값
 
 | Raw skill | 평균 action latency | P95 action latency |
-|---|---:|---:|
+| --- | ---: | ---: |
 | `mineWoodLog` | 10,829.307 ms | 20,384.104 ms |
 | `craftCraftingTable` | 13,172.842 ms | 23,990.514 ms |
 
@@ -257,11 +257,11 @@ Odyssey의 open-world skill library는 40개 primitive skills와 183개 composit
 ### 2. 확인한 결함
 
 | Primitive | 공개 코드 결함 | 논문 기능에 미치는 영향 |
-|---|---|---|
+| --- | --- | --- |
 | `goto` | `bot.entity.positon` 오타 | 현재 위치를 읽을 수 없어 이동 contract 실행 불가 |
 | `goto` | x·y·z 세 축이 모두 오차를 벗어날 때만 반복하는 조건 | 한 축만 멀어도 성공으로 종료할 수 있음 |
 | `goto` | timeout과 최종 위치 검증 부재 | pathfinder 정지·부분 이동을 성공과 구분하기 어려움 |
-| `getAnimal` | `type = "sheep"` 형태의 대입 조건과 항상 참인 `|| "cow"` | 입력 animal type과 무관하게 잘못된 먹이 분기로 진입 |
+| `getAnimal` | `type = "sheep"` 형태의 대입 조건과 항상 참인 ` | | "cow"` | 입력 animal type과 무관하게 잘못된 먹이 분기로 진입 |
 | `getAnimal` | `chichken` 오타와 입력·먹이 검증 부재 | chicken branch와 failure 원인을 신뢰할 수 없음 |
 | `getAnimal` | 동물을 찾은 뒤 target으로 bot만 이동 | 동물이 실제 target까지 따라왔는지 확인하지 않음 |
 
@@ -360,7 +360,7 @@ e8f8c211226b894fcb81acc59f3b34ba3efd5f42
 checkpoint 내부 설정과 현재 adapter 동작을 대조해 다음 text-to-vector contract를 고정했다.
 
 | 항목 | 고정값 | 논문 기능상 의미 |
-|---|---:|---|
+| --- | ---: | --- |
 | vector dimension | 384 | query context와 skill description을 비교하는 공통 vector representation |
 | maximum sequence length | 128 tokens | 긴 text 입력이 잘리는 동일한 경계 |
 | pooling | attention-mask-aware mean pooling | token representation을 하나의 sentence representation으로 결합 |
@@ -399,7 +399,7 @@ query와 document는 서로 다른 encoder를 사용하지 않는다. LangChain 
 ### 4. 당시 상태와 해석
 
 | 논문상의 단계 | 당시 확보한 근거 | 상태 |
-|---|---|---|
+| --- | --- | --- |
 | skill description을 vector representation으로 변환 | checkpoint·pooling·전처리·artifact checksum 고정 | 정적 검증 완료 |
 | text-based subgoal을 query context로 encoding | skill description과 동일한 공통 encoder factory 적용 | 정적 검증 완료 |
 | query context와 skill description의 similarity matching | distance metric과 실제 candidate 순위 미확정 | 다음 단계 |
@@ -447,7 +447,7 @@ CPU runtime fixture에서 세 입력이 `(3, 384)` float32 vector로 변환됐�
 기존 문서와 로그에는 query 원문, candidate 이름과 score가 함께 남은 실행 증거가 없었다. 따라서 고정한 encoder로 `skills.json`의 183개 skill description을 모두 Chroma에 indexing하고, 논문의 query context encoding → similarity matching → top-5 relevant skills 흐름을 직접 실행했다.
 
 | Text-based subgoal/query context | 기대 skill | top-1 결과 | L2 score |
-|---|---|---|---:|
+| --- | --- | --- | ---: |
 | `Craft a wooden pickaxe.` | `craftWoodenPickaxe` | `craftWoodenPickaxe` | 16.1350 |
 | `Mine diamond ore using an iron pickaxe.` | `mineDiamond` | `mineDiamond` | 11.6207 |
 | `Breed two cows using wheat.` | `breedCow` | `breedCow` | 25.7432 |
@@ -468,7 +468,7 @@ CPU runtime fixture에서 세 입력이 `(3, 384)` float32 vector로 변환됐�
 ### 4. 현재 상태와 해석
 
 | 논문상의 단계 | 현재 확보한 근거 | 상태 |
-|---|---|---|
+| --- | --- | --- |
 | skill description을 vector representation으로 변환 | 183개 description 전체 indexing | runtime 검증 완료 |
 | text-based subgoal을 query context로 encoding | 영어 3개·한국어 1개 query 실제 encoding | runtime 검증 완료 |
 | query context와 skill description의 similarity matching | L2 top-5 candidate와 score 기록 | smoke 검증 완료 |
@@ -526,7 +526,7 @@ Fixture는 임시 persist directory에서 183개 description의 index를 새로 
 영어 세 개와 한국어 한 개의 대표 query를 사용했다. fresh index와 reloaded index에서 결과가 같았으므로 아래에는 top-1과 fresh index의 score를 요약한다. 각 query의 top-10 전체 후보와 score는 실행 로그에 저장했다.
 
 | Text-based subgoal/query context | 기대 skill | top-1 결과 | L2 score |
-|---|---|---|---:|
+| --- | --- | --- | ---: |
 | `Craft a wooden pickaxe.` | `craftWoodenPickaxe` | `craftWoodenPickaxe` | 16.1350 |
 | `Mine diamond ore using an iron pickaxe.` | `mineDiamond` | `mineDiamond` | 11.6207 |
 | `Breed two cows using wheat.` | `breedCow` | `breedCow` | 25.7432 |
@@ -537,7 +537,7 @@ L2 score는 확률이나 정확도가 아니라 query와 description vector 사�
 ### 4. Profile과 index reload 결과
 
 | 검사 | Fresh index | Reloaded index | 판정 |
-|---|---:|---:|---|
+| --- | ---: | ---: | --- |
 | corpus/index 수 | 183 | 183 | 통과 |
 | top-5 known-query recall@5 | 4/4 | 4/4 | 통과 |
 | top-10 known-query recall@10 | 4/4 | 4/4 | 통과 |
@@ -552,7 +552,7 @@ L2 score는 확률이나 정확도가 아니라 query와 description vector 사�
 이번 경고는 현재 semantic retrieval 결과가 틀렸다는 뜻은 아니다. 다만 지금 사용한 library 연결부가 향후 update나 새 설치 환경에서 같은 기능을 계속 제공한다는 보장이 약하다는 신호이므로, 구형 dependency issue로부터 안전한 연구 기반을 만들기 위해 정리해야 한다.
 
 | 용어·경고 | 간략한 의미 | 위험한 이유 |
-|---|---|---|
+| --- | --- | --- |
 | `wrapper` | Odyssey 코드가 Sentence Transformer나 Chroma의 내부 API를 직접 다루지 않도록 LangChain이 중간에서 공통 interface로 감싼 adapter다. | wrapper가 바뀌면 model과 DB 자체가 정상이어도 import 경로, 설정 전달 또는 반환 score 형식이 달라져 retrieval 고리가 끊길 수 있다. |
 | `deprecation` | 현재는 동작하지만 해당 class·import 경로를 앞으로 제거할 예정이라는 유지보수 경고다. | 지금 무시해도 즉시 실패하지 않지만, 이후 LangChain upgrade에서 `HuggingFaceEmbeddings`나 `Chroma` class가 삭제되면 clean install 또는 실행이 중단될 수 있다. |
 | `langchain-huggingface` | Hugging Face embedding wrapper를 LangChain 본체에서 분리해 관리하는 새 공식 package다. | 기존 wrapper와 model option·version 호환성이 완전히 같다고 가정하고 교체하면 vector scale이나 전처리가 달라져 candidate score·순위가 조용히 바뀔 수 있다. |
@@ -633,7 +633,7 @@ Odyssey/.venv/bin/python Odyssey/scripts/semantic_retrieval_fixture.py
 ### 3. 기존 API와 신규 API contract 비교
 
 | 항목 | Legacy community wrapper | Modern partner wrapper | 처리 |
-|---|---|---|---|
+| --- | --- | --- | --- |
 | embedding class | `langchain_community.HuggingFaceEmbeddings` | `langchain_huggingface.HuggingFaceEmbeddings` | profile별 lazy import |
 | model 인자 | `model_name=` | `model=` | 공통 factory에서 차이 흡수 |
 | encoding 설정 | `encode_kwargs` | `encode_kwargs` | batch 32·float32·normalization 없음 유지 |
@@ -651,7 +651,7 @@ Odyssey/.venv/bin/python Odyssey/scripts/semantic_retrieval_fixture.py
 Python 3.10.20의 빈 임시 환경에서 다음 핵심 조합을 설치했다.
 
 | Package | Candidate version |
-|---|---:|
+| --- | ---: |
 | `langchain-core` | 1.6.0 |
 | `langchain-huggingface` | 1.2.2 |
 | `langchain-chroma` | 1.1.0 |
@@ -673,7 +673,7 @@ Python 3.10.20의 빈 임시 환경에서 다음 핵심 조합을 설치했다.
 신규 Chroma index의 독립 fixture 결과는 다음과 같다.
 
 | 검사 | 결과 |
-|---|---:|
+| --- | ---: |
 | index count | 183 |
 | fresh top-5 recall@5 | 4/4 |
 | fresh top-10 recall@10 | 4/4 |
@@ -690,7 +690,7 @@ Python 3.10.20의 빈 임시 환경에서 다음 핵심 조합을 설치했다.
 Legacy와 modern의 top-10 후보 순서는 네 query에서 모두 같았지만 L2 score는 다음만큼 달랐다.
 
 | Query | Legacy–modern 최대 절대 score 차이 |
-|---|---:|
+| --- | ---: |
 | `Craft a wooden pickaxe.` | `1.9073486328125e-06` |
 | `Mine diamond ore using an iron pickaxe.` | `2.86102294921875e-06` |
 | `Breed two cows using wheat.` | `7.62939453125e-06` |
@@ -732,7 +732,7 @@ Odyssey의 primitive 40개는 183개 compositional skill이 Minecraft 상태를 
 아래 항목은 연구 의도와 무관하게 현재 dependency에서 존재하지 않는 API를 호출하거나, 정상적인 실패 조건 뒤에도 실행을 계속하거나, 선언되지 않은 상태를 사용하는 결함이다. 수정 뒤 offline regression을 먼저 통과해야 한다.
 
 | Primitive·계층 | 코드상 오류 | 예상 결과 |
-|---|---|---|
+| --- | --- | --- |
 | `killMob`·combat bridge | `killMob`은 `bot.pvp`와 `bot.hawkEye`를 호출하지만 modern bridge는 두 plugin을 설치·load하지 않는다. Legacy에는 `mineflayer-pvp 1.3.2`, `minecrafthawkeye 1.3.6`이 있었다. | entity가 존재하는 실제 전투에서 undefined API 오류 |
 | `getItemFromChest` | 설치된 Mineflayer 4.25.0 container에는 없는 `chest.findContainerItem()`을 호출한다. 현재 API는 `containerItems()`, `withdraw()`, `deposit()` 경로다. | chest를 정상적으로 열어도 인출 단계에서 오류 |
 | `feedAnimals` | 종별 먹이를 조회하거나 hand에 장착하지 않고 `bot.useOn(animal)`을 호출한다. | 논문의 “appropriate food로 먹인다”는 contract를 수행하지 못함 |
@@ -749,7 +749,7 @@ Odyssey의 primitive 40개는 183개 compositional skill이 Minecraft 상태를 
 아래 항목은 위험이 보이지만 공개 코드가 의도적으로 택한 동작일 가능성을 배제할 수 없다. 임의 수정하지 않고 논문 contract와 기존 compositional caller를 함께 보존하는 방향을 정한 뒤 처리한다.
 
 | 항목 | 논문·구현 차이 | 판단할 내용 |
-|---|---|---|
+| --- | --- | --- |
 | spatial signature | 논문의 `checkBlockAbove`·`checkBlocksAround`은 `(x,y,z)`를 받지만 공개 코드와 기존 compositional skill은 `Vec3`를 전달한다. | 기존 `Vec3` caller를 유지하면서 좌표 signature도 받는 호환 interface로 만들지 결정 |
 | placement target | 논문의 `findSuitablePosition`은 대상 block이 `air`여야 하지만 구현과 기존 manifest는 `air` 또는 `water`를 허용한다. | 논문 contract대로 air만 허용할지, water 허용을 공개 코드 profile로 보존할지 결정 |
 | pathfinder goal | `plantSeeds`와 `feedAnimals`는 점유된 farmland·entity 좌표에 `GoalBlock`을 사용한다. | 실제 접근 실패인지 online fixture로 확인하고 `GoalNear`·`GoalLookAtBlock` 전환 여부 결정 |
@@ -810,7 +810,7 @@ Compositional skill이 공유하는 primitive의 입력 형식·배치 조건·�
 ### 2. 확정한 contract와 구현
 
 | 항목 | modernized contract | 구현·증거 |
-|---|---|---|
+| --- | --- | --- |
 | Spatial position | 공개 compositional caller와 같은 `Vec3`를 사용 | `checkBlockAbove`·`checkBlocksAround`의 `Vec3` 입력과 plain object 거부를 offline fixture로 확인 |
 | Placement target | 공개 코드 우선으로 `findSuitablePosition`의 `air` 또는 `water` 후보를 유지 | 인접 reference block이 있는 water 좌표가 반환되는 fixture 통과 |
 | Armor order | 사용자가 이해하기 쉬운 공개 재료 순서 diamond → iron → gold → chainmail → leather 유지 | 네 armor slot 모두 gold와 chainmail이 함께 있을 때 gold가 선택됨을 확인 |
@@ -941,7 +941,7 @@ Planner·실행 기능을 한쪽으로 통합하는 의미의 cloud-only/edge-on
 ### 3. 구분해 평가할 두 개선 효과
 
 | 개선 축 | 의미 |
-|---|---|
+| --- | --- |
 | 코드·스킬 개선 | 내부 절차를 수정해 같은 skill의 실행 안정성·효율을 개선한다. 특정 task에서 확인한 효과가 다른 task로 이어지는지는 별도 검증한다. |
 | 의사결정 개선 | 현재 관측과 누적 피드백을 활용해 skill 선택·순서·작업 할당을 개선한다. |
 
@@ -974,7 +974,7 @@ MineSkynet만을 위한 새 benchmark를 먼저 만들지 않고, Minecraft 안�
 ### 2. 주 benchmark 후보
 
 | 연구 | 현재 지위 | 가져올 핵심 | 그대로 채용하지 않는 범위 |
-|---|---|---|---|
+| --- | --- | --- | --- |
 | VillagerAgent / VillagerBench | 기본 benchmark | 건축 협업, farm-to-table 요리, escape room의 task·판정 방식과 DAG 기반 작업 할당 baseline | 현재 공개 구현의 모든 orchestration 방법을 MineSkynet 최종 방법으로 확정하지 않음 |
 | MineCollab / MINDCraft | 특수 조건 후보 | agent별 자원·recipe·도구 능력을 나누어 단일 agent가 전체 과제를 해결할 수 없게 하는 필수 협업 조건, 요리·제작·건축 validator | 자연어 통신 능력 자체를 MineSkynet의 주 연구 문제로 확대하지 않음 |
 | TickingCollabBench | 특수 조건 후보 | agent capability 차이, 실제 시간이 흐르는 실행, 동적 목표와 failure risk, 중앙·분산·oracle 비교 및 추론 지연·통신비용 기록 | 재난·보스전과 2~8 agent 전체 구성을 초기 benchmark에 일괄 도입하지 않음 |
@@ -1011,7 +1011,7 @@ VillagerAgent는 공개 코드와 benchmark 원출처이자 현재 상태 기반
 ### 5. 조사 후 배제한 후보
 
 | 연구 | 배제 이유 |
-|---|---|
+| --- | --- |
 | TeamCraft | 중앙·분산 방식, agent 수와 inventory 변화, 중복 행동 지표는 유용하지만 연구 중심이 멀티모달 관측과 미관측 scene·goal·agent 수에 대한 일반화여서 현재 물리 actor 작업 할당 질문과 거리가 있다. |
 | Gated Coordination | local recovery와 public communication 사이의 escalation 및 통신 효율을 주로 다룬다. 실행 중 재시도·재배정의 보조 지표로는 참고할 수 있지만 초기 subtask-to-actor 할당 benchmark와는 범위가 다르다. |
 
@@ -1078,7 +1078,7 @@ Odyssey-derived actor service
 현재 코드에는 완성된 `ActorService` 클래스가 따로 존재하지 않지만 다음 기능 경계는 논리적·기능적으로 분리할 수 있다.
 
 | 모듈 경계 | 보존할 기능 | 기본 actor 포함 여부 |
-|---|---|---|
+| --- | --- | --- |
 | Mineflayer execution bridge | Minecraft 접속, `/start`·`/step`·health, 이동·채집·제작 등 JS skill 실행 | 필수 |
 | Skill catalog | 검증된 primitive/compositional skill의 ID·entrypoint·code·capability 관리 | 필수 |
 | Skill selector | 전달된 subtask에서 실행할 skill 선택 | 선택; direct ID, rule, decision tree, retrieval, sLLM로 교체 가능 |
@@ -1148,7 +1148,7 @@ Batch benchmark는 `config.py`가 생성하는 configuration과 `start_with_conf
 이번 점검에서는 package 설치, API 호출, Minecraft 접속과 source 수정 없이 파일·버전·port·import 존재 여부만 확인했다.
 
 | 항목 | 확인 결과 | 판정 |
-|---|---|---|
+| --- | --- | --- |
 | Python | system Python 3.14.4 | pinned legacy dependency와 바로 결합하지 않고 Python 3.10 격리환경 필요 |
 | Node/npm | Node 20.13.1, npm 10.5.2 | 버전 존재만 확인; 실제 package 호환성은 미검증 |
 | Python package | requirements의 주요 package가 현재 환경에 없음 | 별도 환경에 clean install 필요 |
@@ -1270,7 +1270,7 @@ VillagerAgent의 원본 실행과 이후 model-tier routing을 비교하려면 m
 현재 외부 후보는 다음 두 개로 제한한다.
 
 | 역할 | Model과 추론 설정 | 2026-09-23 표준 유료 가격(입력/출력, 1M token) | 현재 판정 |
-|---|---|---:|---|
+| --- | --- | ---: | --- |
 | 주력 외부 기준 | `gemini-3.8-flash`, `thinking_level=low` | `$0.75 / $3.75` | agentic planning·tool use를 포함한 VillagerAgent 재현 후보 |
 | 저비용·하위 tier | `gemini-3.5-flash-lite`, `thinking_level=minimal` | `$0.30 / $2.50` | 단순 actor·고빈도 호출과 저성능 비교 후보 |
 
@@ -1289,7 +1289,7 @@ VillagerAgent의 원본 실행과 이후 model-tier routing을 비교하려면 m
 외부 API 통일과 로컬 model 선택은 별도 문제로 관리한다. 로컬 model은 비용 절감용 즉시 대체재로 단정하지 않고, MineSkynet이 비교하려는 연산·메모리 제약이 다른 actor tier를 구성할 후보로 둔다.
 
 | 후보 | 특징 | 잠정 역할 |
-|---|---|---|
+| --- | --- | --- |
 | Gemma 4 E4B | 공식 추정 load memory가 BF16 17.9GB, SFP8 8.9GB, Q4 약 4.5GB인 경량 model | 강한 자원 제약을 가진 edge actor와 하위 capability tier |
 | Gemma 4 12B | 공식 추정 load memory가 BF16 26.7GB, SFP8 13.4GB, Q4 약 6.7GB이며 system role과 function calling 지원 | 3090에서는 FP8·Q4 중심의 중간 local actor 후보 |
 | Qwen3.5 9B | 262K native context와 OpenAI-compatible vLLM serving을 지원하고 기존 Qwen 계열 prompt·adapter와 가깝다 | 기존 코드 변경을 줄이는 범용 local actor 후보 |
@@ -1326,7 +1326,7 @@ VillagerAgent의 제어 평면이 외부 추론이나 Minecraft 행동을 시작
 Python 3.10.20 격리환경에서 검사는 exit code 0으로 끝났다. 다음 객체와 역할 연결이 생성됐다.
 
 | 확인 항목 | 결과 |
-|---|---|
+| --- | --- |
 | `VillagerBench` | `_virtual_debug=True`로 생성하고 `Alice` 및 원본 QuickStart의 tool 11개 등록 |
 | 초기 상태 반영 | 한 agent의 virtual state를 `DataManager.update_database_init()`에 반영 |
 | `TaskManager` | 생성 성공, LLM role `TaskManager` 및 실제 agent tool description 연결 |
@@ -1395,7 +1395,7 @@ Google dependency에서는 Python 3.10 지원이 2026-10-04 이후 새 `google.a
 이번 단계의 목표는 원인을 확정하거나 최적 agent 수를 제안하는 것이 아니다. 논문이 충분히 설명하지 않은 현상과 실제 실행에서 관측되는 문제를 가설 수준으로 분류한다.
 
 | 계층 | 확인할 문제 | 최소 관측 근거 |
-|---|---|---|
+| --- | --- | --- |
 | Task Decomposer | 병렬 작업을 직렬 DAG로 만들거나 task를 지나치게 크거나 작게 나누는가 | subtask 수, dependency, ready-task 수, graph 재생성 |
 | Agent Controller | ready task와 free agent가 있어도 candidate·배정 정책 때문에 유휴가 생기거나 LLM 판단 비용이 커지는가 | assignment, validation 탈락, 배정 대기, Controller token·latency |
 | Execution/State | actor들이 공간·자원·API·server를 두고 충돌하거나 오래된 상태로 중복 행동하는가 | timeout, retry, action collision, state update와 실행시간 |
@@ -1461,7 +1461,7 @@ Controller가 task 성공을 기록한 직후 Task Manager가 후속 subtask 생
 `tiny_start.py`의 `VillagerBench` 생성 시 `data/tokens.json`과 `data/llm_inference.json`이 초기화되므로, 다음 값은 이전 smoke test를 포함한 누적치가 아니라 1-1 episode의 기록이다.
 
 | 항목 | 기록값 |
-|---|---:|
+| --- | ---: |
 | 성공한 LLM request | 8회 |
 | prompt token | 12,768 |
 | completion token | 807 |
@@ -1520,7 +1520,7 @@ Alice는 시험장 `[-4,-59,1]` 부근에서 시작했고 inventory에 필요한
 각 단계에서 첫 `placeBlock`이 실패하거나 불명확한 상태를 반환한 뒤 `equipItem` 관측에서 실제 block 배치가 확인되는 동작이 있었지만, server log와 judger는 세 좌표의 변경을 모두 확인했다. 최종 score는 다음과 같다.
 
 | Metric | 결과 |
-|---|---:|
+| --- | ---: |
 | `block_hit_rate` | 1.0 |
 | `view_hit_rate` | 1.0 |
 | `efficiency` | 16.89002316417593 |
@@ -1535,7 +1535,7 @@ Judger의 중간 측정도 `0 → 1/3 → 2/3 → 1` 순서로 상승했다. 따
 해당 성공 episode의 기록은 다음과 같다.
 
 | 항목 | 결과 |
-|---|---:|
+| --- | ---: |
 | 성공한 LLM request | 24회 |
 | prompt token | 70,911 |
 | completion token | 3,263 |
@@ -1560,7 +1560,7 @@ Judger는 score와 `end` 상태를 정상 생성하고 Alice와 `build_judge` �
 Construction과 Farming의 단일 case에서 scenario judger가 실행 결과 디렉터리에 `score.json`, `action_log.json`, `tokens.json`을 함께 생성하는 것을 확인했다. 따라서 **행동 로그에서 scenario별 completion과 efficiency를 계산해 episode 산출물로 보존하는 기본 경로는 작동한다.** 다만 세 scenario가 같은 metric schema를 구현하지 않으므로, 현재 출력 전체를 논문 표의 공통 metric으로 바로 간주할 수는 없다.
 
 | Scenario | 실제 생성 metric | 확인 결과 |
-|---|---|---|
+| --- | --- | --- |
 | Construction Task0 | `block_hit_rate`, `view_hit_rate`, `efficiency`, `use_time`, `complexity` | `1.0`, `1.0`, `16.8900`, `18초`, `2.9067` |
 | Farming Task0 | `score`, `cooperation`, `efficiency`, `balance`, `use_time` | `100`, `100`, `13.3333`, `1.0`, `9초` |
 | Escape Room | `complete_score`, `complexity_score`, `efficiency`, `balance`, `use_time`을 기록하도록 구현 | world load blocker로 실제 산출 미확인 |
@@ -1588,7 +1588,7 @@ Construction은 block와 facing이 모두 일치할 때 완료되며, Farming은
 API 비용과 원인 혼입을 줄이기 위해 각 scenario의 가장 작은 단일 case를 우선 선택했다. 이는 framework의 실행 가능성을 확인하는 smoke validation이며 multi-agent collaboration 성능 재현은 아니다.
 
 | Scenario | 최소 조건 | 결과 | LLM 사용 |
-|---|---|---|---:|
+| --- | --- | --- | ---: |
 | Construction | Task0, 1 agent, 3-block lamp | 완료 | 24 requests, $0.0654195 |
 | Farming | Task0 `cake_0`, 1 agent, 모든 재료가 chest에 존재 | 완료 | 24 requests, $0.0685515 |
 | Escape Room | seed 0, 1 room, 1 agent | 검증 완료: `action_time out`과 평가 산출물 생성 | 48 requests, $0.1331415 |
@@ -1621,7 +1621,7 @@ Escape Room은 두 단계에서 막혔다. 첫 시도는 `minecrafthawkeye`의 C
 Alice는 room 탐색, 두 pressure plate 발견, 각 plate로의 이동과 iron door 통과를 시도했다. 그러나 task 설명은 두 plate의 동시 활성화를 요구하는데 1-agent가 한 plate에서 다른 plate로 이동하는 방식으로 반복했고, chest로 향하는 경로도 iron door 부근에서 계속 막혔다. 최종 결과는 다음과 같다.
 
 | 항목 | 결과 |
-|---|---:|
+| --- | ---: |
 | 종료 사유 | `action_time out` |
 | `use_time` | 122초 |
 | 기록 action | 22회 (`navigateTo` 12, `scanNearbyEntities` 10) |
@@ -1653,7 +1653,7 @@ VillagerAgent의 Task Decomposer는 subtask를 노드로, 선행조건을 direct
 ### 3. Controller 구현 두 종류
 
 | 경로 | 실제 정책 |
-|---|---|
+| --- | --- |
 | 논문에 가까운 `pipeline/controller.py` | candidate 수와 요구 인원이 같으면 직접 배정하고, 남은 available task는 환경·경험·상태·free-agent를 넣은 LLM Controller가 선택한다. 반환값은 task 존재, agent 존재, free 상태와 candidate 포함 여부를 검사한다. |
 | 이번 benchmark의 `pipeline/controller_tiny.py` | Controller LLM을 호출하지 않는다. ready task의 candidate가 모두 free이면 그 candidate 전원에게 직접 배정한다. |
 

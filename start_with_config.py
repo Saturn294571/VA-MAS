@@ -9,7 +9,8 @@ from env.env import VillagerBench, env_type, Agent
 from model.init_model import init_language_model
 
 start_time = time.time()
-from pipeline.controller_tiny import GlobalController
+from pipeline.controller import GlobalController as FullController
+from pipeline.controller_tiny import GlobalController as TinyController
 from pipeline.data_manager import DataManager
 from pipeline.task_manager import TaskManager
 import json
@@ -23,12 +24,12 @@ from model.google_model import (
 LLM_API_BASE = GOOGLE_OPENAI_BASE_URL
 LLM_API_MODEL = DEFAULT_GEMINI_MODEL
 LLM_THINKING_LEVEL = DEFAULT_GEMINI_THINKING_LEVEL
-CONFIG_PATH = "base_agent_multi_test_config.json"
+CONFIG_PATH = os.environ.get("VILLAGER_BENCH_CONFIG_PATH", "base_agent_multi_test_config.json")
 
 print(f"pipeline Time taken: {time.time() - start_time}")
 start_time = time.time()
 
-def run(api_model: str, api_base: str, api_key_list: list, thinking_level: str, task_type: str, task_idx: int, agent_num: int, dig_needed: bool, max_task_num: int, task_goal: str, document_file: str, host: str, port: int, task_name: str, role: str = "same", document: dict = {}):
+def run(api_model: str, api_base: str, api_key_list: list, thinking_level: str, task_type: str, task_idx: int, agent_num: int, dig_needed: bool, max_task_num: int, task_goal: str, document_file: str, host: str, port: int, task_name: str, role: str = "same", document: dict = {}, controller_mode: str = "tiny"):
     start_time = time.time()
 
     Agent.base_url = api_base
@@ -132,11 +133,17 @@ def run(api_model: str, api_base: str, api_key_list: list, thinking_level: str, 
         }
 
 
-        ctrl = GlobalController(llm_config, tm, dm, env, 
-                                tm_llm_config=tm_llm_config, 
-                                dm_llm_config=dm_llm_config,
-                                base_agent_config=base_llm_config,
-                                all_tools=agent_tool)
+        if controller_mode == "full":
+            ctrl = FullController(llm_config, tm, dm, env)
+        elif controller_mode == "tiny":
+            ctrl = TinyController(llm_config, tm, dm, env,
+                                  tm_llm_config=tm_llm_config,
+                                  dm_llm_config=dm_llm_config,
+                                  base_agent_config=base_llm_config,
+                                  all_tools=agent_tool)
+        else:
+            raise ValueError(f"Unsupported controller_mode: {controller_mode}")
+        print(f"Controller mode: {controller_mode}")
 
 
         if task_type == "farming": # Supplement prompt for supplementary materials
@@ -211,7 +218,8 @@ if __name__ == "__main__":
                                                 config["port"],
                                                 config["task_name"],
                                                 config.get("role", "same"),
-                                                config.get("evaluation_arg", {})
+                                                config.get("evaluation_arg", {}),
+                                                config.get("controller_mode", "tiny")
                                             )
                                           )
         process.start()
