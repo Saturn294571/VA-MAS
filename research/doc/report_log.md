@@ -1679,3 +1679,58 @@ Construction, Farming, Escape의 `TM_history.json`에는 각각 3, 4, 7회의 �
 **Congestion과의 관계는 아직 가설 단계다.** `task_queue`와 `result_queue`는 존재하지만 Decomposer가 graph 완료 시에만 agent 수 이하의 node를 생성하므로 지속적인 외부 arrival stream이 아니며, backlog·arrival rate·service rate·queue wait·admission control·backpressure를 측정하거나 제어하지 않는다. 따라서 현재 코드만으로 “congestion control을 한다”고 말할 수 없다. agent 수를 늘린 실험에서 ready task 생성률이 Controller·worker 처리율을 넘고 queue와 대기시간이 누적되는지를 계측해야 구조적 congestion으로 승격할 수 있다.
 
 후속 비교에서는 먼저 `controller_tiny`와 일반 LLM Controller를 구분하고, task별 `created/ready/assigned/start/end`, dependency wait, controller wait, candidate 수, queue 길이와 worker 대기를 기록해야 한다. 그 전에는 이번 1-agent 결과를 scheduling 정책의 성능이나 congestion의 증거로 사용하지 않는다.
+
+---
+
+## 2026-10-06 — 원본 Controller 및 Construction Task6·3인 검증
+
+### 결과와 해석
+
+VillagerAgent 논문의 Controller가 실제로 agent를 선택하는지 확인하기 위해 `controller_tiny.py`가 아닌 원본 `controller.py`로 기존 Task0·1인과 Construction Task6·3인을 실행했다. Task0·1인은 완주했다. Task6·3인은 최초 실행에서 block hit rate 1.0, view hit rate 약 0.867이었으나 시간 초과로 종료됐다. 같은 조건의 수정 전 재실행은 block/view hit rate 모두 1.0으로 완주했다(37 LLM requests, 약 $0.0902). 따라서 첫 시간 초과만으로 Task6의 고정적 실패를 판정할 수 없다.
+
+기본 경로에서는 Decomposer가 각 subtask의 후보를 사실상 한 agent로 고정했고, Controller는 LLM 선택 없이 직접 배정했다. 이는 원본 Controller를 *사용했다*는 사실과 논문의 LLM 기반 *agent 선택을 검증했다*는 주장을 구별해야 함을 보여준다.
+
+이를 검증하려고 동질적 Construction에 한해 선택적 `assignment_policy=controller` 경로를 추가했다. 이 경로는 Decomposer가 agent 중립적인 subtask와 세 agent 후보를 제시하도록 하고, Controller가 free agent와 작업 상태를 입력받아 LLM 배정을 제안·검증하게 한다. 배정 검증에는 후보·가용성·필요 인원수와 동일 batch 내 중복 사용 방지를 반영했다. 실행 중 드러난 DataManager의 미구현 과거 작업 경험 조회는 빈 경험 목록으로 처리했다. 따라서 이번 LLM 배정은 현재 환경·agent 상태에 근거하며, 과거 작업 경험을 활용한 배정 검증은 아니다.
+
+수정 후 Task6·3인 실행에서는 Controller 로그에 LLM의 배정 제안과 수락이 여러 차례 기록됐고, 첫 round에 Alice·Bob·Cindy 각각에게 작업이 배정·실행됐다. 공식 판정은 block/view hit rate 모두 1.0, `end_reason=complete task`, `use_time=15`였다(52 LLM requests, 약 $0.1202). 이 결과는 원본 Controller의 LLM 배정 경로가 실제 실행·완주까지 연결됨을 확인하지만, 수정 전 경로보다 성능이 우수하다는 증거는 아니다. 실행 수가 적고 생성 그래프와 호출 조건도 달라 성능·인과 비교는 보류한다.
+
+관련 코드 변경은 `fda2e2c`에 커밋됐다. 원시 결과는 `result/gemini-3.8-flash_construction_task6_3p_full_controller_20261006_repeat1/` 및 `result/gemini-3.8-flash_construction_task6_3p_controller_llm_20261006_retry1/`에 보존했다. 검증용 Minecraft OP 권한은 회수했고 서버는 종료했다. 10.7 랩미팅 목표의 0) 원본 Controller 검증과 1) 중간 규모 Construction 실행은 완료로 표시한다. 병목·최적 agent 수·이기종 할당 성능 검증은 아직 수행하지 않았다.
+
+---
+
+## 2026-10-06 — Construction Task0–64 구조 비교와 다음 병목 탐색 후보
+
+**연구 목적:** agent 수를 늘렸을 때의 성능 저하를 곧바로 배정 실패로 해석하지 않고, 구조 자체가 제공하는 병렬 작업량과 계획·배정·실행 병목을 분리할 수 있는 다음 과제를 고른다.
+
+`data/building_blue_print.json`의 Task0–64는 하나의 구조를 단계적으로 확대한 것이 아니라, 블록 수가 대체로 증가하도록 배열된 서로 다른 65개 구조물이다. Task0은 3블록·3재료·3층의 수직 램프, 성공한 Task6은 6블록·단일 재료·단층의 수평 구조다. Task20·21은 12블록 단층 도로, Task28·29는 18블록 단층 교차로다. Task64는 48블록·4재료·4층의 우리로 방향 조건도 포함한다. 42블록인 Task57은 14재료·11층인 반면 45블록인 Task60·61은 단일 재료·단층 도로여서, 블록 수만으로 계획 난도나 병렬성을 설명할 수 없다. 범위별 비교표와 후보 순서는 `research/doc/labmeeting_temp.md`의 10.7 랩미팅 항목에 정리했다.
+
+VillagerAgent Table 6에서 Task64의 agent 수별 완료율·효율은 4인까지 상승했다가 8인에서 하락하지만, 이것만으로 Controller 배정 실패나 최적 agent 수의 원인을 식별할 수 없다. MineCollab의 agent 수 증가에 따른 효율 저하 역시 질문·아키텍처·평가 분모가 달라 직접적인 수치 비교 근거가 아니라 탐색 동기다. 고정된 총 작업량을 더 많은 agent로 나누면 1인당 작업량이 줄어드는 것은 자연스러운 현상이다.
+
+**다음 후보:** 기존 Task6을 기준점으로 Task20 또는 21의 단층 도로를 먼저 시도하고, 필요할 때 Task28 또는 29의 교차로로 공간 간섭 가능성을 더한다. Task64는 Table 6과 직접 연결되는 후속 확인 사례로 둔다. 우선 동일 구조·모델·설정에서 2·3인의 생성 그래프, ready 작업 수, 후보 폭, 실제 LLM 배정, 유휴·대기 시간을 확인한 뒤 agent 수를 늘린다. 아직 이 후보들의 병목이나 할당 실패를 실험으로 관찰한 것은 아니다.
+
+---
+
+## 2026-10-06 — Construction Task20 첫 실행: 사건 재구성과 다음 관찰점
+
+**연구상 판정:** Task20·3인 단일 실행에서 Controller LLM은 단층 12블록 도로를 세 줄로 나눈 작업을 Alice·Bob·Cindy에게 중복 없이 배정했다. 관찰된 실패를 현재 단계에서 *할당 정책의 실패*로 분류할 근거는 없다. actor의 조기 종료·부분 완료와 Controller의 실패 누적 종료가 더 직접적인 설명이다. 공식 최종 `score.json` 생성 전 반복 연결 오류를 중단했으므로 마지막 `data/score.json`의 block hit rate `7/12=0.5833`, view hit rate `0.7833`은 **중간값**이다. 중단 시점 기록은 45 LLM requests, 약 $0.1292다.
+
+**실험환경 불일치 조건(사후 확인):** 이 실행은 `server.properties`가 `level-type=minecraft:normal`, `difficulty=easy`, `spawn-monsters=true`인 월드에서 이루어졌다. 반면 저장소 README의 VillagerBench 다중-agent 안내는 `superflat` 지형과 `peaceful` 모드를 요구한다. Construction judger는 지형과 무관하게 시험장 기준 높이를 `y=-60`으로 고정하므로, 현 normal 월드에서는 연구자가 직접 확인한 것처럼 어두운 지하 동굴 안에 유리 케이지가 형성됐다. 따라서 아래 진단은 *이 조건에서의 코드·행동 관찰*이며, 권장 월드 조건에서의 Task20 실패율이나 원 논문 benchmark 재현 결과로 일반화하지 않는다. 지형·밝기·몬스터가 개별 실패를 유발했는지 또한 현재 로그만으로 확정할 수 없다. 기존 Task0·6 결과도 동일 서버 조건의 실행 가능성 검증으로 해석해야 한다.
+
+1. **Alice가 왜 배치 없이 끝났나?** 행동 기록에는 `fetchContainerContents` 두 번뿐이다. 첫 호출은 `item_name`에 재료명을 넣어 인자 오류가 났고, 두 번째는 상자를 열어 재료를 확인했다. 이미 inventory에 smooth sandstone 12개가 있었지만 이동·배치에는 도달하지 않았다. 저장된 `final_answer`는 이동 명령을 작성하다가 문장/JSON이 끝나기 전에 끊긴 듯한 텍스트다. *추정:* 재료 확인과 좌표 해석에 출력 예산을 쓰면서 유효한 다음 tool call을 내지 못했고, agent 실행기가 이를 종료 응답으로 받아들였다. 정확히 모델 출력 길이 제한, 파싱 실패, 혹은 다른 종료 조건 중 무엇이 작동했는지는 현재 파일만으로 확정할 수 없다.
+2. **Bob의 마지막 블록은 왜 감지되지 않았나?** 첫 실행의 행동에는 `[-11,-60,0]`, `[-10,-60,0]`, `[-9,-60,0]`에 대한 `placeBlock` 호출은 있으나 마지막 `[-8,-60,0]` 호출이 없다. reflection도 앞의 세 좌표가 관측되고 마지막이 비었다고 판정했다. 따라서 ‘놓았는데 감지 실패’보다 **마지막 배치 시도 전에 첫 actor turn이 끝난 것**이 현재 증거에 맞다. `placeBlock` 메시지의 `can not place`와 `status=true`가 공존하는 이유는 서버가 명령 직후 메시지와 최종 해당 좌표의 블록 존재 여부를 별도로 산출하기 때문이다. 개별 메시지만으로 실패를 판정하지 말고 실제 world state를 확인해야 한다.
+3. **Bob은 왜 두 번째에 아무 행동도 안 했나?** Controller는 남은 줄을 Bob에게 재배정했으나 두 번째 `Bob_history.json`의 action list는 0개다. `final_answer`에는 `navigateTo` 호출처럼 보이는 미완성 코드 블록이 남았다. *추정:* 모델이 행동을 의도했지만 실행기가 파싱 가능한 tool call로 처리하지 못해 유효 행동 없이 종료됐다. 이 사건은 실패 3회 한도 도달 **이전**에 기록됐으므로 뒤따른 actor 서비스 종료가 Bob의 0행동을 만든 것은 아니다. 파서의 원시 응답과 종료 사유 계측이 있어야 원인을 확정할 수 있다.
+4. **Cindy는 왜 종료 뒤에도 연결을 시도했나?** 첫 줄은 성공 판정됐고 재계획에서 다른 미완료 줄을 맡아 실행 중이었다. Alice·Bob·Bob의 세 하위 작업 실패가 Controller의 전역 `stop_after_fail_times=3`을 소진하자 Controller의 세 관리 스레드가 종료됐고, `env.run()`의 정리가 actor 프로세스들을 종료했다. 그러나 이미 제출한 Cindy의 agent 작업은 완료·취소를 기다리는 처리 없이 남아 `localhost:5002/post_emojimurmur` 등으로 재시도했다. 이 주소는 **외부 LLM API가 아니라 Cindy의 로컬 Minecraft 행동 서비스**다. 다만 agent의 재시도 과정에서 LLM 호출도 추가될 수 있으므로 중단했다. 이는 종료 시 실행 중 작업을 안전하게 취소·수거하지 않는 lifecycle 문제로 보인다.
+
+**다음 실험에서 화면으로 확인할 것:** 연구자가 게임에 접속해 Alice·Bob·Cindy의 위치, 각 좌표의 실제 블록 상태와 배치 시도 시점을 로그 시각과 함께 녹화한다. 특히 Bob의 `[-8,-60,0]`이 실제로 끝까지 비어 있는지, actor가 목표 블록 위에 서거나 서로 이동을 방해하는지 확인한다. 화면만으로 LLM 출력 절단·파싱 종료 원인을 알 수는 없으므로, 병행해 actor turn별 원시 응답, 종료 사유, tool call 수와 Controller의 `active future` 수를 기록해야 한다. 첫 실행 한 번으로 반복성 또는 agent 수 증가의 인과효과는 주장하지 않는다. 원시 근거는 `logs/GlobalController.log`, `logs/TaskManager.log`, `data/action_log.json`, `data/score.json`, `result/gemini-3.8-flash_construction_task20_3p_controller_llm_20261006_trial1/*_history.json` 및 `*_reflect.json`이다.
+
+이 네 가지 현상은 재실행에서 재현되지 않더라도 actor–Controller 종료 경계의 유의미한 진단 단서로 유지한다. 게임 화면은 블록·위치·실제 채팅을, 원시 로그는 LLM 응답·도구 파싱·배정 사유를 각각 검증한다. `img/`의 auto-generation/대화 예시처럼 모든 내부 상태와 사고 과정이 현 Construction 경로에서 게임 채팅에 출력된다고 가정하지 않는다.
+
+---
+
+## 2026-10-06 — VillagerBench 권장 월드 조건으로 서버 재생성
+
+**재현 조건 정정:** 연구자가 직접 접속해 기존 `normal` 월드의 `y=-60` 시험장이 어두운 동굴 안에 있고 몬스터가 나타날 수 있음을 확인했다. 저장소 README는 다중-agent VillagerBench 시험에 `superflat`·`peaceful`을 권장한다. `img/autogen2.png`의 `auto_gen` 상태 채팅, `img/seed.png`·`img/cart.png`의 `meta_judger` 점수, `img/conversition.png`의 Bob→Alice 대화는 평탄한 잔디 지형에서 찍혔지만, 각각 auto/meta/대화 장면이므로 Construction의 채팅 출력을 그대로 증명하지는 않는다. Task20의 앞선 진단에는 위 환경 불일치 조건을 명시했다.
+
+기존 서버를 중지하고 기존 `world` 디렉터리를 `.runtime/minecraft/world-normal-20261006-before-superflat`으로 이동해 삭제 없이 보존했다. 기존 컨테이너도 `villageragent-mc-1.19.2-normal-archive-20261006`으로 이름을 바꿔 보존했다. 같은 로컬 포트 `127.0.0.1:25565`, 같은 `/data` bind mount, Vanilla 1.19.2·2GB 메모리 조건으로 새 `villageragent-mc-1.19.2` 컨테이너를 생성했다. `server.properties`에는 `level-type=minecraft:flat`, `difficulty=peaceful`, `spawn-monsters=false`를 적용하고 새 `world`를 생성했다.
+
+새 서버는 healthy 상태다. 새 `level.dat`에서 `minecraft:flat` 생성기를 확인했고, RCON이 Peaceful 난이도를 보고했으며 `y=-61`의 grass block 조건도 실제 월드에서 통과했다. `ops.json`은 빈 목록이다. 서버·월드 재생성까지만 수행했고 Task20이나 LLM/API 실험은 재실행하지 않았다. 이 시점은 환경 정합성 확인 후 사용자가 중간 커밋을 만들 수 있는 경계다. 이후 실험에서는 이전 `normal/easy` 결과와 새 `flat/peaceful` 결과를 같은 조건의 반복으로 합산하지 않는다.

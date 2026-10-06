@@ -414,14 +414,57 @@ Planner와 실행 node의 물리적 분리는 유지한 채, 작업 할당과 �
 
 ## 10.7 랩미팅
 
-- (optional) 수식/정의/개념 정리
+### (optional) 수식/정의/개념 정리
 
-- 진행상황 및 이번 목표
-  0) 벤치마크에서 controller_tiny.py 대신 controller.py 검증
+#### 그래프 생성 알고리즘
+
+$$
+\begin{array}{r l}
+& \textbf{Convert Task List to Graph} \\
+
+\\
+
+1: & G \leftarrow (V,E),\; V \leftarrow \emptyset,\; E \leftarrow \emptyset \\
+
+2: & L \leftarrow [N_1,N_2,\ldots,N_n]
+\quad \triangleright \text{Input list} \\
+
+3: & \textbf{for } i \leftarrow 1 \textbf{ to } n \textbf{ do} \\
+
+4: & \hspace{1em} V \leftarrow V \cup \{N_i\}
+\quad \triangleright \text{Add element as a node} \\
+
+5: & \hspace{1em} \textbf{if } P(N_i) \neq \emptyset \textbf{ then} \\
+
+6: & \hspace{2em} \textbf{for all } p_j \in P(N_i) \textbf{ do} \\
+
+7: & \hspace{3em} E \leftarrow E \cup \{(p_j,N_i)\}
+\quad \triangleright \text{Add edges from predecessors} \\
+
+8: & \hspace{2em} \textbf{end for} \\
+
+9: & \hspace{1em} \textbf{else if } i > 1 \textbf{ then} \\
+
+10: & \hspace{2em} \textbf{for all } p_k \in P(N_{i-1}) \textbf{ do} \\
+
+11: & \hspace{3em} E \leftarrow E \cup \{(p_k,N_i)\}
+\quad \triangleright \text{Share predecessors with previous element} \\
+
+12: & \hspace{2em} \textbf{end for} \\
+
+13: & \hspace{1em} \textbf{end if} \\
+
+14: & \textbf{end for}
+\end{array}
+$$
+
+### 진행상황 및 이번 목표
+
+  0) [완료] 벤치마크에서 controller_tiny.py 대신 controller.py 검증
       1) 이미 성공한 Task0·1인을 원본 Controller로 재실행해 기존 결과와 같은 조건에서 완주 여부를 확인
       2) 통과하면 앞서 선정한 Task6·3인으로 그래프 생성, 배정, 실행을 확인
       3) 각 실행에서 Controller의 직접 배정인지 LLM 배정인지 로그로 구분
-  1) Construction 중간 규모 시나리오 하나를 2–3개 에이전트로 실행
+  1) [완료] Construction 중간 규모 시나리오 하나를 2–3개 에이전트로 실행
       - 생성된 태스크 그래프에서 실제로 두 작업 이상을 할당할 선택지가 생기는지 확인
       - 사용한 Controller 경로와 최종 점수·실행 로그를 함께 기록
   2) 병목 또는 할당 실패가 드러나는 조건을 정해 시나리오 실행
@@ -436,9 +479,21 @@ Planner와 실행 node의 물리적 분리는 유지한 채, 작업 할당과 �
       - 개선 여부와 함께 어떤 단계의 대기·실패가 달라졌는지 확인
   5) 대표 실행 하나를 게임 화면 녹화 또는 스크린샷으로 남김
 
+#### Construction 시나리오 비교와 2) 후보 (구조 원본: `data/building_blue_print.json`)
+
+| Task 범위·대표 | 구조상 차이 | 병목 탐색에서의 의미 |
+| --- | --- | --- |
+| 0–19: 램프·작은 표식·화석 (Task0, Task6) | 3–12블록. Task0은 3층 수직 배치, Task6은 동일 재료·동일 높이 6블록 | Task0은 선행 순서가 강하고, 이미 성공한 Task6은 병렬 배정의 작은 기준점 |
+| 20–43: 도로·교차로 중심 (Task20·21, 28·29) | 대체로 12–28블록. 단층에 수평으로 펼쳐진 구조가 많음 | 재료·높이 변수를 줄인 채 작업량과 agent 간 공간 간섭을 단계적으로 늘릴 수 있음 |
+| 44–56: 다리·천막·농장·큰 화석 (Task44, 50, 55) | 31–41블록. 여러 높이·재료·방향이 섞임 | 배정 실패의 원인이 복합적이므로 첫 탐색에는 부적합 |
+| 57–64: 가로등·큰 도로·우물·우리 (Task57, 60·61, 64) | 42–48블록이지만 구조 편차가 큼. Task57은 14종 재료·11층, Task60·61은 단층·단일 재료, Task64는 4종 재료·4층·방향 조건 | 블록 수만으로 난이도나 병렬성을 대표할 수 없음을 보여줌. Task64는 논문 Table 6과 연결되는 후속 확인 사례 |
+
+- **추천 순서:** Task6(기존 기준점) → Task20 또는 21(12블록 단층 도로) → 필요시 Task28 또는 29(18블록 단층 교차로) → Task64(Table 6 연결). 처음에는 2·3인 조건에서 그래프의 ready 작업 수, 후보, 실제 LLM 배정과 유휴 시간을 비교한다. agent 수 증가는 같은 구조·설정을 고정한 뒤 적용한다.
+- **이유와 한계:** 단층 도로는 층별 선행관계와 재료 다양성을 억제하면서 Task6보다 많은 분담 기회를 준다. 교차로는 공유 공간 간섭을 추가로 살펴볼 수 있다. Task64의 agent 수별 지표는 중간 지점 이후 감소하지만, 원인이 Controller인지 작업 병렬성·actor 간섭인지는 Table 6만으로 구별할 수 없다. 위 후보에서 병목이 실제 관찰됐다는 뜻은 아니다.
+
 - 주요 이슈 & 생각할 볼만한 문제
   - Balance 설명 정정 : $\sigma()$는 시그모이드가 아닌 표준편차
-    - B 지표 의미 : SD(=0~1)가 낮 -> running time 고르게 분배. -> 1-SD : 1에 가까울수록 good
+  - B 지표 의미 : SD(=0~1)가 낮 -> running time 고르게 분배. -> 1-SD : 1에 가까울수록 good
 
 - 다음 계획
   - 재현 가능한 조건을 고정해 3–5회 반복하고 평균·표준편차 산출
