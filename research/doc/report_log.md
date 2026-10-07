@@ -1734,3 +1734,22 @@ VillagerAgent Table 6에서 Task64의 agent 수별 완료율·효율은 4인까�
 기존 서버를 중지하고 기존 `world` 디렉터리를 `.runtime/minecraft/world-normal-20261006-before-superflat`으로 이동해 삭제 없이 보존했다. 기존 컨테이너도 `villageragent-mc-1.19.2-normal-archive-20261006`으로 이름을 바꿔 보존했다. 같은 로컬 포트 `127.0.0.1:25565`, 같은 `/data` bind mount, Vanilla 1.19.2·2GB 메모리 조건으로 새 `villageragent-mc-1.19.2` 컨테이너를 생성했다. `server.properties`에는 `level-type=minecraft:flat`, `difficulty=peaceful`, `spawn-monsters=false`를 적용하고 새 `world`를 생성했다.
 
 새 서버는 healthy 상태다. 새 `level.dat`에서 `minecraft:flat` 생성기를 확인했고, RCON이 Peaceful 난이도를 보고했으며 `y=-61`의 grass block 조건도 실제 월드에서 통과했다. `ops.json`은 빈 목록이다. 서버·월드 재생성까지만 수행했고 Task20이나 LLM/API 실험은 재실행하지 않았다. 이 시점은 환경 정합성 확인 후 사용자가 중간 커밋을 만들 수 있는 경계다. 이후 실험에서는 이전 `normal/easy` 결과와 새 `flat/peaceful` 결과를 같은 조건의 반복으로 합산하지 않는다.
+
+---
+
+## 2026-10-07 — 평지 월드 Task20·3인 재실행과 부분 완료 원인
+
+**연구상 판정:** 권장 `flat/peaceful` 월드에서 원본 Controller와 선택적 LLM 배정 경로로 Construction Task20을 다시 실행했다. Controller LLM은 세 줄의 12블록 도로를 Alice·Bob·Cindy에게 각각 배정했고, 최종 block hit rate는 `10/12=0.8333`, view hit rate는 `0.9667`이었다. 세 줄 중 두 줄은 완성됐지만 가운데 줄의 `[-10,-60,0]`, `[-11,-60,0]`이 남았다. 이는 **배정은 이뤄졌지만 유효 행동과 회복이 이어지지 않은 사례**이며, 이번 한 번으로 agent 수 증가나 배정 정책의 인과효과를 주장하지 않는다.
+
+첫 실행은 유리 케이지 지붕 `y=-44`에 봇이 스폰되어 judger가 `loading`을 벗어나지 못했다. 월드 스폰을 케이지 바깥의 열린 평지 `[-4,-60,4]`로 옮겨 재시도했고, judger 초기화와 그래프 생성이 통과됐다. 첫 실행은 Task20 행동 실험으로 계산하지 않는다. 재시도의 결과는 `result/gemini-3.8-flash_construction_task20_3p_controller_llm_flat_20261007_trial1/`에 보존했다. 공식 `score.json`의 종료 사유는 `max time out`; LLM 44 requests와 추정 비용 $0.1369425가 기록됐다. `use_time=0`, `efficiency=1`은 실제 작업시간·협업효율의 근거로 사용하지 않는다. 임시 봇 OP는 회수했고 연구자 계정의 권한과 서버는 유지했다.
+
+### 영상 관찰과 로그를 대조한 사건 흐름
+
+1. **B의 배정 대비 무행동.** Controller는 첫 round에서 가운데 줄을 Bob에게 배정했다. Bob의 행동 기록은 상자 스캔 1회뿐이다. 다음 LLM 출력은 `navigateTo` JSON의 `"z":`에서 끊겨 닫힌 코드 블록이 없었고, 설치 호출도 없다. 현재 Structured Chat 파서는 닫힌 코드 블록을 찾지 못하면 원문을 최종 답변으로 취급하므로 도구 호출이 실행되지 않았다. actor 출력 한도의 기본값 512토큰은 절단 원인 후보지만 요청별 `finish_reason`이 보존되지 않아 모델이 왜 거기서 멈췄는지는 확정할 수 없다. Bob의 reflection은 블록 0개를 확인해 실패로 판정했다.
+2. **A·C의 실제 설치와 피드백 불일치.** Alice와 Cindy는 실제 블록을 놓았다. 여러 `placeBlock` 응답은 `can not place` 또는 `status=false`였지만 같은 시각 서버 로그에는 해당 좌표의 블록 변경이 기록돼 있다. 행동 API가 명령 직후 메시지와 Mineflayer의 블록 관측 상태를 따로 읽는 구조여서, 이 피드백만으로 실제 실패를 판정할 수 없다. 잘못된 피드백이 재장착·재시도를 유발해 제한된 actor 행동 횟수를 소모했을 가능성은 있으나, 개별 행동의 인과관계는 추가 계측이 필요하다.
+3. **A가 마지막 두 블록을 호출하지 않은 직접 경로.** 재계획에서 Controller는 미완성 가운데 줄을 Alice에게 배정했다. Alice는 두 번째 actor turn에서 상자 확인·장착·이동·설치로 허용된 7회 행동을 모두 썼고, `[-8,-60,0]`, `[-9,-60,0]`을 설치했다. 기록된 최종 답변은 `Agent stopped due to iteration limit or time limit.`이며, 실행 시간은 120초 한도보다 짧다. `[-10,-60,0]`, `[-11,-60,0]`에 대한 `placeBlock` 호출은 없다. reflection은 남은 두 좌표를 정확히 지적하고 실패로 판정했다.
+4. **재계획은 됐지만 재배정 전 종료.** Bob 첫 실패, Alice 첫 실패, Alice 두 번째 실패가 Controller의 기본 `stop_after_fail_times=3`을 소진했다. TaskManager는 11:12:24에 남은 두 블록을 명시한 다음 subtask를 생성했으나 Controller 관리 스레드는 11:12:19–25에 종료되어 새 배정이 실행되지 않았다. judger는 별도 제한시간인 11:18:18까지 관찰한 뒤 공식 점수를 저장했다.
+
+**C 간섭 가설의 현재 지위:** 연구자가 녹화에서 Cindy가 A의 작업 영역 가까이 멈춰 선 장면을 관찰했다. 로그에도 Cindy의 `[-11,-60,1]` 이동 요청이 있다. 그러나 Alice가 남은 두 좌표를 시도하거나 해당 위치로 이동하다 실패한 기록은 없고, 실제 설치 경로는 `/setblock` 명령을 사용한다. 따라서 *C가 A의 마지막 두 블록 설치를 물리적으로 막았다*는 설명은 이번 로그로 입증되지 않는다. 공간 간섭은 여전히 후속 영상-좌표 동기화나 대조 실험의 가설이며, 이번 정지는 우선 **B의 불완전한 도구 출력 → 작업 실패, A의 행동 한도 소진 → 세 번째 실패, Controller의 전역 실패 한도 종료**로 설명된다.
+
+**다음 검증 포인트:** actor 요청별 `finish_reason`과 출력 토큰 수, 파서가 최종 답변으로 처리한 원시 텍스트, `placeBlock` 직후 서버 블록 상태와 관측 지연, actor의 남은 iteration 수, Controller의 실패 카운터·미처리 subtask를 함께 계측한다. 종료 한도나 행동 한도를 높이면 결과의 의미가 바뀌므로, 인과 대조 조건을 정하기 전 이번 run의 설정은 사후 수정하지 않는다. 원시 근거는 위 result 폴더의 `Bob_history.json`, `Alice_history.json`, `*_reflect.json`, `action_log.json`, `score.json`, 그리고 `logs/GlobalController.log`, `logs/TaskManager.log`, `.runtime/minecraft/logs/latest.log`다.
