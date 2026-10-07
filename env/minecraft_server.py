@@ -5,6 +5,7 @@ import names
 from flask import Flask, request, jsonify
 from random import randint, choice
 from env_api import *
+from place_feedback import wait_for_block_name
 from functools import wraps
 import re
 import platform
@@ -521,7 +522,6 @@ def place():
     """place item_name x y z facing: place item at x y z, facing is one of [W, E, S, N, x, y, z, A]."""
     data = request.get_json()
     item_name, x, y, z, facing = data.get('item_name'), data.get('x'), data.get('y'), data.get('z'), data.get('facing')
-    orig_block = bot.blockAt(Vec3(x, y, z))['name']
     if "minecart" in item_name.lower().replace(" ", "_") \
         or "seeds" in item_name.lower().replace(" ", "_") \
         or "saddle" in item_name.lower().replace(" ", "_") \
@@ -585,14 +585,20 @@ def place():
                 bot.chat(f"/setblock {x} {y} {z} {item_name}[axis={facing.lower()}]")
             elif facing == "A":
                 bot.chat(f"/setblock {x} {y} {z} {item_name}")
-            cur_block = bot.blockAt(Vec3(x, y, z))['name']
-            if cur_block == orig_block and orig_block != item_name:
-                flag = False
-                msg = f"can not place {item_name}"
         
         bot.chat(f"/tp {x} {y+1} {z}")
         bot.pathfinder.stop()
-    if flag:
+
+    if "boat" not in item_name.lower().replace(" ", "_"):
+        if flag:
+            status, observed_name = wait_for_block_name(
+                bot.blockAt, Vec3(x, y, z), item_name
+            )
+            if not status:
+                msg = f"can not place {item_name}; observed {observed_name} after waiting for the block update"
+        else:
+            status = bot.blockAt(Vec3(x, y, z))['name'] == item_name
+    if flag and status:
         bot.chat(f"/clear @s {item_name} 1")
 
     # distance = distanceTo(bot.entity.position, Vec3(x, y, z))
@@ -602,8 +608,6 @@ def place():
     #     time.sleep(.3)
     #     bot.setControlState('jump', False)
     events = info_bot.get_action_description_new()
-    if "boat" not in item_name.lower().replace(" ", "_"):
-        status = bot.blockAt(Vec3(x, y, z))['name'] == item_name
     bot.pathfinder.stop()
     return jsonify({'message': msg, 'status': status, "new_events": events})
 

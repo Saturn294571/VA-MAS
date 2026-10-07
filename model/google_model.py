@@ -29,7 +29,7 @@ DEFAULT_GEMINI_THINKING_LEVEL = os.environ.get(
     "VILLAGER_LLM_THINKING_LEVEL", "low"
 )
 DEFAULT_GEMINI_ACTOR_MAX_TOKENS = int(
-    os.environ.get("VILLAGER_ACTOR_MAX_TOKENS", "512")
+    os.environ.get("VILLAGER_ACTOR_MAX_TOKENS", "1024")
 )
 DEFAULT_GEMINI_EMBEDDING_MODEL = os.environ.get(
     "VILLAGER_EMBEDDING_MODEL", "gemini-embedding-001"
@@ -43,6 +43,44 @@ SUPPORTED_GEMINI_MODELS = {
 SUPPORTED_THINKING_LEVELS = {"minimal", "low", "medium", "high"}
 
 _TOKEN_FILE_LOCK = threading.Lock()
+_ACTOR_REQUEST_FILE_LOCK = threading.Lock()
+
+
+def _actor_finish_reason(response):
+    for group in response.generations or []:
+        for generation in group:
+            info = generation.generation_info or {}
+            metadata = getattr(getattr(generation, "message", None), "response_metadata", {}) or {}
+            reason = info.get("finish_reason") or metadata.get("finish_reason")
+            if reason is not None:
+                return reason
+    return (response.llm_output or {}).get("finish_reason")
+
+
+def _record_actor_request(response, actor_name, model, max_tokens, run_id=None):
+    """Keep per-call termination metadata without persisting prompts or API keys."""
+    usage = (response.llm_output or {}).get("token_usage")
+    task_name = None
+    try:
+        with open(".cache/meta_setting.json", "r", encoding="utf-8") as setting_file:
+            task_name = json.load(setting_file).get("task_name")
+    except (OSError, ValueError):
+        pass
+    result_dir = os.path.join("result", task_name) if task_name else "data"
+    os.makedirs(result_dir, exist_ok=True)
+    record = {
+        "time": time.strftime("%Y-%m-%d %H:%M:%S", time.localtime()),
+        "actor": actor_name,
+        "model": model,
+        "run_id": str(run_id) if run_id is not None else None,
+        "max_output_tokens": max_tokens,
+        "finish_reason": _actor_finish_reason(response),
+        "prompt_tokens": _usage_value(usage, "prompt_tokens", None),
+        "completion_tokens": _usage_value(usage, "completion_tokens", None),
+    }
+    with _ACTOR_REQUEST_FILE_LOCK:
+        with open(os.path.join(result_dir, "actor_llm_requests.jsonl"), "a", encoding="utf-8") as log_file:
+            log_file.write(json.dumps(record, ensure_ascii=False) + "\n")
 
 
 def load_google_api_keys(
@@ -194,6 +232,7 @@ def create_google_chat_model(
     thinking_level: Optional[str] = None,
     temperature: float = 0,
     max_tokens: int = DEFAULT_GEMINI_ACTOR_MAX_TOKENS,
+    actor_name: Optional[str] = None,
 ):
     """Create the LangChain chat model used only by Minecraft actor agents."""
     from langchain.callbacks.base import BaseCallbackHandler
@@ -208,6 +247,11 @@ def create_google_chat_model(
             usage = llm_output.get("token_usage")
             if usage:
                 _record_token_usage(usage, api_model, level)
+            if actor_name:
+                try:
+                    _record_actor_request(response, actor_name, api_model, max_tokens, kwargs.get("run_id"))
+                except (OSError, ValueError, TypeError):
+                    logger.warning("Could not record actor LLM termination metadata", exc_info=True)
 
     return ChatOpenAI(
         model=api_model,

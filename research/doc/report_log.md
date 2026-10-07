@@ -1753,3 +1753,15 @@ VillagerAgent Table 6에서 Task64의 agent 수별 완료율·효율은 4인까�
 **C 간섭 가설의 현재 지위:** 연구자가 녹화에서 Cindy가 A의 작업 영역 가까이 멈춰 선 장면을 관찰했다. 로그에도 Cindy의 `[-11,-60,1]` 이동 요청이 있다. 그러나 Alice가 남은 두 좌표를 시도하거나 해당 위치로 이동하다 실패한 기록은 없고, 실제 설치 경로는 `/setblock` 명령을 사용한다. 따라서 *C가 A의 마지막 두 블록 설치를 물리적으로 막았다*는 설명은 이번 로그로 입증되지 않는다. 공간 간섭은 여전히 후속 영상-좌표 동기화나 대조 실험의 가설이며, 이번 정지는 우선 **B의 불완전한 도구 출력 → 작업 실패, A의 행동 한도 소진 → 세 번째 실패, Controller의 전역 실패 한도 종료**로 설명된다.
 
 **다음 검증 포인트:** actor 요청별 `finish_reason`과 출력 토큰 수, 파서가 최종 답변으로 처리한 원시 텍스트, `placeBlock` 직후 서버 블록 상태와 관측 지연, actor의 남은 iteration 수, Controller의 실패 카운터·미처리 subtask를 함께 계측한다. 종료 한도나 행동 한도를 높이면 결과의 의미가 바뀌므로, 인과 대조 조건을 정하기 전 이번 run의 설정은 사후 수정하지 않는다. 원시 근거는 위 result 폴더의 `Bob_history.json`, `Alice_history.json`, `*_reflect.json`, `action_log.json`, `score.json`, 그리고 `logs/GlobalController.log`, `logs/TaskManager.log`, `.runtime/minecraft/logs/latest.log`다.
+
+---
+
+## 2026-10-07 — 작업 DAG와 OS 개념의 연결 범위
+
+VillagerAgent의 과업 할당 병목을 이해하기 위해 [`컴시기말.pdf`](./컴시기말.pdf)의 멀티프로세싱·멀티프로그래밍·멀티스레드, 스케줄링, 동기화, 교착상태 요약을 검토했다. 이 자료는 실행 가능한 작업의 대기·배정과 공유 자원 문제를 구분하는 출발점이지만, 요약본만으로 자연어 목표의 분해, DAG 생성, 다중 에이전트 배정 알고리즘을 설명하거나 특정 실패의 원인을 입증할 수는 없다. 필요한 세부 이론은 이후 OS 교재 및 DAG scheduling 자료에서 해당 부분만 보완한다.
+
+핵심 구분은 **작업 그래프와 ready queue의 역할**이다. DAG의 노드는 subtask, 간선은 선행관계이고, Controller가 배정할 수 있는 것은 선행조건을 만족한 ready task의 부분집합이다. 따라서 `목표 → Decomposer의 작업 DAG → ready task 집합 → Controller의 agent 배정 → actor 실행·피드백`으로 보아야 한다. CPU의 ready queue가 선형 리스트로 표현되더라도 이는 실행 가능 작업을 보관하는 구현 형태이지 원래 작업 사이의 의존관계나 FIFO 정책을 뜻하지 않는다. 멀티프로세싱·멀티스레드는 병렬 실행 방식에 관한 설명으로, 목표를 subtask로 어떻게 분할·통합할지는 별도 문제다. 현재 공개 코드의 `Graph.edge`는 선행 노드 쌍이며 수치 가중치는 없고, Controller는 predecessor와 가용 candidate를 확인한 후 배정한다. 기존 단일-agent 검증 로그에는 간선이 없어 DAG 의존성의 병목을 관찰한 증거도 아니다.
+
+스케줄링 개념은 ready 이후의 대기시간·처리량·유휴시간·할당 지연을 측정하는 데 직접 유용하다. 반면 동기화·교착상태를 적용할 때에는 **선행작업 대기, 동일 위치·자원의 경합, 데이터 race, 순환 자원 대기**를 구별해야 한다. 작업 DAG가 비순환이어도 실행 시점의 자원 대기 그래프에 cycle이 생길 가능성은 별개이며, 작업 정지나 블록 배치 실패만으로 deadlock을 판정할 수 없다. 특히 Minecraft 공간 간섭은 현재로서는 가능한 설명이지 동기화 오류로 확인된 사실이 아니다.
+
+다음에는 선행 간선이 실제로 있는 소규모 construction case를 찾고 `created/ready/assigned/start/end`와 agent 상태, 동일 좌표·자원 접근, 실패 feedback을 함께 기록한다. 그 결과로 지연이 그래프 폭·critical path, Controller 배정, actor 실행, 공유 자원 중 어디에서 발생하는지 구분한다. 방법론을 탐색할 때는 일반 CPU ready-queue 정책뿐 아니라 **precedence-constrained DAG scheduling과 자원 제약 작업 할당**을 우선 검토한다. OS와의 연결은 이 계측으로 확인할 구조적 유사성이지, 현재 관찰만으로 특정 OS 알고리즘의 적용 가능성이나 congestion·deadlock 발생을 확정한 결론은 아니다.

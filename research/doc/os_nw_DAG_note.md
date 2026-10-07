@@ -18,11 +18,20 @@
 | Agent Controller | scheduler/dispatcher | 할당 결정, 우선순위, 큐 길이, 재할당 |
 | actor와 그 actor가 배치된 장치 | processor/server | 연산·메모리 용량, 처리율, 현재 부하 |
 | 할당 대기 중인 하위 작업 | ready queue | 대기 시간, 큐 길이, starvation |
-| Minecraft 응답·LLM 응답·선행 작업을 기다리는 actor | blocked process | 대기 원인과 대기 시간 |
+| Minecraft·LLM 응답을 기다리는 actor | blocked process와의 유추 | 응답 대기 원인과 시간 |
+| 선행 작업이 끝나기를 기다리는 하위 작업 | 아직 ready가 아닌 job | 선행관계 해제 시각과 dependency wait |
 | State Manager와 작업 그래프 | 공유 상태·공유 자원 | 동시 갱신, lock 대기, 상태 일관성 |
 | 작업 재할당 | migration/context switch | 상태·문맥 전달 비용, 이미 수행한 작업의 손실 |
 
 이 대응은 VillagerAgent를 OS로 그대로 간주한다는 뜻이 아니다. 스케줄링 문제를 명확히 표현하고 비교군을 설계하기 위한 분석 틀이다.
+
+### 2.1 작업 DAG와 ready queue는 서로 다른 층위다
+
+Decomposer의 작업 DAG에서 노드는 하위 작업, 간선은 선행관계다. Controller가 실제로 배정할 수 있는 것은 그중 선행조건을 충족한 **ready task 집합**이다. 따라서 `목표 → 작업 DAG 생성 → ready task 선택 → agent 배정 → actor 실행·피드백`으로 나누어 보아야 한다. CPU ready queue를 선형 리스트로 표현하는 수업 요약은 실행 가능 작업을 보관하는 한 방식의 설명이지, 원래의 선행관계가 선형이라는 뜻이나 반드시 FIFO로 배정한다는 뜻이 아니다.
+
+멀티프로세싱·멀티프로그래밍·멀티스레드는 여러 실행 단위가 어떻게 진행되는지 설명하지만, 자연어 목표를 어떤 크기의 하위 작업으로 **분할하고 다시 결과를 통합할지**는 별도의 계획 문제다. 스케줄링 개념은 DAG가 주어진 뒤의 대기·선택·실행 지연에 더 직접적으로 대응한다. 이 때문에 CPU 스케줄링만이 아니라 *선행관계가 있는 작업의 DAG scheduling*과 *자원 제약 작업 할당*을 후속 이론 후보로 본다.
+
+현재 코드에서 `Graph.edge`는 선행 노드의 쌍이며 수치 가중치는 없다. Controller는 predecessor와 가용 candidate를 확인해 배정한다. 기존 단일-agent 검증에서는 생성된 작업 간선이 없어 DAG 의존성에 따른 병렬성 제한을 시험한 것으로 볼 수 없다. 향후 선행 간선이 실제로 있는 소규모 건설 과제에서 `created/ready/assigned/start/end`, agent 상태, 동일 좌표·자원 접근과 실패 feedback을 함께 기록해야 그래프 폭·critical path, 할당 지연, actor 실행 간섭을 분리할 수 있다.
 
 ## 3. 가장 직접적으로 가져올 개념
 
@@ -167,6 +176,8 @@ Task Decomposer는 작업 생산자, actor들은 소비자로 볼 수 있다. �
 
 복합 Minecraft 작업에서 actor가 여러 자원이나 다른 actor의 결과를 서로 기다리면 교착 상태와 유사한 상황이 생길 수 있다. 수업 자료의 네 조건인 상호 배제, 비선점, 점유와 대기, 원형 대기는 진단 체크리스트로 쓸 수 있다.
 
+여기서 **작업 DAG의 선행 간선과 실행 중 자원 대기 간선은 다르다.** 작업 DAG가 비순환이어도 공유 자원에 대한 대기가 순환할 가능성은 별개다. 반대로 작업 정지, 선행 작업 실패, 동일 좌표에서의 블록 배치 간섭만으로 deadlock이나 race condition을 판정할 수 없다. 현재의 Minecraft 공간 간섭은 가능한 설명이지 확인된 동기화 오류는 아니다.
+
 - actor A가 자원 X를 점유한 채 B의 결과를 기다림
 - actor B는 자원 Y를 점유한 채 A의 결과를 기다림
 - Controller가 순환 의존성을 발견하지 못해 진행이 멈춤
@@ -245,6 +256,7 @@ critical-path 작업이 높은 우선순위를 가져도, 그 작업이 필요�
 
 | 자료 | 참고 개념 | 이 문서에서의 사용 |
 |---|---|---|
+| [`컴시기말.pdf`](./컴시기말.pdf), pp. 1, 3–7 | 실행 단위, ready queue, 스케줄링, 동기화, 교착상태의 요약 | DAG와 ready 집합의 구분을 검토하는 출발점; 분해·할당 알고리즘의 직접 근거는 아님 |
 | `2_학습자료/CS_06_Scheduling_handout.pdf`, pp. 1–6 | 고·중·저수준 스케줄링, 과부하 완충, scheduling 목표와 평가 지표, CPU/I/O-bound, 선점·비선점, FCFS/convoy effect, SJF·starvation·aging, HRN, Round Robin, SRT, priority, multilevel feedback queue | 할당 목표, 비교 정책, overload/backpressure, 재할당 비용 |
 | `2_학습자료/CS_05_Process_handout.pdf`, pp. 5–6 | process state, ready/blocked, context switching | actor 상태와 대기 원인 분리 |
 | `2_학습자료/중간/CS_03_Parallelism.pdf`, pp. 1–9 | pipeline, dependency, stall, throughput와 speedup | 작업 DAG, critical path, actor 증가의 비선형 효과 |

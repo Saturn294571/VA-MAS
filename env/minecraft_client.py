@@ -986,6 +986,7 @@ class Agent():
                 api_base=Agent.base_url,
                 thinking_level=Agent.thinking_level,
                 temperature=0,
+                actor_name=self.name,
             )
         elif "glm" in self.model:
             from zhipu import ChatZhipuAI
@@ -1092,6 +1093,7 @@ class Agent():
                 api_base=Agent.base_url,
                 thinking_level=Agent.thinking_level,
                 temperature=0,
+                actor_name=self.name,
             )
         elif "glm" in self.model:
             from zhipu import ChatZhipuAI
