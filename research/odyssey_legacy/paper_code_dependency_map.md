@@ -16,7 +16,7 @@
 이 문서의 항목은 다음 네 종류로 읽는다.
 
 | 종류 | 의미 | 예시 |
-|---|---|---|
+| --- | --- | --- |
 | 논문 기능 | 결과에서 반드시 보존해야 하는 알고리즘 동작 | semantic retrieval, planner–actor–critic |
 | 구현 선택 | 논문 기능을 실제 코드로 제공하는 수단 | Chroma, LangChain, HTTP service |
 | 재현성 관리 | 같은 조건을 다시 사용했음을 보이는 장치 | checksum, lockfile, manifest |
@@ -52,7 +52,7 @@ goal + constraints + environment observation
 ## 3. 기능 대응표
 
 | 논문 기능 | 보존할 contract | 공개 코드 | 주 dependency/model | 현재 판정 |
-|---|---|---|---|---|
+| --- | --- | --- | --- | --- |
 | Minecraft environment와 observation | 실행 전후 inventory, status, voxel, entity, chest, chat와 error를 구조화 event로 반환 | `odyssey/env/bridge.py`, `odyssey/env/mineflayer/index.js`, `lib/observation/*` | Mineflayer, minecraft-data, Express, requests | executor 회귀 완료. `/pause`는 명시적 legacy adapter로 격리했고 modernized 기본은 no-op |
 | Primitive skill | compositional skill이 호출할 안정된 저수준 동작 제공 | `skill_library/skill/primitive`, `odyssey/control_primitives`, `control_primitives_context/mineflayer.js` | Mineflayer, pathfinder, tool, collectblock | [40개 working manifest](../../manifest/odyssey_primitive_40.json) 작성. 정책 fixture 6/6 통과, 나머지 명백 오류와 runtime 검증은 남음 |
 | Compositional skill | 이름, code, description을 가진 재사용 skill이며 다른 skill을 재귀 호출 가능 | `skill_library/skill/compositional`, `skill/skills.json` | JavaScript executor와 primitive corpus | 183 code·description·JSON entry 동기화와 파일별 checksum 완료 |
@@ -73,7 +73,7 @@ goal + constraints + environment observation
 연구 목적은 모든 재현 실험이 논문과 같은 skill 집합을 사용하고, 코드나 description 변화로 검색 결과가 조용히 달라지지 않게 하는 것이다. 현재 작업 트리의 정적 집계는 다음과 같다.
 
 | 자산 | 수량 | 확인 결과 |
-|---|---:|---|
+| --- | ---: | --- |
 | `skill/primitive/*.js` | 22 | 논문에서 Odyssey가 추가했다고 명시한 14 operational + 8 spatial과 이름까지 일치 |
 | `odyssey/control_primitives/*.js` | 11 | Voyager control과 Odyssey 실행 helper가 섞인 파일 수이며 primitive 수와 일대일 대응하지 않음 |
 | `skill/compositional/*.js` | 183 | `skills.json` key와 전부 일치하고 file별 SHA-256 기록 |
@@ -103,7 +103,7 @@ Odyssey/requirements-retrieval-modern.lock.txt sha256 3fd810577c7f2bb40116bca05f
 Odyssey 부록 C.1은 `Voyager의 operational 18 + Odyssey가 추가한 operational 14 + spatial 8 = 40`으로 정의한다. 공개 파일과 이름을 대조하면 Odyssey가 추가한 22개는 완전히 대응한다.
 
 | 분류 | 논문 수 | 현재 source 대응 |
-|---|---:|---|
+| --- | ---: | --- |
 | Odyssey operational | 14 | `plantSeeds`, `feedAnimals`, `killAnimal`, `killMonsters`, `cookFood`, `eatFood`, `equipArmor`, `equipSword`, `equipPickaxe`, `equipAxe`, `equipHoe`, `equipShovel`, `getLogsCount`, `getPlanksCount` |
 | Odyssey spatial | 8 | `findSuitablePosition`, `checkAdjacentBlock`, `checkBlockAbove`, `checkBlocksAround`, `checkNearbyBlock`, `checkNoAdjacentBlock`, `goto`, `getAnimal` |
 
@@ -172,7 +172,7 @@ HTTP timeout, non-2xx, disconnected bot, JavaScript evaluation error와 critic v
 한 기능의 구형 package가 다른 논문 기능까지 실행 불가능하게 만들지 않도록 설치·실행 환경을 역할별로 나눈다.
 
 | Profile | 필수 기능 | 주 dependency | 조치 방향 |
-|---|---|---|---|
+| --- | --- | --- | --- |
 | `executor` | Minecraft 연결, skill 실행, observation | Node 20.13.1, Mineflayer 4.25.0, minecraft-data, pathfinder, tool, collectblock, Express; Python requests/psutil | 현재 lock과 E0 회귀 유지. `/pause` 없는 경로를 기본화 |
 | `controller-core` | planner/actor/critic orchestration, message/schema 처리 | Python, requests, coloredlogs | retrieval·launcher·provider SDK의 eager import 제거 |
 | `retrieval` | description embedding, index persist/reload, top-k | sentence-transformers, Chroma, LangChain adapter | 신뢰받는 구현 유지. 지원 조합 고정 후 corpus 회귀 |
@@ -187,7 +187,7 @@ HTTP timeout, non-2xx, disconnected bot, JavaScript evaluation error와 critic v
 논문 기능에 필요한 package와 특정 실행 방식에만 필요한 package를 구분해, 무거움을 이유로 기능을 삭제하거나 선택 기능을 core에 강제하지 않게 한다. 이 표는 제거 결정이 아니라 현재 source의 직접 사용 여부를 기준으로 한 1차 분류다.
 
 | Dependency | 코드상 역할 | 1차 분류 |
-|---|---|---|
+| --- | --- | --- |
 | `langchain`, `langchain_community` | legacy message type, embedding adapter, Chroma wrapper | 기준 tag에서 보존. modern profile은 `langchain-core` message와 공식 partner wrapper로 분리 |
 | `langchain-huggingface`, `langchain-chroma` | modern embedding·Chroma adapter | clean-install과 기능 회귀를 통과한 기본 retrieval profile |
 | legacy `chromadb==0.3.29` / modern `1.3.5` | skill/QA vector persistence와 search | 새 index 생성·reload 통과. 구 index migration 대신 고정 corpus에서 재생성 |

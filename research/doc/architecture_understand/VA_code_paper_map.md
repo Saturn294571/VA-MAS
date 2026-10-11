@@ -39,7 +39,7 @@ State Manager <─────────────────────�
 ## 2. 논문–코드 기능 대응표
 
 | 논문의 기능 단위 | 논문에서의 책임 | 공개 코드의 주 대응 | 대응 정도 |
-|---|---|---|---|
+| --- | --- | --- | --- |
 | Task Decomposer (§3.2) | 목표를 subtask로 분해하고 선후·병렬 관계를 DAG로 표현하며 실행 결과에 따라 갱신 | [`TaskManager`](../../../pipeline/task_manager.py), [`Task`·`Graph`](../../../type_define/graph.py), [`task_prompt.py`](../../../pipeline/task_prompt.py) | 대체로 직접 대응. 코드 이름은 Decomposer가 아니라 TaskManager |
 | Agent Controller (§3.3) | 실행 가능한 node를 찾고 환경·agent 상태를 근거로 agent를 선택해 병렬 실행 | [`GlobalController`](../../../pipeline/controller.py), [`controller_prompt.py`](../../../pipeline/controller_prompt.py) | 기능상 대응하지만 분해기와 배정 책임이 일부 겹침 |
 | State Manager (§3.4) | agent별 상태·행동 이력과 전역 환경 상태를 유지하고 task-relevant state를 제공 | [`DataManager`](../../../pipeline/data_manager.py), [`data_prompt.py`](../../../pipeline/data_prompt.py) | 직접 대응. 저장 상태의 최신성에는 구현상 제한이 있음 |
@@ -58,7 +58,7 @@ Base Agent       ≈ BaseAgent + Minecraft Agent bridge
 
 ## 3. Task Decomposer: 목표를 실행 가능한 DAG로 바꾸는 기능
 
-### 논문의 설명
+### TD : 논문의 설명
 
 Task Decomposer는 고수준 목표를 작은 subtask node로 나누고, 먼저 끝나야 하는 작업 사이에 directed edge를 둔다. 직접 dependency가 없는 node는 병렬로 실행할 수 있다. 논문에서 각 node는 대략 다음 정보의 묶음이다.
 
@@ -73,7 +73,7 @@ Fj: 실행 feedback
 
 분해기는 전체 원본 data를 모든 agent에게 넘기지 않고 `retrieval paths`를 함께 생성해 node에 필요한 일부 data를 연결한다. 실행 결과가 누적되면 현재 환경, agent 상태, 이전 성공·실패를 참고해 다음 subtask 집합을 다시 만든다.
 
-### 코드의 대응
+### TD : 코드의 대응
 
 `TaskManager`가 LLM으로 `description`, `milestones`, `retrieval paths`, `required subtasks`, agent 관련 필드를 생성한다. 이를 `Task` 객체로 변환하고 `Graph`가 node·edge와 실행 상태를 보관한다. 논문 Appendix A.1의 graph 변환과 마찬가지로 명시된 predecessor는 edge가 되고, predecessor가 생략된 후속 node는 앞 node의 predecessor 관계를 공유하도록 처리된다.
 
@@ -85,7 +85,7 @@ Task Decomposer는 단순한 자연어 task splitter가 아니다. VillagerAgent
 
 ## 4. Agent Controller: ready task를 선택하고 agent에 배정하는 기능
 
-### 논문의 설명
+### AC : 논문의 설명
 
 Agent Controller는 먼저 미실행 node 중 predecessor가 없거나 모든 predecessor가 성공한 node를 `Nready`로 선택한다. 그 다음 환경 상태 `E`, ready node, agent 집합과 agent 상태를 LLM에 제공해 `(agent, subtask)` 쌍을 생성하고, 서로 독립적인 배정을 동시에 실행한다.
 
@@ -94,7 +94,7 @@ Agent Controller는 먼저 미실행 node 중 predecessor가 없거나 모든 pr
 1. **구조적 허용 여부:** dependency가 해소되어 지금 실행 가능한가?
 2. **적합성 판단:** 가용 agent 중 누가 위치·보유 item·경험·능력 면에서 적합한가?
 
-### 코드의 대응
+### AC : 코드의 대응
 
 `GlobalController`는 graph에서 열린 task를 받고, 미완료 predecessor가 없는 task만 available하게 만든다. busy agent를 제외하고 task가 요구한 인원수와 candidate list를 만족하는지 검사한 뒤, Controller LLM에 환경, agent 상태, task 목록과 free agent 목록을 제공한다. LLM의 JSON 배정은 다시 deterministic validation을 거쳐 존재하지 않는 task, busy agent, candidate가 아닌 agent를 제거한다.
 
@@ -116,7 +116,7 @@ DAG dependency·busy 여부·candidate·필요 인원으로 실행 가능 집합
 
 ## 5. State Manager: 관측을 공유 가능한 상태로 바꾸는 기능
 
-### 논문의 설명
+### SM : 논문의 설명
 
 State Manager는 두 종류의 상태를 유지한다.
 
@@ -125,7 +125,7 @@ State Manager는 두 종류의 상태를 유지한다.
 
 각 agent의 local observation을 합쳐 global environment state `I`를 만들고, 고수준 task와 관련된 정보만 LLM으로 요약해 `E`로 제공한다. 이 상태는 Decomposer의 재계획, Controller의 배정, Base Agent의 실행에 공통 근거가 된다.
 
-### 코드의 대응
+### SM : 코드의 대응
 
 `DataManager`는 Mineflayer 측 status를 받아 세 형태로 정리한다.
 
@@ -141,11 +141,11 @@ State Manager는 두 종류의 상태를 유지한다.
 
 ## 6. Base Agent: 배정된 작업을 Minecraft 행동으로 실행하는 기능
 
-### 논문의 설명
+### BA : 논문의 설명
 
 Base Agent는 현재 subtask, milestone, 관련 task data, 환경 상태, 자신의 상태와 action history를 prompt에 넣고 ReAct 방식으로 action과 observation을 반복한다. 실행이 끝나면 action history와 milestone을 다시 비교하여 task 완료 여부와 요약 feedback을 생성한다. 이 feedback이 DAG node의 상태 갱신과 다음 계획의 근거가 된다.
 
-### 코드의 대응
+### BA : 코드의 대응
 
 `BaseAgent`는 Controller가 전달한 `Task`를 받아 실행 prompt를 만들고 `VillagerBench.step()`을 호출한다. 그 아래의 `Agent`는 LangChain의 structured-chat ReAct agent로 Mineflayer tool을 선택한다. 각 tool은 agent별 local HTTP service에 요청되고, service가 실제 Mineflayer bot으로 이동·채집·제작·배치·전달 등의 행동을 수행한다.
 

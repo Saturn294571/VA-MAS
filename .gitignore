@@ -1,27 +1,39 @@
+# 실행 로그
 logs/*
+# 에이전트 실행 이력
 data/history/*
+# Python 바이트코드 캐시
 */__pycache__/*
+# OS 메타데이터
 */.DS_Store
+# 기존 시험 파일 패턴; 정상 테스트도 제외할 수 있음
 *test*
+# 일회성 자동 생성 스크립트
 atom_generator.py
+# 개인 IDE 설정
 .idea
 
+# 외부 API 인증 정보
 openai_api_key.txt
 API_KEY_LIST
 google_api_key.txt
 zhipu_api_key.txt
 
+# 공급자별 호출 로그
 data/openai.logs
 data/google.logs
 data/zhipu.logs
 
+# 실행 중 갱신되는 에이전트·환경 상태
 data/agent.json
 data/experience.json
 data/env.json
 data/history.json
+# 추론·평가 기록
 data/llm_inference.json
 data/url_prefix.json
 data/score.json
+# 실행별 생성 메타데이터
 data/blueprint_description.json
 data/tokens.json
 data/recipe_hint.json
@@ -29,36 +41,63 @@ data/action_log.json
 data/map_description.json
 data/map.json
 data/vllm.logs
+# 생성 그래프 이미지·문서
 img/*graph.png
 img/*graph.md
+# UI 실행 로그
 ui/logs/*
 
+# 실행별 결과물
 result/*
+# 결과 분석 스크립트는 보존
 !result/*.py
+# 가공된 결과물
 processed_result/*
+# 압축 산출물
 *.zip
 
+# 로컬 런타임 캐시
 .cache/*.cache
 .cache/*.json
 
+# 기존 Node 잠금파일 제외 정책; 재현성 검토 시 주의
 package-lock.json
+# 개인 VS Code 설정
 /.vscode/*
+# 실험별 로컬 설정; 광범위한 패턴이므로 주의
 *config*.json
 
+# 루트 Python 바이트코드 캐시
 /__pycache__/*
+# 임시·자동 생성 작업물
 tmp/*
 auto_task/*
 
+# 강화학습 실행 산출물
 rl_env/ckpt/*
 rl_env/replay_buffer/*
 rl_env/tasks/*
 
+# Node 설치 의존성
 node_modules/*
+# 일회성 생성·필터링 결과
 100_meta.json
 filtered_tasks.json
 
+# Data Manager 압축 산출물
 dm_info_compression/*
 
+# 환경 생성 산출물
 env_gen/*
 
+# 로컬 Python 환경
 venv/*
+
+# 논문 제출 패키지에서 지시 문서를 제외할 때만 활성화; 연구 단계에서는 추적
+# /AGENTS.md
+# /pipeline/AGENTS.md
+# /type_define/AGENTS.md
+# /env/AGENTS.md
+# /model/AGENTS.md
+# /data/AGENTS.md
+# /research/AGENTS.md
