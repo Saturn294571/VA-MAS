@@ -6,8 +6,8 @@
 
 근거는 다음 두 자료다.
 
-- 논문: [VillagerAgent.pdf](../paper/VillagerAgent.pdf), 특히 §2, §3.1–3.5와 Appendix A.1·G
-- 코드: `/home/pluto2479/Documents/MineSkynet-villager-agent`, 현재 `integration/villager-control-plane`의 commit `7edb5c6`
+- 논문: [VillagerAgent 논문](../../paper/VillagerAgent.pdf), 특히 §2, §3.1–3.5와 Appendix A.1·G
+- 코드: 이 저장소의 VillagerAgent 구현. 아래 대응은 당시 `integration/villager-control-plane`의 commit `7edb5c6`을 기준으로 작성했다.
 
 논문의 설계 설명은 **의도된 아키텍처**, 코드는 **현재 공개 구현에서 확인되는 동작**으로 구분한다. 아직 end-to-end 실행으로 검증하지 않은 코드 경로는 정적 분석 결과로만 다룬다.
 
@@ -40,12 +40,12 @@ State Manager <─────────────────────�
 
 | 논문의 기능 단위 | 논문에서의 책임 | 공개 코드의 주 대응 | 대응 정도 |
 |---|---|---|---|
-| Task Decomposer (§3.2) | 목표를 subtask로 분해하고 선후·병렬 관계를 DAG로 표현하며 실행 결과에 따라 갱신 | [`TaskManager`](../../../MineSkynet-villager-agent/pipeline/task_manager.py), [`Task`·`Graph`](../../../MineSkynet-villager-agent/type_define/graph.py), [`task_prompt.py`](../../../MineSkynet-villager-agent/pipeline/task_prompt.py) | 대체로 직접 대응. 코드 이름은 Decomposer가 아니라 TaskManager |
-| Agent Controller (§3.3) | 실행 가능한 node를 찾고 환경·agent 상태를 근거로 agent를 선택해 병렬 실행 | [`GlobalController`](../../../MineSkynet-villager-agent/pipeline/controller.py), [`controller_prompt.py`](../../../MineSkynet-villager-agent/pipeline/controller_prompt.py) | 기능상 대응하지만 분해기와 배정 책임이 일부 겹침 |
-| State Manager (§3.4) | agent별 상태·행동 이력과 전역 환경 상태를 유지하고 task-relevant state를 제공 | [`DataManager`](../../../MineSkynet-villager-agent/pipeline/data_manager.py), [`data_prompt.py`](../../../MineSkynet-villager-agent/pipeline/data_prompt.py) | 직접 대응. 저장 상태의 최신성에는 구현상 제한이 있음 |
-| Base Agent (§3.5) | 배정된 subtask를 ReAct로 실행하고 action history를 이용해 완료 여부를 self-reflect | [`BaseAgent`](../../../MineSkynet-villager-agent/pipeline/agent.py), [`agent_prompt.py`](../../../MineSkynet-villager-agent/pipeline/agent_prompt.py) | 직접 대응 |
-| Minecraft action bridge | 논문의 Base Agent가 사용할 행동 API와 관측 제공 | [`Agent`](../../../MineSkynet-villager-agent/env/minecraft_client.py), [`minecraft_server.py`](../../../MineSkynet-villager-agent/env/minecraft_server.py) | 논문에서는 독립 core component가 아니라 Base Agent·환경의 실행 계층 |
-| VillagerBench (§2) | construction, farm-to-table, escape room scenario와 자동 평가 제공 | [`VillagerBench`](../../../MineSkynet-villager-agent/env/env.py)와 `env/*_judger.py` | framework 외부의 benchmark·runtime 계층 |
+| Task Decomposer (§3.2) | 목표를 subtask로 분해하고 선후·병렬 관계를 DAG로 표현하며 실행 결과에 따라 갱신 | [`TaskManager`](../../../pipeline/task_manager.py), [`Task`·`Graph`](../../../type_define/graph.py), [`task_prompt.py`](../../../pipeline/task_prompt.py) | 대체로 직접 대응. 코드 이름은 Decomposer가 아니라 TaskManager |
+| Agent Controller (§3.3) | 실행 가능한 node를 찾고 환경·agent 상태를 근거로 agent를 선택해 병렬 실행 | [`GlobalController`](../../../pipeline/controller.py), [`controller_prompt.py`](../../../pipeline/controller_prompt.py) | 기능상 대응하지만 분해기와 배정 책임이 일부 겹침 |
+| State Manager (§3.4) | agent별 상태·행동 이력과 전역 환경 상태를 유지하고 task-relevant state를 제공 | [`DataManager`](../../../pipeline/data_manager.py), [`data_prompt.py`](../../../pipeline/data_prompt.py) | 직접 대응. 저장 상태의 최신성에는 구현상 제한이 있음 |
+| Base Agent (§3.5) | 배정된 subtask를 ReAct로 실행하고 action history를 이용해 완료 여부를 self-reflect | [`BaseAgent`](../../../pipeline/agent.py), [`agent_prompt.py`](../../../pipeline/agent_prompt.py) | 직접 대응 |
+| Minecraft action bridge | 논문의 Base Agent가 사용할 행동 API와 관측 제공 | [`Agent`](../../../env/minecraft_client.py), [`minecraft_server.py`](../../../env/minecraft_server.py) | 논문에서는 독립 core component가 아니라 Base Agent·환경의 실행 계층 |
+| VillagerBench (§2) | construction, farm-to-table, escape room scenario와 자동 평가 제공 | [`VillagerBench`](../../../env/env.py)와 `env/*_judger.py` | framework 외부의 benchmark·runtime 계층 |
 
 논문의 이름과 코드 class 이름이 다른 핵심 대응은 다음과 같다.
 

@@ -1,6 +1,6 @@
 # MineSkynet 프로젝트 작업 보고 로그
 
-> 문서 역할: 구현 과정에서 이미 보고한 내용과 당시의 완료·미완료 판단을 시간순으로 누적한다. 과거 보고는 후속 결과로 덮어쓰거나 삭제하지 않고, 새 검증 결과는 별도 보고 항목으로 추가한다. 목표와 다음 순서는 마일스톤에서 관리하고, 교수님께 제시할 내용은 `labmeeting_temp.md`에서 선별·편집한다. 각 단위 테스크당 보고 템플릿/예시는 아래와 같다. 불렛포인트(-)/번호 목록(1))/체크포인트([X])/표(|---|---|---|) 등은 이해를 돕기 위해 적절히 사용한다. 반드시 /home/pluto2479/Documents/MineSkynet/research/AGENTS.md 의 원칙을 준수하라.
+> 문서 역할: 구현 과정에서 이미 보고한 내용과 당시의 완료·미완료 판단을 시간순으로 누적한다. 과거 보고는 후속 결과로 덮어쓰거나 삭제하지 않고, 새 검증 결과는 별도 보고 항목으로 추가한다. 목표와 다음 순서는 [마일스톤](../blueprint_milestone/milestone_index.md)에서 관리하고, 교수님께 제시할 내용은 [랩미팅 초안](labmeeting_temp.md)에서 선별·편집한다. 각 단위 작업의 보고에는 목록·체크리스트·표를 필요에 따라 사용하며, [연구 원칙](../../AGENTS.md)을 따른다. 아래의 오래된 외부 저장소·미보존 파일 링크는 당시 근거의 표기로 남아 있을 수 있으며, 현재 파일의 존재나 현재 연구 조건을 뜻하지 않는다.
 
 ```markdown
 # MineSkynet 프로젝트 작업 보고 로그
@@ -110,10 +110,10 @@ E0~E4 gate는 dependency 결함을 격리하는 데 유용했지만, 각 gate의
 
 ### 8. 근거 파일
 
-- [원본 환경·의존성 진단 문서](MVP_report.md)
-- [E0 원시 증거](E0_test_evidence_2026-08-20.md)
-- [현대화 마일스톤](milestone_goal/modernization_milestone.md)
-- [논문–코드–dependency 대응표](paper_code_dependency_map.md)
+- [원본 환경·의존성 진단 문서](MVP_report.md) (링크 유실 : 현 디렉토리에서 찾을 수 없음)
+- [E0 원시 증거](E0_test_evidence_2026-08-20.md) (링크 유실 : 현 디렉토리에서 찾을 수 없음)
+- [현대화 마일스톤](milestone_goal/modernization_milestone.md) (링크 유실 : 현 디렉토리에서 찾을 수 없음)
+- [논문–코드–dependency 대응표](../architecture_understand/paper_code_dependency_map.md)
 
 ## 2026-08-20 — E0 Minecraft execution layer 검사 증거
 
@@ -230,11 +230,11 @@ Minecraft execution layer는 clean install, raw action success와 대표 failure
 
 ### 9. 근거 파일
 
-- [원본 E0 검사 증거](E0_test_evidence_2026-08-20.md)
-- [E0 regression script](../../../MineSkynet-odyssey/Odyssey/scripts/e0_regression.py)
-- [E0 server profile](../../../MineSkynet-odyssey/Odyssey/server-profile/e0/ops.json)
-- [환경·dependency 진단 기록](MVP_report.md)
-- [현대화 마일스톤](milestone_goal/modernization_milestone.md)
+- [원본 E0 검사 증거](E0_test_evidence_2026-08-20.md) (링크 유실 : 현 디렉토리에서 찾을 수 없음)
+- [E0 regression script](../../../MineSkynet-odyssey/Odyssey/scripts/e0_regression.py) (링크 유실 : 현 디렉토리에서 찾을 수 없음)
+- [E0 server profile](../../../MineSkynet-odyssey/Odyssey/server-profile/e0/ops.json) (링크 유실 : 현 디렉토리에서 찾을 수 없음)
+- [환경·dependency 진단 기록](MVP_report.md) (링크 유실 : 현 디렉토리에서 찾을 수 없음)
+- [현대화 마일스톤](milestone_goal/modernization_milestone.md) (링크 유실 : 현 디렉토리에서 찾을 수 없음)
 
 ---
 
@@ -311,11 +311,11 @@ PASS: goto state-based online fixture
 
 ### 7. 근거 파일
 
-- [Primitive 40 working manifest](../manifest/odyssey_primitive_40.json)
-- [Offline primitive fixture](../../../MineSkynet-odyssey/Odyssey/scripts/primitive_runtime_offline.js)
-- [Online primitive fixture](../../../MineSkynet-odyssey/Odyssey/scripts/primitive_runtime_online.py)
-- [실행 절차](../README.md#37-primitive-runtime-online-fixture)
-- [현대화 마일스톤](milestone_goal/modernization_milestone.md)
+- [Primitive 40 working manifest](../../manifest/odyssey_primitive_40.json)
+- [Offline primitive fixture](../../../MineSkynet-odyssey/Odyssey/scripts/primitive_runtime_offline.js) (링크 유실 : 현 디렉토리에서 찾을 수 없음)
+- [Online primitive fixture](../../../MineSkynet-odyssey/Odyssey/scripts/primitive_runtime_online.py) (링크 유실 : 현 디렉토리에서 찾을 수 없음)
+- [실행 절차](../README.md#37-primitive-runtime-online-fixture) (링크 유실 : 현 디렉토리에서 찾을 수 없음)
+- [현대화 마일스톤](milestone_goal/modernization_milestone.md) (링크 유실 : 현 디렉토리에서 찾을 수 없음)
 
 ---
 
@@ -421,11 +421,11 @@ Odyssey/.venv/bin/python Odyssey/scripts/semantic_encoder_fixture.py --run-model
 
 ### 6. 당시 근거 파일
 
-- [Semantic encoder manifest](../manifest/odyssey_semantic_encoder.json)
-- [Semantic encoder fixture](../../../MineSkynet-odyssey/Odyssey/scripts/semantic_encoder_fixture.py)
-- [공통 retrieval encoder 설정](../../../MineSkynet-odyssey/Odyssey/odyssey/retrieval_embedding.py)
-- [현대화 마일스톤](milestone_goal/modernization_milestone.md)
-- [논문–코드–dependency 대응표](paper_code_dependency_map.md)
+- [Semantic encoder manifest](../../manifest/odyssey_semantic_encoder.json)
+- [Semantic encoder fixture](../../../MineSkynet-odyssey/Odyssey/scripts/semantic_encoder_fixture.py) (링크 유실 : 현 디렉토리에서 찾을 수 없음)
+- [공통 retrieval encoder 설정](../../../MineSkynet-odyssey/Odyssey/odyssey/retrieval_embedding.py) (링크 유실 : 현 디렉토리에서 찾을 수 없음)
+- [현대화 마일스톤](milestone_goal/modernization_milestone.md) (링크 유실 : 현 디렉토리에서 찾을 수 없음)
+- [논문–코드–dependency 대응표](../architecture_understand/paper_code_dependency_map.md)
 
 ---
 
@@ -491,13 +491,13 @@ Odyssey/.venv/bin/python Odyssey/scripts/semantic_retrieval_smoke.py
 
 ### 6. 추가 보고 근거 파일
 
-- [Semantic encoder manifest](../manifest/odyssey_semantic_encoder.json)
-- [Semantic encoder fixture](../../../MineSkynet-odyssey/Odyssey/scripts/semantic_encoder_fixture.py)
-- [Semantic retrieval smoke fixture](../../../MineSkynet-odyssey/Odyssey/scripts/semantic_retrieval_smoke.py)
-- [Semantic retrieval 실행 로그](../log/semantic_retrieval_smoke_2026-08-27.json)
-- [공통 retrieval encoder 설정](../../../MineSkynet-odyssey/Odyssey/odyssey/retrieval_embedding.py)
-- [현대화 마일스톤](milestone_goal/modernization_milestone.md)
-- [논문–코드–dependency 대응표](paper_code_dependency_map.md)
+- [Semantic encoder manifest](../../manifest/odyssey_semantic_encoder.json)
+- [Semantic encoder fixture](../../../MineSkynet-odyssey/Odyssey/scripts/semantic_encoder_fixture.py) (링크 유실 : 현 디렉토리에서 찾을 수 없음)
+- [Semantic retrieval smoke fixture](../../../MineSkynet-odyssey/Odyssey/scripts/semantic_retrieval_smoke.py) (링크 유실 : 현 디렉토리에서 찾을 수 없음)
+- [Semantic retrieval 실행 로그](../../log/semantic_retrieval_smoke_2026-08-27.json)
+- [공통 retrieval encoder 설정](../../../MineSkynet-odyssey/Odyssey/odyssey/retrieval_embedding.py) (링크 유실 : 현 디렉토리에서 찾을 수 없음)
+- [현대화 마일스톤](milestone_goal/modernization_milestone.md) (링크 유실 : 현 디렉토리에서 찾을 수 없음)
+- [논문–코드–dependency 대응표](../architecture_understand/paper_code_dependency_map.md)
 
 ---
 
@@ -572,12 +572,12 @@ cd ~/Documents/MineSkynet
 Odyssey/.venv/bin/python Odyssey/scripts/semantic_retrieval_fixture.py
 ```
 
-- [Retrieval profile fixture](../../../MineSkynet-odyssey/Odyssey/scripts/semantic_retrieval_fixture.py)
-- [Top-5·top-10 후보와 reload 실행 로그](../log/semantic_retrieval_profiles_2026-08-27.json)
-- [Semantic encoder·retrieval manifest](../manifest/odyssey_semantic_encoder.json)
-- [공통 retrieval profile 설정](../../../MineSkynet-odyssey/Odyssey/odyssey/retrieval_embedding.py)
-- [현대화 마일스톤](milestone_goal/modernization_milestone.md)
-- [논문–코드–dependency 대응표](paper_code_dependency_map.md)
+- [Retrieval profile fixture](../../../MineSkynet-odyssey/Odyssey/scripts/semantic_retrieval_fixture.py) (링크 유실 : 현 디렉토리에서 찾을 수 없음)
+- [Top-5·top-10 후보와 reload 실행 로그](../../log/semantic_retrieval_profiles_2026-08-27.json)
+- [Semantic encoder·retrieval manifest](../../manifest/odyssey_semantic_encoder.json)
+- [공통 retrieval profile 설정](../../../MineSkynet-odyssey/Odyssey/odyssey/retrieval_embedding.py) (링크 유실 : 현 디렉토리에서 찾을 수 없음)
+- [현대화 마일스톤](milestone_goal/modernization_milestone.md) (링크 유실 : 현 디렉토리에서 찾을 수 없음)
+- [논문–코드–dependency 대응표](../architecture_understand/paper_code_dependency_map.md)
 
 ---
 
@@ -702,10 +702,10 @@ Legacy와 modern의 top-10 후보 순서는 네 query에서 모두 같았지만 
 
 ### 7. 근거와 공식 참고자료
 
-- [Migration 실행 로그](../log/retrieval_wrapper_migration_2026-08-27.json)
-- [Modern retrieval lock](../../../MineSkynet-odyssey/Odyssey/requirements-retrieval-modern.lock.txt)
-- [공통 wrapper profile factory](../../../MineSkynet-odyssey/Odyssey/odyssey/retrieval_embedding.py)
-- [Retrieval comparison fixture](../../../MineSkynet-odyssey/Odyssey/scripts/semantic_retrieval_fixture.py)
+- [Migration 실행 로그](../../log/retrieval_wrapper_migration_2026-08-27.json)
+- [Modern retrieval lock](../../../MineSkynet-odyssey/Odyssey/requirements-retrieval-modern.lock.txt) (링크 유실 : 현 디렉토리에서 찾을 수 없음)
+- [공통 wrapper profile factory](../../../MineSkynet-odyssey/Odyssey/odyssey/retrieval_embedding.py) (링크 유실 : 현 디렉토리에서 찾을 수 없음)
+- [Retrieval comparison fixture](../../../MineSkynet-odyssey/Odyssey/scripts/semantic_retrieval_fixture.py) (링크 유실 : 현 디렉토리에서 찾을 수 없음)
 - [LangChain HuggingFace encode contract](https://reference.langchain.com/python/langchain-huggingface/embeddings/huggingface/HuggingFaceEmbeddings/encode_kwargs)
 - [LangChain Chroma API](https://reference.langchain.com/python/langchain-chroma/vectorstores/Chroma)
 - [Chroma persistence migration](https://docs.trychroma.com/docs/overview/migration)
@@ -788,12 +788,12 @@ Odyssey의 primitive 40개는 183개 compositional skill이 Minecraft 상태를 
 
 ### 5. 근거 파일
 
-- [Primitive 40 working manifest](../manifest/odyssey_primitive_40.json)
-- [현재 primitive offline fixture](../../../MineSkynet-odyssey/Odyssey/scripts/primitive_runtime_offline.js)
-- [현재 primitive online fixture](../../../MineSkynet-odyssey/Odyssey/scripts/primitive_runtime_online.py)
-- [Odyssey 추가 primitive source](../../../MineSkynet-odyssey/Odyssey/skill_library/skill/primitive)
-- [Voyager 상속 control primitive source](../../../MineSkynet-odyssey/Odyssey/odyssey/control_primitives)
-- [Modern Mineflayer bridge](../../../MineSkynet-odyssey/Odyssey/odyssey/env/mineflayer/index.js)
+- [Primitive 40 working manifest](../../manifest/odyssey_primitive_40.json)
+- [현재 primitive offline fixture](../../../MineSkynet-odyssey/Odyssey/scripts/primitive_runtime_offline.js) (링크 유실 : 현 디렉토리에서 찾을 수 없음)
+- [현재 primitive online fixture](../../../MineSkynet-odyssey/Odyssey/scripts/primitive_runtime_online.py) (링크 유실 : 현 디렉토리에서 찾을 수 없음)
+- [Odyssey 추가 primitive source](../../../MineSkynet-odyssey/Odyssey/skill_library/skill/primitive) (링크 유실 : 현 디렉토리에서 찾을 수 없음)
+- [Voyager 상속 control primitive source](../../../MineSkynet-odyssey/Odyssey/odyssey/control_primitives) (링크 유실 : 현 디렉토리에서 찾을 수 없음)
+- [Modern Mineflayer bridge](../../../MineSkynet-odyssey/Odyssey/odyssey/env/mineflayer/index.js) (링크 유실 : 현 디렉토리에서 찾을 수 없음)
 
 ---
 
@@ -859,11 +859,11 @@ RCON playerGameType after denial: 0 (survival)
 
 ### 5. 근거 파일
 
-- [Primitive policy offline fixture](../../../MineSkynet-odyssey/Odyssey/scripts/primitive_policy_offline.js)
-- [Primitive 40 working manifest](../manifest/odyssey_primitive_40.json)
-- [Host-only RCON harness](../../../MineSkynet-odyssey/Odyssey/scripts/host_admin_rcon.py)
-- [Modern server operator profile](../../../MineSkynet-odyssey/Odyssey/server-profile/modernized/ops.json)
-- [실행·검증 절차](../README.md#32-터미널-1-minecraft-서버-실행)
+- [Primitive policy offline fixture](../../../MineSkynet-odyssey/Odyssey/scripts/primitive_policy_offline.js) (링크 유실 : 현 디렉토리에서 찾을 수 없음)
+- [Primitive 40 working manifest](../../manifest/odyssey_primitive_40.json)
+- [Host-only RCON harness](../../../MineSkynet-odyssey/Odyssey/scripts/host_admin_rcon.py) (링크 유실 : 현 디렉토리에서 찾을 수 없음)
+- [Modern server operator profile](../../../MineSkynet-odyssey/Odyssey/server-profile/modernized/ops.json) (링크 유실 : 현 디렉토리에서 찾을 수 없음)
+- [실행·검증 절차](../README.md#32-터미널-1-minecraft-서버-실행) (링크 유실 : 현 디렉토리에서 찾을 수 없음)
 
 ---
 
@@ -957,7 +957,7 @@ Observation space 자체의 확장과 기존 관측·이력을 활용한 판단 
 
 ### 5. 문서 반영
 
-[블루프린트 §7 실험설계](./MineSkynet_blueprint.md#7-실험-설계)를 잠정 전제와 실험 후보 중심으로 재작성했다. 연관된 연구 질문·가설, 물리 배치, 능동 skill 갱신 범위와 성공 판정의 충돌 문장도 함께 정리했다. 세부 비교 조건과 통제 항목은 블루프린트에서 관리한다.
+당시 블루프린트 §7 실험설계(현재 문서에서는 재편됨)를 잠정 전제와 실험 후보 중심으로 재작성했다. 연관된 연구 질문·가설, 물리 배치, 능동 skill 갱신 범위와 성공 판정의 충돌 문장도 함께 정리했다. 당시 세부 비교 조건과 통제 항목은 블루프린트에서 관리했다.
 
 연구자의 후속 지적에 따라 임의 교체했던 연구 질문을 원문으로 복원했다. 주 비교는 다중 agent 환경에서 방법론 간 비교이며, 단일·다중 agent 비교는 보조 후보로 둔다. 기존 연구 질문과 lifelong 구상을 미정·선택 사항으로 축소한 표현, code repair 담당을 특정 계층으로 확정한 표현도 바로잡았다. 이번 주의 “개선 입증” 목표는 기존 연구 질문을 구체적인 실험으로 연결하기 위한 목표이며 연구 질문 변경을 승인한 것으로 해석하지 않는다.
 
@@ -1189,13 +1189,13 @@ Batch benchmark는 `config.py`가 생성하는 configuration과 `start_with_conf
 
 ### 6. 근거 파일
 
-- [VillagerAgent 실행 안내](../../../MineSkynet-villager-agent/README.md)
-- [최소 QuickStart](../../../MineSkynet-villager-agent/tiny_start.py)
-- [Batch 실행 경로](../../../MineSkynet-villager-agent/start_with_config.py)
-- [Benchmark configuration 생성](../../../MineSkynet-villager-agent/config.py)
-- [Python dependency 선언](../../../MineSkynet-villager-agent/requirements.txt)
-- [Node dependency 선언](../../../MineSkynet-villager-agent/package.json)
-- [현재 Dockerfile](../../../MineSkynet-villager-agent/Dockerfile)
+- [VillagerAgent 실행 안내](../../../README.md)
+- [최소 QuickStart](../../../tiny_start.py)
+- [Batch 실행 경로](../../../start_with_config.py)
+- [Benchmark configuration 생성](../../../config.py)
+- [Python dependency 선언](../../../requirements.txt)
+- [Node dependency 선언](../../../package.json)
+- [현재 Dockerfile](../../../Dockerfile)
 
 ---
 
@@ -1386,7 +1386,7 @@ Google dependency에서는 Python 3.10 지원이 2026-10-04 이후 새 `google.a
 
 #### 2.2 OS/network 개념
 
-[`os_network_idea.md`](./os_network_idea.md)를 바탕으로 scheduling의 completion·makespan·throughput·waiting time·utilization, FCFS와 convoy effect, SJF/SRT의 실행시간 예측, ready/running/blocked 상태, 재할당 비용, task DAG의 width와 critical path, queue backlog·service capacity·backpressure, synchronization과 resource competition을 발표용으로 압축한다.
+당시 `os_network_idea.md`(현재 작업트리에는 없음)를 바탕으로 scheduling의 completion·makespan·throughput·waiting time·utilization, FCFS와 convoy effect, SJF/SRT의 실행시간 예측, ready/running/blocked 상태, 재할당 비용, task DAG의 width와 critical path, queue backlog·service capacity·backpressure, synchronization과 resource competition을 발표용으로 압축한다.
 
 여기서 congestion은 패킷 계층의 TCP 혼잡이 아니라 우선 **작업 생성·도착 속도가 Decomposer, Controller 또는 actor의 처리 능력을 넘어 queue가 누적되는 현상**으로 제한해 사용한다.
 
@@ -1408,7 +1408,7 @@ VillagerAgent의 *Agent Collaboration and Performance Dynamics*와 Table 6은 ag
 4. actor 수 증가가 action 충돌, retry, state staleness 또는 LLM/API 대기를 늘렸는가?
 5. 성능 저하가 control-plane 정책 문제인지 고정 workload의 정상적인 병렬성 포화인지 구별할 수 있는가?
 
-세부 계측과 원인 분리 실험은 [`agent_efficiency_blueprint.md`](./agent_efficiency_blueprint.md)에 임시 초안으로 유지한다. 이번 랩미팅에서는 benchmark 실행으로 직접 확인된 사실과 아직 추측인 항목을 나누어 보고한다.
+세부 계측과 원인 분리 실험은 [`agent_efficiency_blueprint.md`](../idea_hypothesis/agent_efficiency_blueprint.md)에 임시 초안으로 유지한다. 이번 랩미팅에서는 benchmark 실행으로 직접 확인된 사실과 아직 추측인 항목을 나누어 보고한다.
 
 ### 4. 산출물과 완료 기준
 
@@ -1758,7 +1758,7 @@ VillagerAgent Table 6에서 Task64의 agent 수별 완료율·효율은 4인까�
 
 ## 2026-10-07 — 작업 DAG와 OS 개념의 연결 범위
 
-VillagerAgent의 과업 할당 병목을 이해하기 위해 [`컴시기말.pdf`](./컴시기말.pdf)의 멀티프로세싱·멀티프로그래밍·멀티스레드, 스케줄링, 동기화, 교착상태 요약을 검토했다. 이 자료는 실행 가능한 작업의 대기·배정과 공유 자원 문제를 구분하는 출발점이지만, 요약본만으로 자연어 목표의 분해, DAG 생성, 다중 에이전트 배정 알고리즘을 설명하거나 특정 실패의 원인을 입증할 수는 없다. 필요한 세부 이론은 이후 OS 교재 및 DAG scheduling 자료에서 해당 부분만 보완한다.
+VillagerAgent의 과업 할당 병목을 이해하기 위해 [`컴시기말.pdf`](../idea_hypothesis/컴시기말.pdf)의 멀티프로세싱·멀티프로그래밍·멀티스레드, 스케줄링, 동기화, 교착상태 요약을 검토했다. 이 자료는 실행 가능한 작업의 대기·배정과 공유 자원 문제를 구분하는 출발점이지만, 요약본만으로 자연어 목표의 분해, DAG 생성, 다중 에이전트 배정 알고리즘을 설명하거나 특정 실패의 원인을 입증할 수는 없다. 필요한 세부 이론은 이후 OS 교재 및 DAG scheduling 자료에서 해당 부분만 보완한다.
 
 핵심 구분은 **작업 그래프와 ready queue의 역할**이다. DAG의 노드는 subtask, 간선은 선행관계이고, Controller가 배정할 수 있는 것은 선행조건을 만족한 ready task의 부분집합이다. 따라서 `목표 → Decomposer의 작업 DAG → ready task 집합 → Controller의 agent 배정 → actor 실행·피드백`으로 보아야 한다. CPU의 ready queue가 선형 리스트로 표현되더라도 이는 실행 가능 작업을 보관하는 구현 형태이지 원래 작업 사이의 의존관계나 FIFO 정책을 뜻하지 않는다. 멀티프로세싱·멀티스레드는 병렬 실행 방식에 관한 설명으로, 목표를 subtask로 어떻게 분할·통합할지는 별도 문제다. 현재 공개 코드의 `Graph.edge`는 선행 노드 쌍이며 수치 가중치는 없고, Controller는 predecessor와 가용 candidate를 확인한 후 배정한다. 기존 단일-agent 검증 로그에는 간선이 없어 DAG 의존성의 병목을 관찰한 증거도 아니다.
 

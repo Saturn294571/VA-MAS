@@ -1,8 +1,7 @@
 # Agent 수 증가에 따른 협업 효율 병목 조사 초안
 
-> 상태: 임시 연구 초안  
-> 범위: VillagerAgent의 Task Decomposer–Agent Controller 정책과 실행 경로에서 나타나는 확장성 병목 진단  
-> 주의: 이 문서는 이기종 하드웨어 인지 할당 연구를 대체하지 않는다. 동일 조건의 agent 수 증가만을 먼저 분석하는 병렬 조사 축이다.
+> 상태: 원인 가설과 계측 항목을 넓게 모은 초기 초안. 현재 확정 방향과 완료 기준은 [연구 청사진](../blueprint_milestone/MineSkynet_blueprint.md)과 [마일스톤](../blueprint_milestone/milestone_index.md)을 따른다.  
+> 범위: VillagerAgent의 Task Decomposer–Agent Controller 정책과 실행 경로에서 나타나는 확장성 병목 진단. 아래 실험·정책은 확정 절차가 아니라 후보이다.
 
 ## 1. 출발점
 
@@ -45,17 +44,9 @@ Table 6의 Construction 결과는 다음과 같다.
 
 여기서 목표는 당장 새로운 Decomposer나 Controller를 제안하는 것이 아니라, 먼저 수확체감이 생기는 위치와 조건을 식별하는 것이다.
 
-## 3. 주 연구축과의 관계
+## 3. 현재 연구 방향과의 관계
 
-| 구분 | 이기종 과제 할당 | Agent 효율 병목 조사 |
-|---|---|---|
-| 핵심 독립변수 | 장치별 연산·메모리 능력과 부하 | 동일 조건에서의 agent 수 |
-| 중심 질문 | 어떤 actor가 어떤 task를 맡아야 하는가? | 몇 actor까지 유효하며 어디서 확장이 막히는가? |
-| 우선 통제 | task, model, agent 수 | model, hardware, task, world 조건 |
-| 주요 비교 | capability-aware 대 capability-blind | agent 수와 control-plane 조건별 scaling |
-| 교차 가능성 | 적정 병렬도 안에서 이기종 actor를 배정 | 필요 이상 actor를 활성화하지 않는 admission 정책 |
-
-두 축을 초기부터 한 실험에 섞으면 agent 수 효과와 장치 이질성 효과를 구분하기 어렵다. 병목 조사에서는 우선 동일 model·동일 hardware 조건을 사용한다. 이후에 확인된 유효 병렬도와 병목 지점은 이기종 scheduler가 몇 actor를 활성화하고 어디에 배정할지 결정하는 근거가 될 수 있다.
+이 초안은 지금의 주 연구 질문인 **agent 수 증가에 따른 효율 저하 원인**을 넓게 탐색한 자료다. 우선 같은 task·world·model·hardware 조건에서 agent 수와 단계별 대기·실패를 비교한다. 이기종 장치별 배정은 현재 독립변수가 아니며, 이 문서의 정책 후보를 모두 구현할 필요도 없다. 측정된 병목에 직접 해당하는 후보만 후속 대조 실험으로 올린다.
 
 ## 4. 분석 단위와 용어
 
@@ -358,5 +349,5 @@ utility(N, w)
 - VillagerAgent, §4.2 *Agent Collaboration and Performance Dynamics*: agent 추가에 따라 성능이 중간 수준까지 향상된 뒤 resource competition과 LLM management complexity 때문에 감소할 수 있다고 해석하지만 정확한 최적 범위는 제시하지 않는다.
 - VillagerAgent, Appendix Table 6: Construction Task0·Task64의 1/2/4/8-agent 완료율, 효율, balance 결과.
 - VillagerAgent, Figure 11 *Agent Controller Prompt Template*: 현재 상태, task 요구, 경험과 능력을 근거로 free agent를 task에 배정하도록 요구한다.
-- [`villager_agent_architecture.md`](./villager_agent_architecture.md): 논문 모듈과 공개 코드의 대응, Decomposer–Controller 책임 중첩, 현재 Controller 경로의 제약과 검증 과제.
-- [`os_network_idea.md`](./os_network_idea.md): scheduling, queueing, critical path, backpressure와 동기화 개념을 현재 연구 질문에 대응한 선행 메모.
+- [VA 논문–코드 지도](../architecture_understand/VA_code_paper_map.md): 논문 모듈과 공개 코드의 대응, Decomposer–Controller 책임 중첩, 현재 Controller 경로의 제약과 검증 과제.
+- [OS·DAG 개념 메모](os_nw_DAG_note.md): scheduling, queueing, critical path, backpressure와 동기화 개념을 정리한 탐색 메모.

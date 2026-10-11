@@ -13,10 +13,10 @@ import argparse
 import json
 import logging
 import os
-from pathlib import Path
 import re
 import tempfile
 from dataclasses import dataclass
+from pathlib import Path
 
 import networkx as nx
 from openai import OpenAI
@@ -30,7 +30,6 @@ from model.google_model import (
 from pipeline.controller import GlobalController
 from pipeline.task_manager import TaskManager
 from type_define.graph import Graph
-
 
 REPO = Path(__file__).resolve().parent
 GOAL = (
