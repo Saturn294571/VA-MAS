@@ -27,6 +27,7 @@ from model.google_model import (
     create_google_chat_model,
     load_google_api_keys,
 )
+from env.action_policy import complete_legacy_trace, guarded_tools, make_action_context
 
 env = os.environ.copy()
 env["PYTHONIOENCODING"] = "utf-8"
@@ -1006,12 +1007,20 @@ class Agent():
         
         if recommended_tools == []:
             recommended_tools = self.all_tools if len(tools) == 0 else tools
+        context = make_action_context(
+            self.name,
+            {"id": "direct-step", "description": "direct actor request", "milestones": []},
+            {"source": "direct-step"},
+            recommended_tools,
+            1,
+        )
+        contract_events = []
         llmhandler = LLMHandler()
 
         while max_try_turn > 0:
             random.shuffle(self.tools)
             agent = initialize_agent(
-                tools=recommended_tools,
+                tools=guarded_tools(context, recommended_tools, contract_events),
                 llm=self.llm,
                 verbose=Agent.verbose,
                 agent=AgentType.STRUCTURED_CHAT_ZERO_SHOT_REACT_DESCRIPTION,
@@ -1046,8 +1055,12 @@ class Agent():
                 max_try_turn -= 1
         response = filter_emoji_from_dict(response)
         if response is None:
+            failure = "The task execute failed."
             return (None, None), {"input": f"Your name is {self.name}.\n{instruction}", "action_list": [],
-                                                "final_answer": "The task execute failed.", "chain_input": llmhandler.chain_input, "seralized_input": llmhandler.seralized_input}
+                                 "final_answer": failure, "chain_input": llmhandler.chain_input,
+                                 "seralized_input": llmhandler.seralized_input,
+                                 "action_contract": complete_legacy_trace(context, [], contract_events,
+                                                                          failure, recommended_tools)}
         # print(response)
         # print(dumps(response, pretty=True),type(dumps(response, pretty=True)))
         action_list = []
@@ -1056,8 +1069,12 @@ class Agent():
             action_list.append({"action": step[0]["kwargs"], "feedback": step[1]})
         
         if len(action_list) == 0:
+            failure = "The task execute failed."
             return (None, None), {"input": f"Your name is {self.name}.\n{instruction}", "action_list": [],
-                                                "final_answer": "The task execute failed.", "chain_input": llmhandler.chain_input, "seralized_input": llmhandler.seralized_input}
+                                 "final_answer": failure, "chain_input": llmhandler.chain_input,
+                                 "seralized_input": llmhandler.seralized_input,
+                                 "action_contract": complete_legacy_trace(context, [], contract_events,
+                                                                          failure, recommended_tools)}
     
 
         final_answer = response["output"]
@@ -1067,9 +1084,13 @@ class Agent():
             json.dump({"input": response["input"], "action_list": action_list, "final_answer": final_answer}, f,
                       indent=4)
         action = action_list[0]
-        return (action['action'], action["feedback"]), {"input": response["input"], "action_list": action_list, "final_answer": final_answer}
+        return (action['action'], action["feedback"]), {
+            "input": response["input"], "action_list": action_list, "final_answer": final_answer,
+            "action_contract": complete_legacy_trace(context, action_list, contract_events,
+                                                     final_answer, recommended_tools),
+        }
 
-    def run(self, instruction: str, player_name_list=[], max_try_turn=10, max_iterations=5, tools=[]):
+    def run(self, instruction: str, player_name_list=[], max_try_turn=10, max_iterations=5, tools=[], action_context=None):
         # print(f"Your name is {self.name}. \n{instruction}")
         assert len(self.api_key_list) > 0, "Please set the api_key_list in Agent class."
         # dynamic api key
@@ -1103,12 +1124,26 @@ class Agent():
             self.llm = ChatOpenAI(model=self.model, temperature=0,  max_tokens=256, openai_api_key=random.choice(Agent.api_key_list), base_url=Agent.base_url)
         else:
             raise NotImplementedError(f"Model {self.model} not implemented.")
+        available_tools = self.tools if len(tools) == 0 else tools
+        actor_input = action_context or {
+            "task": {"id": "direct-run", "description": "direct actor request", "milestones": []},
+            "observation": {"source": "direct-run"},
+        }
+        context = make_action_context(
+            self.name,
+            actor_input["task"],
+            actor_input["observation"],
+            available_tools,
+            max_iterations,
+        )
+        contract_events = []
         # This part defines the agent type; the agent at the initialization position is not used
         while max_try_turn > 0:
             random.shuffle(self.tools)
+            executable_tools = guarded_tools(context, available_tools, contract_events)
             llmhandler = LLMHandler()
             agent = initialize_agent(
-                tools=self.tools if len(tools) == 0 else tools,
+                tools=executable_tools,
                 llm=self.llm,
                 verbose=Agent.verbose,
                 agent=AgentType.STRUCTURED_CHAT_ZERO_SHOT_REACT_DESCRIPTION,
@@ -1171,8 +1206,11 @@ class Agent():
                 max_try_turn -= 1
         response = filter_emoji_from_dict(response)
         if max_try_turn < 0 or response is None:
-            return "The task execute failed.", {"input": f"Your name is {self.name}.\n{instruction}", "action_list": [],
-                                                "final_answer": "The task execute failed.", "chain_input": llmhandler.chain_input, "seralized_input": llmhandler.seralized_input}
+            failure = "The task execute failed."
+            return failure, {"input": f"Your name is {self.name}.\n{instruction}", "action_list": [],
+                             "final_answer": failure, "chain_input": llmhandler.chain_input,
+                             "seralized_input": llmhandler.seralized_input,
+                             "action_contract": complete_legacy_trace(context, [], contract_events, failure, available_tools)}
         # print(response)
         # print(dumps(response, pretty=True),type(dumps(response, pretty=True)))
         action_list = []
@@ -1194,8 +1232,11 @@ class Agent():
         with open(f"data/history/{hash(response['input'])}.json", "w", encoding='utf-8') as f:
             json.dump({"input": response["input"], "action_list": action_list, "final_answer": final_answer}, f,
                       indent=4)
-        self.update_history({"input": response["input"], "action_list": action_list, "final_answer": final_answer})
-        return final_answer, {"input": response["input"], "action_list": action_list, "final_answer": final_answer}
+        detail = {"input": response["input"], "action_list": action_list, "final_answer": final_answer,
+                  "action_contract": complete_legacy_trace(context, action_list, contract_events,
+                                                           final_answer, available_tools)}
+        self.update_history(detail)
+        return final_answer, detail
 
     def chat(self, msg, async_tag=False):
         url = Agent.get_url_prefix()[self.name] + "/post_chat"

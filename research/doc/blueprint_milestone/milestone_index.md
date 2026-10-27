@@ -1,30 +1,34 @@
 # MineSkynet 마일스톤 인덱스
 
-최종 갱신: 2026-10-12
+최종 갱신: 2026-10-24
 
 ## 현재 목표
 
-VillagerAgent(VA)에서 **에이전트 수 증가에 따른 협업 효율 저하**가 어디에서 생기는지 확인한다. 먼저 Task Decomposer(TD)의 계획 폭·후보 제약, Agent Controller(AC)의 배정·판단 비용, Base Agent의 실행 간섭, 공통 서비스 지연을 분리해 측정한다. 원인을 확인하기 전에는 새 할당 정책이나 Odyssey 이식을 연구의 필수 단계로 삼지 않는다. 질문과 판정 틀은 [연구 청사진](MineSkynet_blueprint.md)에 있다.
+VillagerAgent(VA)를 기준으로 **생성형 계획을 유지하면서 제한된 행동 선택(BA)과 작업 배정(AC)을 경량 결정 정책으로 분리했을 때의 성능–지연–비용 trade-off**를 검증한다. BA 행동 선택을 먼저 단일 축으로 비교하고, AC 배정은 실제 선택 기회와 비교 가능성이 확인된 뒤 진행한다. [연구 청사진](MineSkynet_blueprint.md)에 질문·2×2 조건·해석 경계가 있다.
 
-## 지금까지와 다음 결정
+이전의 *에이전트 수 증가에 따른 모든 효율 저하 원인 규명*은 현재 완료 조건이 아니다. S1-MAS·Jev-LiteMAS는 역할 분리의 선행 아이디어이며, 특정 JEV 모델의 채택이나 VA에서의 성능 이득은 아직 검증하지 않았다.
 
-| 단계 | 상태 | 근거와 남은 판단 |
+## 확인된 기반과 다음 결정
+
+| 단계 | 상태 | 확인된 범위와 다음 판단 |
 | --- | --- | --- |
-| VA 원본 실행 경로 | 완료 | 원본 `controller.py`로 Task0·1인, Task6·3인 등 작은 Construction 경로 확인 |
-| Task20·3인 환경/actor 안정화 | 해당 실행 완료 | 평지·Peaceful, 개선 후 12/12 블록·`complete task`; [점수](../../../result/gemini-3.8-flash_construction_task20_3p_controller_llm_flat_20261007_trial2_feedback1024/score.json). scaling 원인 판정은 아님 |
-| Task25 TD/AC 분리 프로브 | 첫 라운드 완료 | [프로브](../../../result/td_ac_probe_task25_20261007/probe.json): 3 node·0 edge, 9/15블록 계획, 세 배정 유효. actor 실행·전체 완료는 검사하지 않음 |
-| Task50 계획·배정 프로브 | 다음 과제 | 실제 간선·후보·ready 폭을 확인. 구조상 선행관계 가능성은 아직 가설 |
-| 병목의 재현·귀속 | 미완료 | 선행/후보/실행 간섭이 드러나는 조건 선정, 시간·상태 로그 계측, 반복 비교 |
-| 제한된 개선안 비교 | 보류 | 원인 근거가 확보된 뒤 한 요소만 변경 |
+| VA 기준 실행 경로 | 확인 | 원본 `controller.py`로 작은 Construction 경로를 실행했다. Task20·3인 개선 후 한 실행은 [12/12 블록과 완료 점수](../../../result/gemini-3.8-flash_construction_task20_3p_controller_llm_flat_20261007_trial2_feedback1024/score.json)를 남겼다. 새 정책 비교·원 논문 수치의 완전 재현은 아님 |
+| TD/AC 첫 라운드 프로브 | 확인 | [Task25 프로브](../../../result/td_ac_probe_task25_20261007/probe.json)는 합성 snapshot·actor 0회 조건에서 3 node·0 edge·유효 배정 3개를 확인했다. 과제 완주·배정 병목 증거는 아님 |
+| BA 행동 결정 경계·계측 | **다음 단계** | 현행 ReAct 도구 호출의 관측, 후보·인자, 선택, 실행, 피드백을 구별하고 공통 정책 계약이 가능한지 판단 |
+| G/G 기준선 → G/D 단일 축 | 미시작 | 같은 과제·월드·TD/AC/SM·도구 제약으로 생성형/결정형 행동 정책의 효과 비교 |
+| AC 배정 기회 → D/G 단일 축 | 보류 | 직접 배정과 LLM 배정의 빈도·의미 있는 대안부터 확인. 현재 Controller 주도 배정 경로는 Construction·동질 agent로 제한됨 |
+| D/D 결합과 benchmark 확장 | 보류 | 단일 축의 안정된 결과가 나온 뒤 결합, 다른 과제와 인원 수의 일반화 검토 |
 
-다음 결정점은 **Task50 또는 더 적절한 소규모 과제의 TD/AC 출력이 실제 선행제약·후보 병목을 제공하는가**이다. 없다면 미관찰로 보고하고 시나리오를 다시 고른다. 있다면 actor 포함 실행으로 넘어가 단계별 대기와 실패를 확인한다. Task64와 agent 수별 scaling은 그 뒤의 비교 후보이지 즉시 대규모 실행할 의무가 아니다.
+**다음 결정점:** BA/Minecraft Agent의 다음 행동을 *같은 관측과 같은 유효 행동·인자 집합* 아래에서 두 정책이 선택하게 만들 수 있는가? 가능하다면 쉬운 VillagerBench 과제에서 G/G 경로를 먼저 재현한다. 불가능하다면 후보·인자 생성에 필요한 생성형 기능을 분리하거나 교체 범위를 더 좁힌다. 결정을 기록하기 전부터 JEV 모델 구현이나 2×2 전체 실행을 약속하지 않는다.
+
+Benchmark는 기존 Construction을 기준 과제로 유지하고, Farm-to-Table을 주력 **후보**로 선별한다. Escape Room은 동기화·시간 의존성의 후속 후보이며, 에이전트 수에 따라 생성 과제가 바뀌는지 확인해야 한다. 외부 benchmark 이식과 게임 내 에이전트 이질성은 별도 확장 판단이다.
 
 ## 문서 경계
 
-- [연구 마일스톤](research_milestone.md): 단계별 완료 조건과 실험 기록 항목
-- [재현·환경 작업의 범위](modernization_milestone.md): 현 VA 실행 기반과 보류한 Odyssey 현대화의 구분
-- [VA 논문–코드 지도](../architecture_understand/VA_code_paper_map.md): TD·AC·State Manager·Base Agent 역할
-- [랩미팅 초안](../human_report/labmeeting_temp.md): 다음 보고에서 선택·편집할 논점
-- [리포트 로그](../human_report/report_log.md): 날짜별 실행·진단 경과와 원시 근거
+- [연구 청사진](MineSkynet_blueprint.md): 현재 질문, 정책 경계, 실험·판정 원칙
+- [연구 마일스톤](research_milestone.md): 단계별 통과·중단 기준과 보존할 근거
+- [VA 논문–코드 지도](../architecture_understand/VA_code_paper_map.md): TD·AC·SM·BA의 실제 책임
+- [랩미팅 초안](../human_report/labmeeting_temp.md): 발표용 논점과 아직 정리 중인 제안
+- [리포트 로그](../human_report/report_log.md): 날짜별 실행·진단 및 원시 증거
 
-과거 연구 방향은 Git 기록에 있으며 이 인덱스의 현재 완료 조건으로 유지하지 않는다.
+과거 질문과 당시 판단은 Git 기록·리포트 로그에 남긴다. 이전 완료 사례를 새 정책의 성공으로 소급하지 않는다.

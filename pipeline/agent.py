@@ -350,25 +350,36 @@ class BaseAgent:
         else:
             agent_prompt = agent_prompt_w_emoji
 
+        env_snapshot = self.data_manager.query_env_with_task(task.description, agent_query=True)
+        agent_state = self.data_manager.query_history(self.name)
+        other_agents = self.other_agents()
+        relevant_data = smart_truncate(task.content, max_length=4096)
+        action_context = {
+            "task": {"id": task.id, "description": task.description,
+                     "milestones": task.milestones},
+            "observation": {"environment": env_snapshot, "agent_state": agent_state,
+                            "other_agents": other_agents, "relevant_data": relevant_data},
+        }
+
         if len(task._agent) == 1:
             task_str = format_string(agent_prompt, {"task_description": task.description, "milestone_description": task.milestones, 
-                                    "env": self.data_manager.query_env_with_task(task.description, agent_query=True),
-                                    "relevant_data": smart_truncate(task.content, max_length=4096), # TODO: change to "relevant_data": task.content
+                                    "env": env_snapshot,
+                                    "relevant_data": relevant_data, # TODO: change to "relevant_data": task.content
                                     "agent_name": self.name,
-                                    "agent_state": self.data_manager.query_history(self.name),
+                                    "agent_state": agent_state,
                                     "personality": personality,
                                     "example": example,
                                     "traits": traits,
-                                    "other_agents": self.other_agents(),
+                                    "other_agents": other_agents,
                                     "agent_action_list": self.history_action_list,
                                     "minecraft_knowledge_card": minecraft_knowledge_card})
         else:
             task_str = format_string(agent_cooper_prompt, {"task_description": task.description, "milestone_description": task.milestones, 
-                                    "env": self.data_manager.query_env_with_task(task.description, agent_query=True),
-                                    "relevant_data": smart_truncate(task.content, max_length=4096), # TODO: change to "relevant_data": task.content
+                                    "env": env_snapshot,
+                                    "relevant_data": relevant_data, # TODO: change to "relevant_data": task.content
                                     "agent_name": self.name,
-                                    "agent_state": self.data_manager.query_history(self.name),
-                                    "other_agents": self.other_agents(),
+                                    "agent_state": agent_state,
+                                    "other_agents": other_agents,
                                     "agent_action_list": self.history_action_list,
                                     "team_members": ", ".join(task._agent),
                                     "minecraft_knowledge_card": minecraft_knowledge_card})
@@ -376,8 +387,8 @@ class BaseAgent:
         self.logger.debug("="*20 + " Agent Step " + "="*20)
         self.logger.info(f"{self.name} try task:\n {task.description}")
         self.logger.info(f"{self.history_action_list}")
-        self.logger.info(f"other agents: {self.other_agents()}")
-        self.logger.info(f"{self.name} status:\n {self.data_manager.query_history(self.name)}")
+        self.logger.info(f"other agents: {other_agents}")
+        self.logger.info(f"{self.name} status:\n {agent_state}")
         max_retry = 3
         
         instruction = format_string(task_prompt, {
@@ -394,7 +405,7 @@ class BaseAgent:
         self.IDLE = False
         while max_retry > 0:
             try:
-                feedback, detail = self.env.step(self.name, task_str)
+                feedback, detail = self.env.step(self.name, task_str, action_context=action_context)
                 break
             except KeyboardInterrupt:
                 self.logger.info("KeyboardInterrupt")
