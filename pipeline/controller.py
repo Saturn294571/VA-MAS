@@ -1,9 +1,9 @@
+from pipeline.controller_execution import ControllerExecution
 import sys
 import os
-import threading
 import time
 import traceback
-from concurrent.futures import ThreadPoolExecutor, as_completed
+from concurrent.futures import as_completed
 
 from model.init_model import init_language_model
 
@@ -20,7 +20,7 @@ from tracer import current_tracer, safe_emit, traced
 from pipeline.assignment_policy import graph_error, revalidate_controller_assignments, validate_controller_proposal
 
 
-class GlobalController:
+class GlobalController(ControllerExecution):
     '''
     Global Controller is the main controller of the system, it is responsible for assigning tasks to agents and monitoring the progress of the tasks.
     
@@ -70,21 +70,8 @@ class GlobalController:
         self.llm = llm
         self.llm.role_name = "GlobalController"
 
-        self.task_list = [Task]  # task published by tm
-        self.query_interval = 1  # time interval between two query
+        self._initialize_execution(max_workers)
 
-        # init lock
-        self.task_list_lock = threading.Lock()
-        self.result_list_lock = threading.Lock()
-
-        self.task_queue = []
-        self.result_queue = []
-
-        # init thread pool
-        self.executor = ThreadPoolExecutor(max_workers=max_workers)  # adjust max_workers to control the number of threads
-
-        # max task time for each task in seconds
-        self.max_task_time = 60 * 30 # 30 minutes
 
         self.max_execution_time = 60 * 20  # 20 minutes
         self.stop_after_fail_times = 3  # stop after 3 times of failure
@@ -93,7 +80,6 @@ class GlobalController:
         # task done signal
         self.one_task_done = True
 
-        self.shutdown = False
 
         # start time
         self.start_time = time.time()
@@ -223,63 +209,27 @@ class GlobalController:
         return extract_info(response)
 
     # worker
-    def worker(self):
-        while True:
-            if self.shutdown or time.time() - self.start_time > self.max_execution_time or self.stop_after_fail_times <= 0 or self.stop_after_success_times <= 0:
-                self.logger.info("Worker thread is shutting down ...")
-                break
+    def _worker_should_stop(self) -> bool:
+        if (self.shutdown or time.time() - self.start_time > self.max_execution_time
+                or self.stop_after_fail_times <= 0 or self.stop_after_success_times <= 0):
+            self.logger.info("Worker thread is shutting down ...")
+            return True
+        return False
 
-            if self.env.agents_ping()["status"] == False:
-                self.logger.info("Some agents are offline!")
-                self.shutdown = True
-                self.max_execution_time = 0
-                break
+    def _worker_offline(self) -> None:
+        super()._worker_offline()
+        self.max_execution_time = 0
 
-            with self.task_list_lock:
-                if not self.task_queue:
-                    time.sleep(self.query_interval)
-                    continue
-                while self.task_queue:
-                    agent_task = self.task_queue.pop(0)
-                    agent, task = agent_task
+    def _stop_before_submit(self) -> bool:
+        return self._worker_should_stop()
 
-                    if self.shutdown or time.time() - self.start_time > self.max_execution_time or self.stop_after_fail_times <= 0 or self.stop_after_success_times <= 0:
-                        self.logger.info("Worker thread is shutting down ...")
-                        break
+    def _task_submitted(self, agent) -> None:
+        pass
 
-                    future = self.executor.submit(agent.step, task)
-                    with self.result_list_lock:
-                        self.result_queue.append((future, agent, task, time.time()))
-                    time.sleep(self.query_interval)
+    def _after_submit(self) -> None:
+        time.sleep(self.query_interval)
 
-    def set_task_status(self, task_id, status, feedback):
-        safe_emit(current_tracer(), "AC", "task.status", task_id=str(task_id), result_status=str(status))
-        for task in self.task_manager.graph.vertex:
-            if task.id == task_id:
-                if task.status == Task.success and status == Task.failure:
-                    if status == Task.failure:
-                        task.status = status
-                else:
-                    task.status = status
 
-                if type(feedback) == dict and type(task.reflect) == None:
-                    task.reflect = feedback
-                elif type(feedback) == str and type(task.reflect) == None:
-                    task.reflect = feedback
-                elif type(feedback) == dict and type(task.reflect) == dict:
-                    task.reflect = [task.reflect, feedback]
-                elif type(feedback) == str and type(task.reflect) == str:
-                    task.reflect = [task.reflect, feedback]
-                elif type(task.reflect) == list:
-                    task.reflect.append(feedback)
-                else:
-                    task.reflect = feedback
-                break
-    def get_task_by_id(self, task_id):
-        for task in self.task_manager.graph.vertex:
-            if task.id == task_id:
-                return task
-        return None
     
     def update_feedback(self, task, agent, detail):
         if isinstance(detail, dict) and detail.get("policy_abort"):
@@ -536,28 +486,4 @@ class GlobalController:
             self.task_manager = None
             self.data_manager = None
             self.executor.shutdown(wait=False)
-            raise Exception("Interrupted by user")
-
-    def run(self):
-        try:
-            # generate threads
-            task_thread = threading.Thread(target=self.execute_tasks)
-            worker_thread = threading.Thread(target=self.worker)
-            result_thread = threading.Thread(target=self.process_completed_tasks)
-            # start threads
-            task_thread.start()
-            worker_thread.start()
-            result_thread.start()
-            # wait for threads to finish
-            task_thread.join()
-            worker_thread.join()
-            result_thread.join()
-        except KeyboardInterrupt:
-            # force to shutdown
-            self.shutdown = True
-            self.task_manager = None
-            self.data_manager = None
-            # shutdown thread pool
-            self.executor.shutdown(wait=False)
-            # raise exception
             raise Exception("Interrupted by user")

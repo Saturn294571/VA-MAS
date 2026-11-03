@@ -9,7 +9,7 @@ from tracer import TRACE_ENV, Tracer, safe_emit, summarize, write_manifest
 import time
 from env.env import VillagerBench, env_type, Agent
 from model.init_model import init_language_model
-from model.role_models import resolve_role_models
+from model.role_models import configure_actor_model, resolve_role_models
 
 start_time = time.time()
 from pipeline.controller import GlobalController as FullController
@@ -47,15 +47,7 @@ def run(api_model: str, api_base: str, api_key_list: list, thinking_level: str, 
     if role_configs["ac"]["provider"] == "ollama" and controller_mode == "tiny":
         print("Tiny Controller uses direct assignment; the configured AC model will not be called.")
     ba_config = role_configs["ba"]
-    Agent.base_url = api_base
-    Agent.model = ba_config["api_model"]
-    Agent.model_provider = ba_config["provider"]
-    if Agent.model_provider == "ollama":
-        Agent.ollama_base_url = ba_config["api_base"]
-        Agent.ollama_num_ctx = ba_config["num_ctx"]
-        Agent.ollama_timeout = ba_config["timeout"]
-    Agent.thinking_level = thinking_level
-    Agent.api_key_list = api_key_list
+    configure_actor_model(Agent, ba_config)
 
     # Set env
     if task_type == "construction":

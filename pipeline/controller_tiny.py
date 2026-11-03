@@ -1,9 +1,9 @@
+from pipeline.controller_execution import ControllerExecution
 import sys
 import os
-import threading
 import time
 import traceback
-from concurrent.futures import ThreadPoolExecutor, as_completed
+from concurrent.futures import as_completed
 
 from model.init_model import init_language_model
 
@@ -20,7 +20,7 @@ from tracer import current_tracer, safe_emit, traced
 from pipeline.assignment_policy import graph_error, revalidate_controller_assignments, validate_controller_proposal
 
 
-class GlobalController:
+class GlobalController(ControllerExecution):
     '''
     Global Controller for Minecraft game agents. The task is to assign tasks to agents. Create a plan that assigns tasks to suitable agents and return a list of task-assignment JSON objects.
     
@@ -62,23 +62,8 @@ class GlobalController:
         self.llm = llm
         self.llm.role_name = "GlobalController"
 
-        self.task_list = [Task]  # task published by tm
-        self.query_interval = 1  # time interval between two query
+        self._initialize_execution(max_workers)
 
-        # init lock
-        self.task_list_lock = threading.Lock()
-        self.result_list_lock = threading.Lock()
-
-        self.task_queue = []
-        self.result_queue = []
-
-        # init thread pool
-        self.executor = ThreadPoolExecutor(max_workers=max_workers)  # The number of max_workers can be adjusted as needed
-
-        # init max task time
-        self.max_task_time = 60 * 30 # 3min
-
-        self.shutdown = False
 
     def validate_assignments(self, result: [dict]):
         return validate_controller_proposal(self, result, allow_multi_agent=False)
@@ -112,61 +97,7 @@ class GlobalController:
 
             task_instance.status = Task.running
 
-    # worker
-    def worker(self):
-        while True:
-            if self.shutdown:
-                break
 
-            # if future.done() and task.id in [t.id for t in self.task_list] and task.status == Task.running:
-            if self.env.agents_ping()["status"] == False:
-                self.logger.info("Some agents are offline!")
-                self.shutdown = True
-                break
-                
-            with self.task_list_lock:
-                if not self.task_queue:
-                    time.sleep(self.query_interval)
-                    continue
-                while self.task_queue:
-                    agent_task = self.task_queue.pop(0)
-                    agent, task = agent_task
-
-                    future = self.executor.submit(agent.step, task)
-                    self.logger.info(f"Agent {agent.name} is executing task now ...")
-                    with self.result_list_lock:
-                        self.result_queue.append((future, agent, task, time.time()))
-                    # time.sleep(self.query_interval)
-
-    def set_task_status(self, task_id, status, feedback):
-        safe_emit(current_tracer(), "AC", "task.status", task_id=str(task_id), result_status=str(status))
-        for task in self.task_manager.graph.vertex:
-            if task.id == task_id:
-                if task.status == Task.success and status == Task.failure:
-                    if status == Task.failure:
-                        task.status = status
-                else:
-                    task.status = status
-
-                if type(feedback) == dict and type(task.reflect) == None:
-                    task.reflect = feedback
-                elif type(feedback) == str and type(task.reflect) == None:
-                    task.reflect = feedback
-                elif type(feedback) == dict and type(task.reflect) == dict:
-                    task.reflect = [task.reflect, feedback]
-                elif type(feedback) == str and type(task.reflect) == str:
-                    task.reflect = [task.reflect, feedback]
-                elif type(task.reflect) == list:
-                    task.reflect.append(feedback)
-                else:
-                    task.reflect = feedback
-                break
-
-    def get_task_by_id(self, task_id):
-        for task in self.task_manager.graph.vertex:
-            if task.id == task_id:
-                return task
-        return None
     
     def update_feedback(self, task, agent, detail):
         if isinstance(detail, dict) and detail.get("policy_abort"):
@@ -337,28 +268,4 @@ class GlobalController:
             self.task_manager = None
             self.data_manager = None
             self.executor.shutdown(wait=False)
-            raise Exception("Interrupted by user")
-
-    def run(self):
-        try:
-            # generate threads
-            task_thread = threading.Thread(target=self.execute_tasks)
-            worker_thread = threading.Thread(target=self.worker)
-            result_thread = threading.Thread(target=self.process_completed_tasks)
-            # start threads
-            task_thread.start()
-            worker_thread.start()
-            result_thread.start()
-            # wait for threads to finish
-            task_thread.join()
-            worker_thread.join()
-            result_thread.join()
-        except KeyboardInterrupt:
-            # shutdown
-            self.shutdown = True
-            self.task_manager = None
-            self.data_manager = None
-
-            self.executor.shutdown(wait=False)
-            # raise exception
             raise Exception("Interrupted by user")
