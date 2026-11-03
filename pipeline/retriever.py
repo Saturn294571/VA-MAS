@@ -10,6 +10,16 @@ from pipeline.utils import document2string
 from concurrent.futures import ThreadPoolExecutor
 
 
+class LocalOnlyEmbeddingGuard:
+    """Fail closed if the optional semantic retriever is used in an all-local run."""
+
+    def embed_query(self, text):
+        raise RuntimeError("Semantic embeddings are not configured for all-local runs")
+
+    def embed_documents(self, texts):
+        raise RuntimeError("Semantic embeddings are not configured for all-local runs")
+
+
 class Retriever:
     '''
     This class is the retriever for the pipeline, it is used to retrieve the most similar data from the given data.

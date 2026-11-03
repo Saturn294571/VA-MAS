@@ -210,6 +210,7 @@ def run_probe(task_idx, model, output_dir):
                 )
             else:
                 ctrl = GlobalController.__new__(GlobalController)
+                ctrl.task_manager = tm
                 ctrl.agent_list = agents
                 ctrl.assignment = {}
                 ctrl.name_list = names

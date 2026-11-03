@@ -16,6 +16,8 @@ from pipeline.utils import *
 from pipeline.controller_prompt import *
 from env.env import VillagerBench
 import logging
+from tracer import current_tracer, safe_emit, traced
+from pipeline.assignment_policy import graph_error, revalidate_controller_assignments, validate_controller_proposal
 
 
 class GlobalController:
@@ -33,25 +35,26 @@ class GlobalController:
     - max_workers (int): The maximum number of workers in the thread pool. Default is 4.
     '''
     def __init__(self, llm_config: dict, task_manager: TaskManager, data_manager: DataManager, env: VillagerBench,
-                 silent: bool = False, max_workers=4, tm_llm_config: dict = None, dm_llm_config: dict = None, base_agent_config: dict = None, all_tools=[]):
+                 silent: bool = False, max_workers=4, tm_llm_config: dict = None, dm_llm_config: dict = None, base_agent_config: dict = None, all_tools=[], ac_llm_config: dict = None):
 
         self.task_manager = task_manager
-        tm_llm_config = llm_config.copy() if tm_llm_config is None else tm_llm_config
+        tm_llm_config = llm_config.copy() if tm_llm_config is None else tm_llm_config.copy()
         tm_llm_config["role_name"] = "TaskManager"
         self.task_manager.llm = init_language_model(tm_llm_config)
 
         self.task_manager.dm = data_manager
         self.data_manager = data_manager
-        dm_llm_config = llm_config.copy() if dm_llm_config is None else dm_llm_config
+        dm_llm_config = llm_config.copy() if dm_llm_config is None else dm_llm_config.copy()
         dm_llm_config["role_name"] = "DataManager"
         self.data_manager.llm = init_language_model(dm_llm_config)
 
-        llm = init_language_model(llm_config)
+        llm = init_language_model(ac_llm_config or llm_config)
         base_agent_config = llm_config.copy() if base_agent_config is None else base_agent_config
         base_llm = init_language_model(base_agent_config)
         self.agent_list = [BaseAgent(base_llm, env, data_manager, name=a.name, silent=False, all_tools=all_tools) for a in env.agent_pool]
         self.task_manager.agent_list = self.agent_list
         self.assignment = {}
+        self._traced_ready = set()
         self.feedback = {}
 
         self.logger = init_logger("GlobalController", level=logging.DEBUG, dump=True, silent=silent)
@@ -78,54 +81,23 @@ class GlobalController:
         self.shutdown = False
 
     def validate_assignments(self, result: [dict]):
-        validated_assignments = []
+        return validate_controller_proposal(self, result, allow_multi_agent=False)
 
-        for assign in result:
-            task_id = assign["task_id"]
-            agent_names = assign["agent"]
-            if isinstance(agent_names, BaseAgent):
-                agent_names = [agent_names.name]
-            elif not isinstance(agent_names, list):
-                agent_names = [agent_names]
-
-            # Check if task exists
-            if task_id >= len(self.task_list) or task_id < 0:
-                self.logger.warning("Choose a non exist task!")
-                continue
-
-            task_instance = self.task_list[task_id]
-            agent_instances = []
-
-            # Check if agents exist and are valid for the task
-            for agent_name in agent_names:
-                agent = next((a for a in self.agent_list if a.name == agent_name), None)
-                if agent is None:
-                    self.logger.warning(f"Agent {agent_name} does not exist!")
-                    continue
-
-                if self.assignment.get(agent.name) is not None or agent_name not in task_instance.candidate_list:
-                    self.logger.warning(f"Agent {agent_name} is not valid for the task!")
-                    continue
-
-                agent_instances.append(agent)
-
-            if agent_instances:
-                validated_assignments.append({
-                    "task_instance": task_instance,
-                    "agent_instances": agent_instances
-                })
-
-        return validated_assignments
-
-    
+    @traced("AC", "assignment")
     def execute_assignments(self, validated_assignments):
+        validated_assignments = revalidate_controller_assignments(
+            self, validated_assignments, source="direct", allow_multi_agent=False)
         for assignment in validated_assignments:
             task_instance = assignment["task_instance"]
             agent_instances = assignment["agent_instances"]
-
             for agent in agent_instances:
                 self.assignment[agent.name] = task_instance.id
                 task_instance._agent.append(agent.name)
+                safe_emit(current_tracer(), "AC", "task.assigned", task_id=task_instance.id,
+                          agent_id=agent.name, assignment_mode="direct",
+                          decision_id=assignment.get("decision_id"),
+                          candidate_count=len(task_instance.candidate_list),
+                          required_agents=task_instance.number)
 
             with self.task_list_lock:
                 task_instance.status = Task.running
@@ -167,6 +139,7 @@ class GlobalController:
                     # time.sleep(self.query_interval)
 
     def set_task_status(self, task_id, status, feedback):
+        safe_emit(current_tracer(), "AC", "task.status", task_id=str(task_id), result_status=str(status))
         for task in self.task_manager.graph.vertex:
             if task.id == task_id:
                 if task.status == Task.success and status == Task.failure:
@@ -196,6 +169,11 @@ class GlobalController:
         return None
     
     def update_feedback(self, task, agent, detail):
+        if isinstance(detail, dict) and detail.get("policy_abort"):
+            self.logger.warning("Decision BA stopped: %s", detail["policy_abort"])
+            self.set_task_status(task.id, Task.failure, detail)
+            self.shutdown = True
+            return
         task.status = Task.success if agent.reflect(task, detail) else Task.failure
         # task.status = Task.success
         self.set_task_status(task.id, task.status, detail)
@@ -209,6 +187,7 @@ class GlobalController:
 
         return
 
+    @traced("AC", "task.feedback")
     def update_task_status(self, task, status, detail): 
         task.status = status
         self.set_task_status(task.id, status, detail)
@@ -283,6 +262,13 @@ class GlobalController:
         for task in self.task_list:
             if task.available:
                 available_task_list.append(task)
+                tracer = current_tracer()
+                if tracer is not None and not hasattr(self, "_traced_ready"):
+                    self._traced_ready = set()
+                if tracer is not None and task.id not in self._traced_ready:
+                    self._traced_ready.add(task.id)
+                    safe_emit(tracer, "AC", "task.ready", task_id=task.id,
+                              candidate_count=len(task.candidate_list), required_agents=task.number)
         
         return available_task_list
     # Producer
@@ -298,6 +284,12 @@ class GlobalController:
                     self.shutdown = True
                     break
 
+                invalid_graph = graph_error(self.task_manager.graph)
+                if invalid_graph:
+                    self.logger.error("Cannot schedule task graph: %s", invalid_graph)
+                    safe_emit(current_tracer(), "AC", "assignment.rejected", reason=invalid_graph)
+                    self.shutdown = True
+                    break
                 self.task_list = self.task_manager.query_subtask_list()
                 if self.task_list == []:
                     self.logger.info("all assigned tasks are finished ...")

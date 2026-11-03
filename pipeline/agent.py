@@ -18,6 +18,7 @@ import numpy as np
 import threading
 import torch
 import platform
+from tracer import traced
 from model.utils import extract_info
 
 class AgentFeedback:
@@ -99,6 +100,7 @@ class BaseAgent:
         with open(os.path.join(root, f"{self.name}_reflect.json"), "w") as f:
             json.dump(self.reflect_info, f, indent=4)
 
+    @traced("BA", "task.execute")
     def step(self, task:Task) -> (str, dict):
         '''
         take an action and return the feedback and detail
@@ -622,6 +624,7 @@ class BaseAgent:
                 continue
         return ''.join(ret_str)
 
+    @traced("BA", "reflection")
     def reflect(self, task: Task, detail) -> bool:
         '''
         Reflect on the task and return the result

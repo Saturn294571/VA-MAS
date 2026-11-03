@@ -8,23 +8,15 @@ from pipeline.data_manager import DataManager
 from pipeline.task_manager import TaskManager
 import json
 import os
-from model.google_model import (
-    DEFAULT_GEMINI_MODEL,
-    DEFAULT_GEMINI_THINKING_LEVEL,
-    GOOGLE_OPENAI_BASE_URL,
-    load_google_api_keys,
-)
+from model.role_models import configure_actor_model, standalone_model_config
 
-LLM_API_BASE = GOOGLE_OPENAI_BASE_URL
-LLM_API_MODEL = DEFAULT_GEMINI_MODEL
-LLM_THINKING_LEVEL = DEFAULT_GEMINI_THINKING_LEVEL
 MINECRAFT_HOST = "localhost"
 MINECRAFT_PORT = 25565
 TASK_NAME = "tiny_start_single_task"
 TASK_DESCRIPTION = "Alice talk with yubo"
 
 if __name__ == "__main__":
-    api_key_list = load_google_api_keys()
+    llm_config = standalone_model_config()
     os.makedirs(".cache", exist_ok=True)
     with open(".cache/meta_setting.json", "w", encoding="utf-8") as config_file:
         json.dump({"task_name": TASK_NAME}, config_file, indent=4)
@@ -33,17 +25,7 @@ if __name__ == "__main__":
     env = VillagerBench(env_type.none, task_id=0, _virtual_debug=False, dig_needed=False, host=MINECRAFT_HOST, port=MINECRAFT_PORT)
 
     # Set Agent
-    llm_config = {
-        "api_model": LLM_API_MODEL,
-        "api_base": LLM_API_BASE,
-        "thinking_level": LLM_THINKING_LEVEL,
-        "api_key_list": api_key_list
-    }
-
-    Agent.model = LLM_API_MODEL
-    Agent.base_url = LLM_API_BASE
-    Agent.thinking_level = LLM_THINKING_LEVEL
-    Agent.api_key_list = api_key_list
+    configure_actor_model(Agent, llm_config)
 
     # more agent tools can be added here you can refer to the agent_tool in doc/api_library.md
     agent_tool = [Agent.talkTo, Agent.read, Agent.scanNearbyEntities, Agent.equipItem, Agent.SmeltingCooking,
@@ -62,7 +44,7 @@ if __name__ == "__main__":
         dm.update_database_init(env.get_init_state())
 
         # Set Task Manager
-        tm = TaskManager(silent=False)
+        tm = TaskManager(silent=False, local_only=llm_config["provider"] == "ollama")
 
         # Set Controller
         ctrl = GlobalController(llm_config, tm, dm, env)

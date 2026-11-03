@@ -13,9 +13,6 @@ import colorlog
 
 from FlagEmbedding import LLMEmbedder
 sys.path.append(os.getcwd())
-from model import openai_models
-
-
 
 def init_logger(name: str, level=logging.ERROR, dump=False, silent=False):
     if silent:
@@ -410,7 +407,27 @@ Please generate the JSON output based on the prompt provided.
 """
 
 def describe_map(building):
-    llm = openai_models.OpenAILanguageModel(api_key=os.environ["OPENAI_API_KEY"], api_model="gpt-4-1106-preview")
+    mode = os.environ.get("VILLAGER_LOCAL_GENERATION_ONLY")
+    if mode == "1":
+        from model.init_model import init_language_model
+        local_config = {"provider": "ollama", "api_model": os.environ["VILLAGER_LOCAL_MODEL"],
+                        "api_base": os.environ["VILLAGER_LOCAL_BASE_URL"], "role_name": "JUDGER",
+                        "timeout": float(os.environ.get("VILLAGER_LOCAL_TIMEOUT", "300"))}
+        if os.environ.get("VILLAGER_LOCAL_NUM_CTX"):
+            local_config["num_ctx"] = int(os.environ["VILLAGER_LOCAL_NUM_CTX"])
+        llm = init_language_model(local_config)
+    elif mode == "0":
+        from model.init_model import init_language_model
+        from model.google_model import (DEFAULT_GEMINI_MODEL, DEFAULT_GEMINI_THINKING_LEVEL,
+                                        GOOGLE_OPENAI_BASE_URL, load_google_api_keys)
+        keys = load_google_api_keys()
+        llm = init_language_model({"api_model": DEFAULT_GEMINI_MODEL, "api_base": GOOGLE_OPENAI_BASE_URL,
+                                   "thinking_level": DEFAULT_GEMINI_THINKING_LEVEL,
+                                   "api_key_list": keys, "role_name": "JUDGER"})
+    else:
+        from model.init_model import init_language_model
+        from model.role_models import standalone_model_config
+        llm = init_language_model(standalone_model_config())
     new_building = []
     for structure in building:
         if len(structure) == 0:
@@ -420,7 +437,7 @@ def describe_map(building):
             continue
         new_prompt = describe_prompt + """structure-data:\n{structure}\nPlease generate the JSON output based on the prompt provided.""".format(structure=json.dumps(structure))
         print(new_prompt)
-        response = llm.few_shot_generate_thoughts(new_prompt,max_tokens=256,temperature=0.0,cache_enabled=False)
+        response = llm.few_shot_generate_thoughts("", new_prompt, max_tokens=256, temperature=0.0, cache_enabled=False)
         if "```json\n" in response:
             response = response[response.find("```json\n") + 8:response.find("\n```")]
         response = json.loads(response)

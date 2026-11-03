@@ -3,10 +3,17 @@ from model.openai_models import OpenAILanguageModel
 from model.zhipu_model import ZhipuLanguageModel
 from model.huggingface_model import HFLanguageModel
 from model.vllm_model import VLLMLanguageModel
+from model.ollama_model import OllamaLanguageModel
 
 def init_language_model(args: dict):
     api_model = args.get("api_model", "")
 
+    if args.get("provider") == "ollama" or (not args.get("provider") and api_model == "qwen3.8:27b"):
+        return OllamaLanguageModel(**{k: v for k, v in {
+            "api_model": api_model, "api_base": args.get("api_base"),
+            "role_name": args.get("role_name"), "num_ctx": args.get("num_ctx"),
+            "timeout": args.get("timeout"),
+        }.items() if v is not None})
     if "gemini" in api_model:
         new_args = {
             "api_key": args.get("api_key", None),

@@ -1814,3 +1814,188 @@ G/D는 BA 전체를 교체한다는 뜻이 아니다. 우선 같은 관측과 �
 **검증 수준:** 오프라인 fixture에서 유효 호출과 잘못된 agent 인자의 호출 차단, 알려지지 않은 도구 기록을 확인했다. 모의 `Agent.run()`으로 기존 반환 형식과 계약 기록을 확인했고 Python 구문 검사와 `git diff --check`도 통과했다. 해당 검사는 외부 API·Minecraft 없이 수행한 단발성 검사이며 별도의 benchmark 결과 파일은 생성하지 않았다. 도구 검증이 기준선 동작을 바꿀 수 있으므로, 계약 적용 전후의 실제 Minecraft G/G 과제 성능·행동 경로 동등성은 아직 확인되지 않았다.
 
 기존 ReAct의 선택과 실행은 여전히 LangChain 내부에서 결합되어 있다. `ActionPolicy`는 현재 인터페이스 정의이며 독립적인 `select()` 루프, 결정형 정책, 정책 간 공통 fallback 및 역할별 모델 분리는 아직 구현되지 않았다. 래퍼 밖에서 처리되는 파서 오류나 알 수 없는 도구는 사후 기록으로 구분한다. 다음에는 제한된 도구·인자 집합을 고정한 오프라인 계약 검증과 기존 생성형 경로의 실제 G/G 재현을 거쳐, BA 단일 축 G/D 비교 가능성을 판정한다.
+
+---
+
+## 2026-10-28 — AC·BA 계약과 trace 적용 후 Task0 smoke test
+
+**결과:** Minecraft 1.19.2 평지·Peaceful, Construction Task0, Alice 1인, full Controller, `assignment_policy=controller`, Gemini 3.8 Flash `low` 조건에서 3블록 구조물이 완성됐다. [공식 점수](../../../result/20261028_005349_construction_task0_1p_full_controller_contract_smoke_retry1/score.json)는 block hit rate 1.0, view hit rate 1.0, `end_reason=complete task`다. 서버에서 `[-8,-60,0]`의 cut sandstone, `[-8,-59,0]`의 terracotta, `[-8,-58,0]`의 torch를 각각 확인했다. 이는 수정된 G/G 경로의 **단일 실행 smoke test**이지 이전 기준선과의 동등성이나 결정형 정책 성능 비교가 아니다.
+
+### 실행·보존 조건
+
+폴더 이름 변경 전 경로를 참조하는 기존 Docker 컨테이너는 중지 상태로 보존하고, 현재 `.runtime/minecraft` 월드를 연결한 `villageragent-mc-1.19.2-va` 컨테이너를 기동했다. 기존 월드 사본은 `.runtime/minecraft/world-before-task0-smoke-20261028_004738`, 이전 `logs/`·data 상태·생성 그래프는 `result/pre_task0_trace_smoke_backup_20261028_004738/`에 보존했다. 실험 전 서버 접속자는 0명이었다. `build_judge`와 Alice에게 실험 중 임시 OP를 부여하고 종료 후 회수했으며, 연구자 계정 OP는 유지했다. 월드의 스폰 좌표는 이번 실행에서 별도로 재확인하지 않았다.
+
+첫 시도는 자식 judger가 PATH에서 `python`을 찾지 못해 환경 초기화 중 종료됐고 모델 호출이나 actor 실행에 이르지 못했다. [첫 시도 요약](../../../result/20261028_005318_construction_task0_1p_full_controller_contract_smoke/summary.json)을 보존한 뒤 가상환경의 `bin`을 PATH에 추가해 새 결과 폴더로 재시도했다. 별도로 Gemini 인증 확인을 위한 최소 호출 1회가 있었으며 아래 benchmark 비용 합계에는 포함되지 않는다.
+
+### 실행 흐름과 계측
+
+TD는 첫 라운드에서 바닥보다 가운데 terracotta를 먼저 제안했다. Alice는 지지 블록이 없다는 행동 피드백을 받고 바닥 좌표에 임시 dirt를 설치한 후 terracotta를 놓았다. 다음 라운드에서 torch를 설치하고, 세 번째 라운드에서 dirt를 제거해 cut sandstone으로 교체했다. 이는 한 번의 실행에서 관찰한 계획·복구 경로이며 해당 순서가 항상 발생한다는 뜻은 아니다.
+
+[trace 요약](../../../result/20261028_005349_construction_task0_1p_full_controller_contract_smoke_retry1/summary.json)에는 AC 직접 배정 4회, 거부 0회, BA 도구 검증 12회가 기록됐다. 에이전트가 한 명이므로 이번 실행에서 **LLM이 여러 후보 중 worker를 선택하는 AC 경로는 발생하지 않았다.** TD·SM·BA의 LLM 요청 완료는 각각 4·4·17회였다. [사용량](../../../result/20261028_005349_construction_task0_1p_full_controller_contract_smoke_retry1/tokens.json)은 완료된 요청 25회, 입력 77,215·출력 3,217 tokens, 코드 가격표 기준 약 $0.069975다. 공급자 청구액 및 별도 인증 확인 호출 비용과 같다고 단정하지 않는다.
+
+launcher 기준 wall-clock은 약 128.17초다. judger의 `use_time=7`초는 행동 구간에 관한 기존 지표로서 전체 경과 시간과 다르며, `efficiency=43.43`을 wall-clock 속도 향상으로 해석하지 않는다. 성공 판정 직전 TD가 추가 확인 작업을 생성했고, 부모 launcher가 judger 종료 신호에 따라 프로세스를 종료하면서 trace에는 **BA 작업 시작 4회 대비 종료 3회, LLM 요청 시작 중 종료 이벤트가 없는 1회**가 남았다. 해당 요청이 공급자 측에서 처리·청구됐는지는 이 기록만으로 알 수 없다. 따라서 원시 trace는 불완전한 종료 경계를 포함한다.
+
+원시 근거는 [실행 폴더](../../../result/20261028_005349_construction_task0_1p_full_controller_contract_smoke_retry1/), [events.jsonl](../../../result/20261028_005349_construction_task0_1p_full_controller_contract_smoke_retry1/trace/events.jsonl), TM·Alice 이력과 보존한 `logs_snapshot/`에 있다. 실행 시점의 commit은 `6090ccf`이고 작업 트리는 dirty여서 관련 소스 사본과 해시를 실행 폴더의 `source_snapshot/` 및 `reproduction_notes.json`에 함께 남겼다.
+
+---
+
+## 2026-10-28 — BA·AC 생성형 Ollama 경로 추가
+
+**목적:** TD·SM의 Gemini 경로를 유지하면서 BA 행동 선택·reflection과 AC 생성형 배정의 모델을 각기 로컬 Qwen으로 선택할 수 있게 한다. 기존 Gemini 설정은 선택지로 유지한다. 이는 생성형 모델·배포 환경을 바꾼 비교 준비이며 결정형 정책의 구현이나 우위 검증이 아니다.
+
+`model_roles` 설정에서 `ac`와 `ba`의 공급자를 별도로 고르도록 했고, 로컬 경로는 [Ollama adapter](../../../model/ollama_model.py)를 사용한다. `ba=ollama`는 Minecraft Agent의 행동 선택과 BaseAgent reflection, `ac=ollama`는 full Controller의 생성형 배정·협업 분해에 적용된다. 두 역할의 모델 객체는 별도로 만들고 TD·SM에는 기존 Gemini 설정을 전달한다. 모델 역할 설정을 생략하면 기존 경로를 유지하며, 로컬 모델 오류 시 외부 API로 자동 fallback하지 않는다. 설정 예시와 실행 범위는 [Ollama 역할 문서](../architecture_understand/ollama_roles.md)에 있다.
+
+실제 서버에 설치된 `qwen3.8:27b` 모델 ID는 `aaee06c39dcf`였다. 로컬 OpenAI 호환 endpoint에 `think=false`를 전달한 32토큰 단문 검사는 내용 없이 `length`로 끝났고, native `/api/chat`의 `think: false` 단문 검사는 `OK`를 반환했다. 이에 로컬 adapter는 native 경로를 사용한다. 이 검사는 두 endpoint의 모든 모델·설정에 대한 일반 비교가 아니다.
+
+**검증 수준:** 오프라인 fixture에서 역할별 설정, Gemini 기준 경로, launcher 전달, BA structured ReAct·행동 계약, 로컬 호출 오류, 사용량·trace 기록을 검사했다. 이어 실제 로컬 Qwen에 합성 입력을 넣어 AC JSON 생성, 기존 Controller prompt 및 배정 validator 수락 1건, BA ReAct의 mock 도구 호출 1건을 확인했다. 이 확인에는 Minecraft나 외부 Gemini를 사용하지 않았고, 임시 디렉터리에서 실행했다. Minecraft benchmark의 완주·성능이나 모델 간 비교는 아직 수행하지 않았다.
+
+로컬 요청은 token 수·`done_reason`·load/prompt-eval/eval 시간을 trace에 기록하고 `tokens.json`의 `ollama/<model>`로 집계한다. 로컬 비용은 미추정으로 표시한다. 다만 로컬 control-plane 캐시는 객체 수명 동안의 메모리 캐시여서 Gemini 파일 캐시와 다르다. full Controller에서도 후보가 한 명뿐이면 직접 배정하므로 로컬 AC 호출이 일어나지 않을 수 있고, tiny Controller는 직접 배정만 사용하므로 로컬 AC 설정을 거부한다. 실제 비교에서는 모델·캐시·배포 조건을 명시해야 한다.
+
+---
+
+## 2026-10-28 — 생성형 호출 전체의 로컬 Qwen 통일
+
+이전의 BA·AC 로컬 선택에서 나아가 TD·SM·AC·BA와 Minecraft actor의 생성형 호출을 같은 `qwen3.8:27b`로 구성했다. `model_roles.default`에 Ollama를 지정하면 네 역할 모두 적용되며, BA reflection·actor ReAct와 AC의 협업 분해 호출도 각 역할의 로컬 모델을 사용한다. 현재 로컬 실행 설정과 [Task6 예시](../../../examples/ollama_construction_task6.json)에 전체 로컬 선택을 추가했다. `model_roles`의 역할별 override와 기존 Gemini 어댑터는 보존했고, Gemini 역할이 하나라도 선택된 경우에만 키를 읽는다. 변경된 설정의 상세는 [역할별 모델 문서](../architecture_understand/ollama_roles.md)에 둔다.
+
+코드 조사에서 Construction judger가 미리 생성된 blueprint 설명을 찾지 못하면 별도 OpenAI 호출을 시도하는 예외 경로를 확인했다. 전체 로컬 실행에서는 이 경로도 TD와 같은 Ollama 모델을 사용한다. TaskManager의 선택적 semantic retrieval은 기본 경로에서 문서 경로 탐색과 별개이며, 전체 로컬 실행에서 Google embedding으로 빠지지 않도록 해당 embedding 호출을 명시적으로 차단했다. 별도 `tiny_start.py`, `agent_demo.py`, `auto_gen_gpt_task.py`, `config.py` 생성 경로와 직접 Minecraft Agent도 기본 로컬로 설정했다. 해당 독립 경로의 Gemini 사용은 환경 변수로 명시한다. tiny Controller의 직접 배정은 모델을 호출하지 않으므로, 이전 기록과 달리 로컬 AC 설정 자체는 허용하되 미사용을 알린다.
+
+**검증 수준:** Gemini 환경 변수를 제거한 실제 로컬 Qwen으로 SM의 합성 환경 요약과 [Task25 TD/AC 합성 프로브](../../../result/ollama_qwen38_task25_tdac_synthetic_20261028_0945/probe.json)를 실행했다. 프로브는 첫 라운드 3 node·0 edge, 유효 배정 3개를 반환했고 Minecraft 연결과 외부 API 호출은 없었다. 이는 완주나 선행관계 검증이 아니다. 별도 검사에서는 잘못된 시스템 프록시와 Gemini 키가 없는 상태에서 localhost 이외 소켓을 차단하고 Ollama native 호출 및 TD trace 집계를 확인했다. Construction 설명 생성 예외 경로는 처음에 system 메시지만 보내 Ollama가 거부했으나, 요청을 user 메시지로 전달하도록 수정한 뒤 로컬 Qwen의 합성 입력 검사에서 통과했다. 오프라인 fixture는 전체 역할 주입, 키 미조회, actor·judger fallback과 embedding 차단을 검사했다.
+
+localhost HTTP 통신, Ollama 서버 대기·모델 로딩·동시 요청의 GPU 경합은 여전히 실행 시간에 포함된다. 전체 로컬 Minecraft benchmark와 동일 조건 반복 비교는 아직 실행하지 않았다. 현재 로컬 기본 설정의 과제 이름은 과거 결과와 같아, 그대로 실행하면 launcher가 기존 결과를 보존하기 위해 건너뛴다.
+
+---
+
+## 2026-10-28 — 생성형 기준 모델을 Gemini로 복귀
+
+연구자가 Qwen 27B와 `tev1:4b-2k`를 동시에 적재한 상태를 확인했다. 제시된 `ollama ps`에는 Qwen 100% GPU, tev1 13% CPU/87% GPU가 표시됐고, `nvidia-smi`에는 전체 24,576MiB 중 22,284MiB가 사용 중이었다. 이는 해당 시점의 적재 상태이며 추론 지연이나 과제 성능의 비교 실험은 아니다. GPU 여유와 동시 사용 부담을 고려해 생성형 기준 모델은 외부 Gemini로 되돌리고, 결정형 모델의 로컬 실행을 별도로 검토한다.
+
+현재 로컬 실행 설정의 `model_roles.default`와 Minecraft Agent·독립 실행 스크립트의 기본 생성형 경로를 Gemini로 변경했다. Construction judger가 blueprint 설명을 생성해야 할 때의 기본 호출도 Gemini로 맞췄다. Ollama adapter와 명시적인 로컬 선택 설정은 후속 비교를 위해 보존한다. 로컬 Qwen과 tev1의 실제 성능 우열이나 동시 실행 불가능 여부를 확정한 것은 아니다. 자세한 선택 방법은 [모델 역할 문서](../architecture_understand/ollama_roles.md)에 있다.
+
+---
+
+## 2026-10-28 — Tev1 기반 BA 행동 선택 도입 검토
+
+**목적과 근거 수준:** 생성형 Gemini 기준선을 유지하면서 BA/Minecraft actor의 다음 행동 선택에 로컬 결정 모델을 적용하는 방안을 검토했다. 이번 내용은 코드·공식 문서 조사와 설계 제안이며, 결정형 정책의 구현이나 Minecraft 실험 결과가 아니다. 연구자가 이전 실험용 `tev1:4b-2k`를 삭제하고 `tev1:4b-q4_K_M`을 설치했다고 알렸다. 앞선 동시 적재 기록은 삭제 전 모델의 당시 상태다. 이번 조사 환경에서는 로컬 Ollama 소켓 접근이 제한되어 새 모델의 실제 런타임 컨텍스트와 Ollama 버전을 직접 확인하지 못했다.
+
+### 적용 경계와 후보 생성
+
+현재 실행 경로는 `BaseAgent.normal_step()` → `VillagerBench.step()` → `Agent.run()`이며, 마지막 단계에서 생성형 ReAct가 여러 도구 선택과 실행을 수행한다. [행동 계약](../architecture_understand/BA_action_policy_contract.md)과 [검증기](../../../env/action_policy.py)는 존재하지만 현재 ReAct 호출을 감싸는 방식이고, `ActionPolicy.select()`에 기반한 독립 선택·실행 루프와 결정형 정책은 아직 없다. 우선 TD·AC·SM, BA reflection, Minecraft 도구 및 최종 judger는 유지하고 actor의 다음 행동 선택만 비교하는 방향을 고려한다. 별도 `Agent.step()` 경로를 현재 주 실행 경로와 동일시하지 않는다.
+
+Tev1은 상태와 질문, 선택지를 받아 선택하는 모델이다. Ollama는 `/v1/systemone` 경로를 안내하며, Together AI는 4B 모델을 Qwen3.5 기반 결정 모델로 설명한다. [Ollama 모델 문서](https://ollama.com/library/tev1), [Together AI 저장소](https://github.com/togethercomputer/tev1). 생성형 actor가 도구 이름뿐 아니라 좌표·아이템·방향 등 인자를 만드는 것과 달리, Tev1을 행동 선택에 쓰려면 **누가 실행 가능한 후보와 전체 인자를 구성할지** 먼저 정해야 한다. 예를 들어 건설에서는 블록 장착, 특정 좌표에 배치, 상태 관측, 후보 없음/보류를 후보로 둘 수 있다. 작업 명세와 관측에서 인자를 만드는 방법, 후보가 하나뿐일 때의 처리, 후보 누락과 잘못된 후보의 검출을 별도로 검토한다. 후보 생성 실패와 모델의 후보 선택 실패는 다른 원인이다.
+
+### 관측·검증·완료 판단
+
+작업 목표, 봇 위치·인벤토리, 주변 블록, 이전 행동 피드백과 허용 도구를 필요한 범위에서 제공한다. 행동 후 관측의 갱신 시점을 확인해 오래된 상태에 근거한 반복 행동을 줄여야 한다. 현재 공통 검증기는 허용 도구, agent 일치, 인자 형식 등의 검사이지 접근 가능성·재료 보유·월드 상태의 모든 조건을 보장하지 않는다. 형식 유효성, 환경상 실행 가능성, 실행 후 실제 월드 변화를 구분해 확인한다.
+
+모델이 `finish`를 선택한 것은 actor 루프 종료 의사이지 작업 성공이나 judger 점수가 아니다. 후보가 없거나 정보가 부족한 경우는 `defer` 등으로 구분한다. 생성형 fallback을 도입한다면 발생 횟수와 추가 지연·호출 비용을 기록하고, fallback을 거친 완료를 Tev1 단독 완료로 집계하지 않는다. Tev1이 반환하는 선택 점수는 실제 행동 성공 확률로 검증된 값이 아니므로 임계값 적용은 별도 평가가 필요하다.
+
+### 비교 조건과 측정
+
+초기 비교는 Gemini ReAct 기준선과 로컬 Tev1 후보 선택 경로를 대상으로 하되, 나머지 역할과 과제·환경 조건을 고정한다. 기존 ReAct는 자유롭게 인자를 생성하고 Tev1은 고정 후보에서 고르므로 초기 비교의 행동 공간 차이를 명시한다. 필요하면 후속 비교에서 Gemini에도 동일한 후보를 제공한다. 모델·정책 형태·배포 위치·네트워크 지연이 함께 달라지므로 결과를 결정 모델 방식만의 인과 효과로 단정하지 않는다.
+
+후보 생성, 모델 요청·응답, 검증, 도구 실행, 재시도·fallback, 전체 완료 시간을 분리하고 judger 점수·유효/무효 행동·후보 누락·호출량을 함께 기록한다. Gemini의 토큰·API 비용과 Tev1의 로컬 추론·자원 사용도 각 조건에 맞게 기록한다. 기존 Minecraft API는 상대적으로 높은 수준의 행동을 제공하므로 우선 검증 대상은 행동 결정 지연이지 tick 단위 실시간 제어가 아니다.
+
+### 다음 검증 순서
+
+1. 설치된 `tev1:4b-q4_K_M`, Ollama 버전, 실제 컨텍스트 설정과 `/v1/systemone` 호출 가능성을 확인한다. 양자화의 성능 영향은 실측 전 가정하지 않는다.
+2. 과거 건설 로그나 합성 상태로 후보 생성·인자 검증과 Tev1 선택을 오프라인에서 먼저 확인한다.
+3. 단일 봇의 3블록 construction에서 기존 Gemini 경로와 비교해 행동·점수·지연·fallback을 기록한다.
+4. 단일 봇 경로가 성립하면 복수 봇으로 확대해 행동 간섭 및 관리 계층과의 상호작용을 살핀다.
+
+후보 생성에 필요한 규칙이나 생성형 호출의 비용까지 포함해야 이 접근의 실용성을 판단할 수 있다. 구체적인 실험 횟수와 완료 성능의 허용 차이는 비교 실험 전에 정한다.
+
+---
+
+## 2026-10-28 — VA의 생성형 계획부터 Minecraft 행동 실행까지
+
+**검토 범위:** 현재 저장소의 일반적인 full Controller·생성형 actor 경로를 정적으로 조사했다. 아래는 구현 흐름에 대한 설명이며, 새로운 실행이나 성능 측정은 하지 않았다. 논문의 기능과 코드 대응은 [VA 기능 대응표](../architecture_understand/VA_code_paper_map.md)를 함께 참조한다.
+
+### 상위 계획·배정: 무엇을 누구에게 맡기는가
+
+전체 목표가 주어지면 Task Manager의 TD 역할이 환경·작업 이력을 참고해 하위 작업과 선행관계, 완료 조건을 생성하고 작업 그래프로 관리한다. Controller는 선행조건과 작업 상태, 후보와 가용 agent를 고려해 실행 가능한 작업을 배정한다. 상황에 따라 직접 배정하거나 LLM에 배정을 요청하고 응답을 검증한다. Data Manager는 환경·agent 이력 등을 제공하며 실행 결과를 갱신한다. 실행 결과에 따라 작업 상태가 바뀌고, 이후 계획과 배정에 피드백된다. [Task Manager](../../../pipeline/task_manager.py), [Controller](../../../pipeline/controller.py), [Data Manager](../../../pipeline/data_manager.py).
+
+```text
+목표 → TD의 하위 작업·그래프 → AC의 유효 작업/agent 배정
+     → BA의 작업 수행 → 상태·결과 반영 → 다음 작업 또는 계획
+```
+
+이는 반복적인 관리 흐름의 추상화다. 최초 그래프가 전체 과제의 완전한 계획임을 보장하지 않으며, `Graph.add_edge()`도 순환을 자체 검증하지 않는다. Controller의 직접 배정과 LLM 배정은 구별한다.
+
+### BA에서 행동 정책이 정해지는 과정
+
+1. **작업 문맥 구성:** Controller가 worker에 작업을 맡기면 [BaseAgent.step() 및 normal_step()](../../../pipeline/agent.py)은 task 설명·milestone, 환경 정보, agent 이력, 다른 agent 상태, 관련 데이터, Minecraft 지식 카드 등을 조합한 자연어 지시를 만든다. 단일·협업 작업의 프롬프트가 다르며, 성격·말투도 일부 무작위 선택한다. 별도 `action_context`에도 작업과 관측을 넣어 전달한다.
+2. **Minecraft actor로 전달:** [VillagerBench.step()](../../../env/env.py)은 이름에 맞는 Minecraft Agent를 찾아 `Agent.run()`을 호출한다. 일반 경로의 `max_turn` 기본값은 7이며 `Agent.run()`에는 이 값이 최대 반복 횟수로 전달된다. RL 등의 별도 경로와 구별해야 한다.
+3. **생성형 행동 선택:** [Minecraft Agent.run()](../../../env/minecraft_client.py)은 설정된 생성형 모델과 허용 도구를 LangChain의 `STRUCTURED_CHAT_ZERO_SHOT_REACT_DESCRIPTION`으로 연결한다. 모델은 작업 문맥과 도구 설명, 이전 행동의 피드백을 바탕으로 다음 도구와 그 인자를 생성하거나 최종 응답을 낸다. 즉 고정된 작업별 행동 순서표가 아니라 **프롬프트·도구 스키마·관측·이력에 조건부인 생성형 ReAct 정책**이다. 한 `run()` 안에서 여러 행동을 할 수 있고, 반복·실행시간 제한과 파싱 오류 처리가 있다.
+4. **공통 검사와 실행:** 현재 [행동 계약 래퍼](../../../env/action_policy.py)는 생성된 호출의 도구 허용 여부, 해당 agent 이름, 필수 인자와 타입, 일부 허용값을 검사한 뒤 실제 도구를 실행한다. 환경상의 모든 선행조건이나 성공을 보증하지는 않는다. 이는 기존 ReAct를 감싼 검증이며, 계약의 독립 `select()` 루프가 구현됐다는 뜻은 아니다.
+5. **도구에서 봇으로:** 예를 들어 모델이 `placeBlock(player_name, item_name, x, y, z, facing, ...)`을 선택하면 Python 도구가 해당 봇의 `/post_place`에 HTTP 요청을 보낸다. 서버는 인자를 확인하고 [환경 API](../../../env/env_api.py)의 블록·인벤토리 확인과 이동 등 절차를 호출해 결과를 반환한다. 이동은 Mineflayer pathfinder, 채굴 등은 Mineflayer bot API를 사용한다. 따라서 LLM이 저수준 움직임을 한 틱씩 생성하는 구조가 아니라, **높은 수준의 도구 호출과 인자를 결정하고 기존 실행 코드가 세부 동작을 수행**한다.
+6. **결과와 재판단:** 도구의 상태·메시지와 환경 이벤트가 ReAct의 다음 판단에 전달되고, `intermediate_steps`가 `action_list`와 최종 응답으로 정리된다. BA는 환경 상태와 행동 내역을 Data Manager에 반영한다. 이후 별도의 BA `reflect()`가 행동 이력 등으로 작업 성공 여부를 추정하며 Controller가 이를 사용한다. 이 reflection과 실제 월드를 기준으로 한 benchmark judger의 최종 점수는 다르다.
+
+**실행 경로상 주의:** 일반 서버의 [`/post_place`](../../../env/minecraft_server.py)는 조건 확인 후 `/setblock` 등 관리자 명령을 사용하는 분기가 있으며, [fast 서버](../../../env/minecraft_server_fast.py)는 별도의 `place_axis` 경로를 사용한다. 따라서 모든 배치를 일반 플레이어의 `bot.placeBlock`이라고 설명하면 부정확하다. 서버 경로·권한과 실제 월드 결과를 실험별로 기록해야 한다.
+
+---
+
+## 2026-10-28 — rmalde/minecraft-agent의 JEV 행동 선택 조사
+
+**검토 범위:** [공개 저장소](https://github.com/rmalde/minecraft-agent)의 README와 `agent.mjs`, `models.mjs`, `optimization/policy.mjs`, `extra-actions.mjs`를 읽었다. 코드를 실행하거나 기록 영상을 독립적으로 검증하지 않았다. README는 Minecraft Java 1.16.5 단일 봇의 특정 Survival/Peaceful run에서 Astra 계획과 JEV 선택으로 드래곤 처치 및 출구 도달, 131회 JEV 결정과 35회 Astra 호출을 보고한다. 원본 영상·실행 증거는 저장소에서 제외되어 있어 여기서는 **저장소의 자체 보고**로 취급한다. [README](https://github.com/rmalde/minecraft-agent/blob/main/README.md)
+
+### 무엇을 모델이 고르고 무엇을 코드가 정하는가
+
+```text
+월드/인벤토리 관측 + 기존 계획
+ → 코드가 조건별 행동 후보와 실행 함수를 생성·필터
+ → JEV가 후보 ID 하나 선택
+ → 선택 ID에 연결된 함수 실행
+ → 행동 결과·관측 기록 → 다음 선택 및 필요시 재계획
+```
+
+- **상위 계획:** `plan()`은 생성형 Astra 또는 설정된 Sol에게 현재 상태를 전달하고 `objective`, `targets`, `waypoint`, `notes` 형태의 계획을 요청한다. 계획 요청은 초기 상태, 단계·차원 변경, 반복 실패, 목표 도착 등에서 촉발되며 일부는 기존 계획으로 행동하는 동안 비동기로 진행된다. 대기해야 하는 경우도 있어 모든 계획이 완전히 비동기인 것은 아니다. [models.mjs](https://github.com/rmalde/minecraft-agent/blob/main/models.mjs), [policy.mjs](https://github.com/rmalde/minecraft-agent/blob/main/optimization/policy.mjs), [실행 루프](https://github.com/rmalde/minecraft-agent/blob/main/agent.mjs).
+- **후보와 인자:** `candidates()`가 현재 환경·인벤토리·단계·위치 등을 검사해 `{key, description, fn}`을 구성한다. 예를 들어 관측된 좌표의 블록 채굴, 상자 열기, 제작, waypoint 이동, 보트 배치, 음식 섭취, 전투 및 대기 등이 조건부로 추가된다. 좌표와 대상은 코드가 관측에서 정하고 실행 함수에 묶는다. 일부 후보는 이동·장비 장착·채굴·아이템 수집을 묶은 **복합 행동**이다. 같은 도구 이름을 고른다는 수준보다 추상화가 높다. [agent.mjs](https://github.com/rmalde/minecraft-agent/blob/main/agent.mjs), [extra-actions.mjs](https://github.com/rmalde/minecraft-agent/blob/main/extra-actions.mjs).
+- **규칙 기반 제한:** 실패한 후보에는 cooldown을 적용하고, 단계·난이도·재료 필요량 등에 따라 후보를 제외한다. `selectUsefulOptions()`는 위험할 때 탈출 후보를 우선하고, 도착 시 일부 이동을 제거하며 유용한 행동이 있으면 대기를 제외한다. 이런 필터는 JEV 이전에 선택 공간을 실질적으로 결정한다. [policy.mjs](https://github.com/rmalde/minecraft-agent/blob/main/optimization/policy.mjs)
+- **JEV의 역할:** `decide()`는 축약된 상태와 후보 설명을 `/api/alpha/decisions`의 `typesafe/jev-1.13` choice 요청으로 전송한다. 반환된 선택 ID가 실제 후보인지 검사하고 해당 후보의 `fn`을 실행한다. 선택 기준 프롬프트에도 위험 회피, 음식, 이동과 실패 반복 방지 등 구체적인 우선순위가 포함된다. JEV가 임의의 Mineflayer 코드나 좌표 인자를 직접 생성하는 구조는 아니다. [models.mjs](https://github.com/rmalde/minecraft-agent/blob/main/models.mjs)
+- **실행·복구:** 함수는 Mineflayer와 pathfinder로 실행되며 시간 제한과 오류 기록이 있다. 실패 후보 cooldown과 반복 실패 시 계획 초기화가 있고, 별도의 물속 점프 같은 반사적 제어도 있다. 따라서 모든 게임 동작이 JEV 한 번의 선택만으로 결정되는 것은 아니다. 실행 루프는 요청·응답·지연·선택과 결과를 기록한다. [agent.mjs](https://github.com/rmalde/minecraft-agent/blob/main/agent.mjs)
+
+### VA 도입에 주는 시사점과 한계
+
+이 사례의 유용한 힌트는 **관측에 근거한 실행 가능한 후보 생성 → 후보 ID 선택 → 기존 구현 실행**의 경계다. VA에도 task·관측을 이용해 `placeBlock`의 대상 좌표와 블록을 구체화한 후보를 만들고, 선택 ID를 기존 도구와 연결하는 작은 건설 실험을 설계할 수 있다. 후보의 전제조건과 대상, 생성 시각, 선택·실행 결과를 함께 기록하면 후보 생성 실패와 모델 선택 실패를 구분할 수 있다. 다만 이는 새 설계 제안이며 현재 VA에 구현된 기능이 아니다.
+
+동시에 참고 저장소의 정책은 seed별로 사전 조사한 경로·좌표·상자 내용, 단계별 목표, 구체적인 우선순위와 다수의 맞춤 실행 함수에 크게 의존한다. 성공을 JEV만의 범용 판단 능력이나 독립적 스피드런 성능으로 귀속할 수 없다. 또한 단일 봇과 VA의 다중 agent benchmark는 작업·행동 단위·평가 조건이 다르고, JEV와 로컬 Tev1도 서로 다른 모델·서비스다. 이식 시 후보 생성 규칙의 범용성, 후보 누락, 코드에 들어간 도메인 지식과 개발 비용을 따로 평가해야 한다. 저장소의 각 선택에 호출을 거치는 구현은 tick 단위 제어라는 의미의 실시간성을 입증하지 않는다.
+
+---
+
+## 2026-10-28 — Tev1 반복 배치 활성화 Task20 실행
+
+Minecraft 1.19.2 평지·Peaceful, Construction Task20·3인, full Controller `assignment_policy=controller`, Gemini 생성형 및 `VILLAGER_TEV1_REPEATED_PLACEMENT=1`로 세 차례 실행했다. **세 실행 모두 judger의 block hit rate와 view hit rate는 1.0이지만 Tev1 행동 선택 호출은 0회**였다. 따라서 이는 생성형 actor 실행 결과이며 결정 모델 적용 성공이나 성능 비교가 아니다. 사전 로컬 Tev1 API 단문 선택 요청 1회는 정상 응답했다.
+
+| 실행 | 결과 | Gemini 집계 요청 | 코드 가격표 기준 비용 |
+| --- | --- | --- | --- |
+| [trial1](../../../result/20261028_tev1_construction_task20_3p_trial1/) | 12/12, complete task | 29 | 약 $0.1100 |
+| [trial2](../../../result/20261028_tev1_construction_task20_3p_trial2/) | 12/12, complete task | 24 | 약 $0.0933 |
+| [trial3](../../../result/20261028_tev1_construction_task20_3p_trial3/) | 12/12, complete task | 25 | 약 $0.0933 |
+
+요청 집계는 완료된 호출 기준이며 실제 청구액이나 종료 시점의 미완료 호출까지 보장하지 않는다. trial1 후 실제 TD 출력의 `Place ... at`과 조건부 재료 확보 milestone을, trial2 후 한 milestone에 여러 좌표를 나열하는 표현을 감지하도록 보완하고 각각 오프라인 fixture를 통과했다. trial3에서는 **명시적인 상자 인출이 선행되는 계획**이 생성되어 이를 건너뛰지 않도록 Tev1 구간에 진입하지 않았다. 각 실행 사이 코드가 달라 동일 조건 반복으로 취급하지 않는다. 추후 기존 ReAct가 재료 인출을 마친 뒤 반복 배치 구간으로 제어를 넘기는 경계가 필요하다.
+
+기존 월드와 초기화 대상 자료는 [사전 백업](../../../result/pre_tev1_task20_20261028_120938/)에 보존했고, 실행별 launcher와 `logs_snapshot`을 각 결과 폴더에 복사했다. 실험용 `build_judge`, Alice, Bob, Cindy의 임시 OP는 종료 후 회수했다. 접속자는 실행 전 0명이었다. 코드 기준 commit은 `6090ccf`이며 작업 트리는 수정 상태다. API 키 파일 형식을 확인하는 과정에서 인증 값이 도구 출력에 노출되어 키 교체가 필요하다. 키 값 자체는 기록하지 않는다.
+
+---
+
+## 2026-10-28 — 혼합 BA Tev1 배치 판단 Task20 3회 실행
+
+Minecraft 1.19.2 평지·Peaceful, Construction Task20, 3인, full Controller의 `assignment_policy=controller`, `decision_policies={"ba":"hybrid","ac":"generative"}`로 세 번 순차 실행했다. Gemini 생성형 actor가 행동과 인자를 제안하고, `placeBlock` 실행 전 로컬 `tev1:4b-q4_K_M`이 배치 또는 보류를 선택했다. 결정형 모델은 좌표를 독립적으로 생성하지 않는다.
+
+| 실행 | judger 블록·시점 적중률 | Tev1 배치 승인 / 보류 | 성공 피드백 배치 | wall-clock | 완료 Gemini 요청 / 추정 비용 |
+| --- | --- | --- | --- | --- | --- |
+| [1](../../../result/20261028_hybrid_tev1_task20_3p_run1/) | 1.0 / 1.0 | 12 / 0 | 12 | 약 70.1초 | 25 / $0.09038 |
+| [2](../../../result/20261028_hybrid_tev1_task20_3p_run2/) | 1.0 / 1.0 | 12 / 0 | 12 | 약 70.1초 | 28 / $0.10761 |
+| [3](../../../result/20261028_hybrid_tev1_task20_3p_run3/) | 1.0 / 1.0 | 12 / 0 | 12 | 약 90.1초 | 29 / $0.11192 |
+
+세 실행 모두 `end_reason=complete task`; Tev1 요청 시작·정상 종료는 각각 12회였다. 모두 배치를 선택했으므로 보류·오류 복구나 부적절한 배치 제안을 걸러내는 능력은 관찰되지 않았다. Gemini 요청은 각 실행에서 시작이 종료보다 1회 많아 종료 시점에 미완료 요청이 있었고, 코드의 완료 요청 집계와 가격표 기반 합계 약 $0.30992는 실제 청구액을 보장하지 않는다. 이전 생성형 실행과 조건 및 코드가 다르므로 속도·성능 향상으로 단정하지 않는다.
+
+실행별 폴더에 점수, `trace/events.jsonl`, actor 이력, 설정, launcher·서버 측 로그 스냅샷과 주요 소스 사본을 보존했다. 실험 전 월드와 초기화 자료는 [백업](../../../result/pre_hybrid_task20_20261028_1230/)에 보존했다. 실행 전 접속자 0명, 임시 `build_judge`·Alice·Bob·Cindy OP는 세 실행 후 회수했다. 시작 기준 commit `6090ccf`, 작업 트리 수정 상태. 이전에 노출된 API 키는 연구자가 이번 실행에 한해 사용을 승인했고, 종료 후 교체하기로 했다.
+
+---
+
+## 2026-10-28 — 연구자 촬영 중 혼합 BA Task20
+
+연구자 `saturn294571`이 서버에 접속한 상태에서 Construction Task20·3인, full Controller, Gemini 생성형과 Tev1 배치 판단의 혼합 BA를 실행했다. [재시도 결과](../../../result/hybrid_tev1_task20_recording_20261028_retry1/)는 judger block hit rate·view hit rate 1.0, `complete task`; Tev1은 12회 모두 `place`를 선택했다. wall-clock 약 69.1초, 완료된 Gemini 요청 25회 및 코드 가격표 기준 약 $0.08995다. 실제 청구액과 미완료 요청을 보장하지 않는다. 이는 생성형이 제안한 배치 인자에 대한 판단이며 Tev1 단독 행동 생성 검증은 아니다.
+
+[첫 시도](../../../result/hybrid_tev1_task20_recording_20261028_124738/)에서는 judger 준비 이벤트가 지연돼 재시작했으나 heartbeat timeout으로 actor 실행 초기에 중단됐다. 별도 결과 폴더에서 정상 judger 수명주기로 재시도했으며 두 실행을 동일한 반복으로 합치지 않는다. 실험 전 월드·로그는 [백업](../../../result/pre_hybrid_recording_20261028_124738/)에 보존했고, 실험용 judger 및 Alice·Bob·Cindy의 임시 OP를 회수했다. 연구자 계정은 유지했다.

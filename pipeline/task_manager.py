@@ -2,9 +2,10 @@ import sys
 import os
 sys.path.append(os.getcwd())
 from type_define.graph import Graph, Task
+from tracer import current_tracer, safe_emit, traced
 from pipeline.task_prompt import *
 from pipeline.data_manager import DataManager
-from pipeline.retriever import Retriever
+from pipeline.retriever import LocalOnlyEmbeddingGuard, Retriever
 from model.openai_models import OpenAILanguageModel
 from pipeline.utils import *
 from typing import Union
@@ -40,7 +41,7 @@ class TaskManager:
     )
 
     def __init__(self, silent:bool = False, method:str = "update", cache_enabled:bool = False,
-                 assignment_policy: str = "decomposer"):
+                 assignment_policy: str = "decomposer", local_only: bool = False):
         if assignment_policy not in ("decomposer", "controller"):
             raise ValueError(f"Unsupported assignment_policy: {assignment_policy}")
         self.llm = None
@@ -49,7 +50,7 @@ class TaskManager:
         self.logger = init_logger("TaskManager", level= logging.WARNING ,dump=True, silent=silent)
         self.status = TaskManager.idle
         self.agent_describe = None
-        self.retriever = Retriever()
+        self.retriever = Retriever(embeddings=LocalOnlyEmbeddingGuard() if local_only else None)
         self.agent_list = []
         self.task_document = None
         self.method = method
@@ -192,6 +193,7 @@ class TaskManager:
     '''
         Public API
     '''
+    @traced("TD", "plan")
     def init_task(self, description:str, document:dict = {}):
         # task append
         # query state
@@ -258,6 +260,8 @@ class TaskManager:
             subtask_list.append(subtask)
 
         self.graph = self.query_graph(subtask_list)
+        safe_emit(current_tracer(), "TD", "graph.created", graph_nodes=len(self.graph.vertex),
+                  graph_edges=len(self.graph.edge))
 
         time_str = time.strftime("%Y_%m_%d_%H_%M_%S_graph", time.localtime())
         
@@ -517,6 +521,7 @@ class TaskManager:
                 self.task_trace_description.pop(idx)
 
 
+    @traced("TD", "replan")
     def update_task(self, task:Task):
         # task append
         # query state
@@ -580,6 +585,8 @@ class TaskManager:
             subtask_list.append(subtask)
 
         self.graph = self.query_graph(subtask_list)
+        safe_emit(current_tracer(), "TD", "graph.created", graph_nodes=len(self.graph.vertex),
+                  graph_edges=len(self.graph.edge))
 
         time_str = time.strftime("%Y_%m_%d_%H_%M_%S_graph", time.localtime())
         

@@ -1,0 +1,27 @@
+[
+  {
+    "host": "localhost",
+    "port": 25565,
+    "task_idx": 6,
+    "task_type": "construction",
+    "task_goal": "Using the provided blueprint, please collaborate to place blocks in Minecraft. You can use materials from both your inventory and the chest. The task is complete once the blueprint is fully built.",
+    "agent_num": 3,
+    "dig_needed": false,
+    "max_task_num": 1,
+    "task_name": "ollama_qwen38_construction_task6_3p_example",
+    "document_file": "data/map_description.json",
+    "role": "same",
+    "controller_mode": "full",
+    "assignment_policy": "controller",
+    "model_roles": {
+      "default": {
+        "provider": "ollama",
+        "model": "qwen3.8:27b"
+      }
+    },
+    "decision_policies": {
+      "ba": "generative",
+      "ac": "generative"
+    }
+  }
+]

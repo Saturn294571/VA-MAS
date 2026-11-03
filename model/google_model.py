@@ -8,6 +8,8 @@ details in this module.
 
 import json
 import logging
+import uuid
+from tracer import current_component, current_tracer, safe_emit
 import os
 import random
 import threading
@@ -140,6 +142,13 @@ def _usage_value(usage, field, default=0):
     return getattr(usage, field, default) or default
 
 
+def _trace_usage_value(usage, field):
+    """Keep a reported zero distinct from missing provider usage."""
+    if usage is None:
+        return None
+    return usage.get(field) if isinstance(usage, dict) else getattr(usage, field, None)
+
+
 def _ensure_runtime_files():
     os.makedirs("data", exist_ok=True)
     os.makedirs(".cache", exist_ok=True)
@@ -242,9 +251,42 @@ def create_google_chat_model(
     level = _validate_model_settings(api_model, thinking_level)
 
     class GoogleUsageCallback(BaseCallbackHandler):
+        def __init__(self):
+            self._starts = {}
+            self._lock = threading.Lock()
+
+        def on_chat_model_start(self, serialized, messages, *, run_id, **kwargs):
+            self._start(run_id)
+
+        def on_llm_start(self, serialized, prompts, *, run_id, **kwargs):
+            self._start(run_id)
+
+        def _start(self, run_id):
+            with self._lock:
+                if str(run_id) in self._starts:
+                    return
+                self._starts[str(run_id)] = time.monotonic()
+            safe_emit(current_tracer(), current_component("BA"), "llm.request.start",
+                      request_id=str(run_id), agent_id=actor_name, model=api_model)
+
         def on_llm_end(self, response, **kwargs):
             llm_output = response.llm_output or {}
             usage = llm_output.get("token_usage")
+            request_id = str(kwargs.get("run_id"))
+            with self._lock:
+                started = self._starts.pop(request_id, None)
+            prompt_tokens = _trace_usage_value(usage, "prompt_tokens")
+            completion_tokens = _trace_usage_value(usage, "completion_tokens")
+            details = _trace_usage_value(usage, "completion_tokens_details")
+            price = SUPPORTED_GEMINI_MODELS[api_model]
+            cost = ((prompt_tokens * price["input"] + completion_tokens * price["output"]) / 1_000_000
+                    if prompt_tokens is not None and completion_tokens is not None else None)
+            safe_emit(current_tracer(), current_component("BA"), "llm.request.end",
+                      request_id=request_id, agent_id=actor_name, model=api_model,
+                      result_status="ok", duration_s=time.monotonic() - started if started is not None else None,
+                      finish_reason=_actor_finish_reason(response), prompt_tokens=prompt_tokens,
+                      completion_tokens=completion_tokens,
+                      thinking_tokens=_trace_usage_value(details, "reasoning_tokens"), cost_usd=cost)
             if usage:
                 _record_token_usage(usage, api_model, level)
             if actor_name:
@@ -252,6 +294,14 @@ def create_google_chat_model(
                     _record_actor_request(response, actor_name, api_model, max_tokens, kwargs.get("run_id"))
                 except (OSError, ValueError, TypeError):
                     logger.warning("Could not record actor LLM termination metadata", exc_info=True)
+
+        def on_llm_error(self, error, *, run_id, **kwargs):
+            with self._lock:
+                started = self._starts.pop(str(run_id), None)
+            safe_emit(current_tracer(), current_component("BA"), "llm.request.end",
+                      request_id=str(run_id), agent_id=actor_name, model=api_model,
+                      result_status="error", error_type=type(error).__name__,
+                      duration_s=time.monotonic() - started if started is not None else None)
 
     return ChatOpenAI(
         model=api_model,
@@ -432,6 +482,8 @@ class GoogleLanguageModel(AbstractLanguageModel):
         if cache_enabled:
             content = self.cache_api_call_handler(cache_key)
             if content is not None:
+                safe_emit(current_tracer(), current_component(self.role_name or "LLM"),
+                          "llm.cache_hit", model=model, cache_hit=True)
                 self._record_ui_log(prompt, content)
                 return content
 
@@ -446,7 +498,29 @@ class GoogleLanguageModel(AbstractLanguageModel):
             request["stop"] = stop
 
         start_time = time.time()
-        response = self.client.chat.completions.create(**request)
+        started = time.monotonic()
+        request_id = uuid.uuid4().hex
+        component = current_component(self.role_name or "LLM")
+        safe_emit(current_tracer(), component, "llm.request.start", request_id=request_id, model=model)
+        try:
+            response = self.client.chat.completions.create(**request)
+        except Exception as exc:
+            safe_emit(current_tracer(), component, "llm.request.end", request_id=request_id,
+                      model=model, result_status="error", error_type=type(exc).__name__,
+                      duration_s=time.monotonic() - started)
+            raise
+        usage = response.usage
+        prompt_tokens = _trace_usage_value(usage, "prompt_tokens")
+        completion_tokens = _trace_usage_value(usage, "completion_tokens")
+        details = _usage_value(usage, "completion_tokens_details", {})
+        price = SUPPORTED_GEMINI_MODELS[model]
+        cost = ((prompt_tokens * price["input"] + completion_tokens * price["output"]) / 1_000_000
+                if prompt_tokens is not None and completion_tokens is not None else None)
+        safe_emit(current_tracer(), component, "llm.request.end", request_id=request_id,
+                  model=model, result_status="ok", duration_s=time.monotonic() - started,
+                  finish_reason=getattr(response.choices[0], "finish_reason", None),
+                  prompt_tokens=prompt_tokens, completion_tokens=completion_tokens,
+                  thinking_tokens=_trace_usage_value(details, "reasoning_tokens"), cost_usd=cost)
         content = response.choices[0].message.content or ""
         self._update_token_usage(response.usage, model)
 

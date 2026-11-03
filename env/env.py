@@ -8,6 +8,7 @@ import time
 import os
 from env.utils import init_logger
 import logging
+from tracer import traced
 
 
 class env_type:
@@ -52,6 +53,7 @@ class VillagerBench:
         self.dig_needed = dig_needed  # For construction
         self.launch_time = None
         self.langchain_model = ""
+        self.local_generation_config = None
         self.base_port = 5000
         self.op_path = ""
         if not os.path.exists("data/history"):
@@ -275,6 +277,7 @@ class VillagerBench:
             self.agent_pool.append(agent)
             self.log[agent.name] = []
 
+    @traced("ENV", "environment.launch")
     def launch(self, debug: bool = False, fast_api=False):
         Agent.launch(host=self.host, port=self.port, debug=debug, fast=fast_api)
         self.running = True
@@ -293,11 +296,21 @@ class VillagerBench:
             assert False, "env not running, please '.launch()' first"
         
         elif self.env_type == env_type.construction:
+            judger_env = os.environ.copy()
+            if self.local_generation_config:
+                judger_env["VILLAGER_LOCAL_GENERATION_ONLY"] = "1"
+                judger_env["VILLAGER_LOCAL_MODEL"] = self.local_generation_config["api_model"]
+                judger_env["VILLAGER_LOCAL_BASE_URL"] = self.local_generation_config["api_base"]
+                judger_env["VILLAGER_LOCAL_TIMEOUT"] = str(self.local_generation_config["timeout"])
+                if self.local_generation_config.get("num_ctx") is not None:
+                    judger_env["VILLAGER_LOCAL_NUM_CTX"] = str(self.local_generation_config["num_ctx"])
+            else:
+                judger_env["VILLAGER_LOCAL_GENERATION_ONLY"] = "0"
             if self.dig_needed:
-                subprocess.Popen(["python", "env/build_judger.py", "--idx", str(self.task_id), "--host", self.host, "--port" , str(self.port), "--agent_num", str(len(self.agent_pool)), "--dig_needed","true", "--agent_names", agent_names_str, "--task_name", self.task_name], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+                subprocess.Popen(["python", "env/build_judger.py", "--idx", str(self.task_id), "--host", self.host, "--port" , str(self.port), "--agent_num", str(len(self.agent_pool)), "--dig_needed","true", "--agent_names", agent_names_str, "--task_name", self.task_name], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, env=judger_env)
                 self.logger.debug(f"python env/build_judger.py --idx {self.task_id} --host {self.host} --port {self.port} --dig_needed true --agent_num {len(self.agent_pool)} --agent_names {agent_names_str} --task_name {self.task_name}")
             else:
-                subprocess.Popen(["python", "env/build_judger.py", "--idx", str(self.task_id), "--host", self.host, "--port" , str(self.port), "--agent_num", str(len(self.agent_pool)), "--agent_names", agent_names_str, "--task_name", self.task_name], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+                subprocess.Popen(["python", "env/build_judger.py", "--idx", str(self.task_id), "--host", self.host, "--port" , str(self.port), "--agent_num", str(len(self.agent_pool)), "--agent_names", agent_names_str, "--task_name", self.task_name], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, env=judger_env)
                 self.logger.debug(f"python env/build_judger.py --idx {self.task_id} --host {self.host} --port {self.port} --agent_num {len(self.agent_pool)} --agent_names {agent_names_str} --task_name {self.task_name}")
         elif self.env_type == env_type.farming:
             subprocess.Popen(["python", "env/farm_craft_judger.py", "--idx", str(self.task_id), "--host", self.host, "--port" , str(self.port), "--agent_num", str(len(self.agent_pool)), "--agent_names", agent_names_str, "--task_name", self.task_name], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
@@ -409,6 +422,7 @@ class VillagerBench:
                 metadata = json.load(f)
             return metadata
 
+    @traced("JUDGER", "score.read")
     def get_score(self):
         if self.env_type == env_type.construction:
             with open(f"data/score.json") as f:

@@ -93,6 +93,9 @@ env_gen/*
 # 로컬 Python 환경
 venv/*
 
+# jev 관련 RQ 변경 이전 문서들
+research/doc/legacy
+
 # 논문 제출 패키지에서 지시 문서를 제외할 때만 활성화; 연구 단계에서는 추적
 # /AGENTS.md
 # /pipeline/AGENTS.md

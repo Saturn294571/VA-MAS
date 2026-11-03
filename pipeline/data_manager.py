@@ -14,6 +14,7 @@ from type_define.graph import Task, Graph
 from pipeline.utils import *
 import logging
 import random
+from tracer import traced
 
 class DataManager:
     '''
@@ -281,6 +282,7 @@ class DataManager:
                 documents.append(document)
             return documents
 
+    @traced("SM", "state.initialize")
     def update_database_init(self, info: list):
         self._logger.debug("=" * 20 + " Update Database Init " + "=" * 20)
         self._logger.info(f"gathering info data: \n{info}")
@@ -335,6 +337,7 @@ class DataManager:
         with open(os.path.join(root, "DM_history.json"), "w") as f:
             json.dump(self.history_log, f, indent=4)
 
+    @traced("SM", "state.update")
     def update_database(self, new_info: dict):
         self._logger.info("Start updating database...")
         new_info["status"] = new_info["status"]["message"] if new_info["status"]["status"] else {}
@@ -406,6 +409,7 @@ class DataManager:
         self._logger.info("Update database finished")
 
     @timed_cache(max_age=120)
+    @traced("SM", "environment.query")
     def query_env(self) -> (str, dict):
         person_info = self._env_data["person_info"]
         if len(person_info) == 0:
@@ -467,6 +471,7 @@ class DataManager:
             json.dump(self.query_log, f, indent=4)
 
     @timed_cache(max_age=120)
+    @traced("SM", "environment.query")
     def query_env_with_task(self, task: str, agent_query = False) -> str:
         # input task description
         # output task relevant env data

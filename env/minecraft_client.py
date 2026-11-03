@@ -28,6 +28,8 @@ from model.google_model import (
     load_google_api_keys,
 )
 from env.action_policy import complete_legacy_trace, guarded_tools, make_action_context
+from model.ollama_model import DEFAULT_OLLAMA_BASE_URL, create_ollama_chat_model
+from tracer import trace_scope
 
 env = os.environ.copy()
 env["PYTHONIOENCODING"] = "utf-8"
@@ -186,6 +188,10 @@ class Agent():
     logging.basicConfig()
     logging.getLogger("langchain.retrievers.multi_query").setLevel(logging.INFO)
     model = DEFAULT_GEMINI_MODEL
+    model_provider = "gemini"
+    ollama_base_url = DEFAULT_OLLAMA_BASE_URL
+    ollama_num_ctx = None
+    ollama_timeout = 300.0
     thinking_level = DEFAULT_GEMINI_THINKING_LEVEL
     temperature = 0
     max_tokens = 1024
@@ -964,8 +970,13 @@ class Agent():
 
     def step(self, instruction: str, actions=[], observations=[], player_name_list=[], max_try_turn=2, max_iterations=1, tools=[], recommended_actions=[]):
         # return the (action, observation), details.
-        assert len(self.api_key_list) > 0, "Please set the api_key_list in Agent class."
-        if 'qwen' in self.model:
+        if Agent.model_provider != "ollama":
+            assert len(self.api_key_list) > 0, "Please set the api_key_list in Agent class."
+        if Agent.model_provider == "ollama":
+            self.llm = create_ollama_chat_model(model=self.model, base_url=Agent.ollama_base_url,
+                                                actor_name=self.name, max_tokens=Agent.max_tokens,
+                                                num_ctx=Agent.ollama_num_ctx, timeout=Agent.ollama_timeout)
+        elif 'qwen' in self.model:
             from langchain_community.chat_models.tongyi import ChatTongyi
             self.llm = ChatTongyi(model=self.model, temperature=0, max_tokens=256, dashscope_api_key=random.choice(Agent.api_key_list), base_url=Agent.base_url,model_kwargs={"enable_thinking": False})
         elif "default" in self.model:
@@ -1034,10 +1045,12 @@ class Agent():
             try:
                 if len(player_name_list) == 0:
                     task = f"Your name is {self.name}.\n{instruction}"
-                    response = agent({"input": filter_emoji(task)})
+                    with trace_scope(decision_id=context["decision_id"]):
+                        response = agent({"input": filter_emoji(task)})
                 else:
                     task = f"You should control {player_name_list} work together. \n{instruction}"
-                    response = agent({"input": filter_emoji(task)})
+                    with trace_scope(decision_id=context["decision_id"]):
+                        response = agent({"input": filter_emoji(task)})
                 break
             except KeyboardInterrupt:
                 logging.info("KeyboardInterrupt")
@@ -1092,10 +1105,39 @@ class Agent():
 
     def run(self, instruction: str, player_name_list=[], max_try_turn=10, max_iterations=5, tools=[], action_context=None):
         # print(f"Your name is {self.name}. \n{instruction}")
-        assert len(self.api_key_list) > 0, "Please set the api_key_list in Agent class."
+        if os.environ.get("VILLAGER_BA_POLICY", "generative") == "decision":
+            from env.repeated_placement import run_segment
+            from pathlib import Path
+            available = self.tools if not tools else tools
+            actor_input = action_context or {"task": {"id": "direct-run", "description": "", "milestones": []}, "observation": {}}
+            context = make_action_context(self.name, actor_input["task"], actor_input["observation"], available, max_iterations)
+            events = []
+            segment = None if player_name_list else run_segment(context, available, events)
+            reason = segment["reason"] if segment else "unsupported_task"
+            # A complete segment is not evidence of task completion: reflection is generative.
+            if reason == "completed_segment":
+                reason = "segment_complete_unverified"
+            detail = {"input": instruction, "action_list": [
+                {"action": {"tool": e["decision"]["tool_name"], "tool_input": e["decision"]["tool_args"]},
+                 "feedback": e.get("feedback", {"status": False})} for e in events],
+                "final_answer": "Decision policy stopped: " + reason,
+                "tev1_segment": segment, "tev1_action_events": events, "policy_abort": reason}
+            self.update_history(detail)
+            time.sleep(3)
+            trace_dir = os.environ.get("VILLAGER_TRACE_DIR")
+            if trace_dir:
+                marker = Path(trace_dir) / "policy_abort.json"
+                marker.write_text(json.dumps({"agent": self.name, "reason": reason}), encoding="utf-8")
+            return detail["final_answer"], detail
+        if Agent.model_provider != "ollama":
+            assert len(self.api_key_list) > 0, "Please set the api_key_list in Agent class."
         # dynamic api key
 
-        if 'qwen' in self.model:
+        if Agent.model_provider == "ollama":
+            self.llm = create_ollama_chat_model(model=self.model, base_url=Agent.ollama_base_url,
+                                                actor_name=self.name, max_tokens=Agent.max_tokens,
+                                                num_ctx=Agent.ollama_num_ctx, timeout=Agent.ollama_timeout)
+        elif 'qwen' in self.model:
             from langchain_community.chat_models.tongyi import ChatTongyi
             self.llm = ChatTongyi(model=self.model, temperature=0, max_tokens=256, dashscope_api_key=random.choice(Agent.api_key_list), base_url=Agent.base_url,model_kwargs={"enable_thinking": False})
         elif "default" in self.model:
@@ -1137,10 +1179,20 @@ class Agent():
             max_iterations,
         )
         contract_events = []
+        segment = None
+        segment_events = []
+        if False:  # Hybrid fallback is disabled; policy must be selected explicitly.
+            from env.repeated_placement import run_segment
+            segment = run_segment(context, available_tools, segment_events)
+            if segment is not None:
+                instruction += ("\nA prior Tev1 placement segment has run. Verify the current world "
+                                "and continue the original task; do not assume tool feedback proves "
+                                "completion. Segment result: " + json.dumps(segment, ensure_ascii=False))
         # This part defines the agent type; the agent at the initialization position is not used
         while max_try_turn > 0:
             random.shuffle(self.tools)
-            executable_tools = guarded_tools(context, available_tools, contract_events)
+            executable_tools = guarded_tools(context, available_tools, contract_events,
+                                             "hybrid" if os.environ.get("VILLAGER_BA_POLICY") == "hybrid" else "legacy_react")
             llmhandler = LLMHandler()
             agent = initialize_agent(
                 tools=executable_tools,
@@ -1159,10 +1211,12 @@ class Agent():
                     start_time = time.time()
                     if len(player_name_list) == 0:
                         task = f"Your name is {self.name}.\n{instruction}"
-                        response = agent({"input": filter_emoji(task)})
+                        with trace_scope(decision_id=context["decision_id"]):
+                            response = agent({"input": filter_emoji(task)})
                     else:
                         task = f"You should control {player_name_list} work together. \n{instruction}"
-                        response = agent({"input": filter_emoji(task)})
+                        with trace_scope(decision_id=context["decision_id"]):
+                            response = agent({"input": filter_emoji(task)})
                     # print(llmhandler.chain_input)
                     # print(llmhandler.seralized_input)
 
@@ -1207,16 +1261,26 @@ class Agent():
         response = filter_emoji_from_dict(response)
         if max_try_turn < 0 or response is None:
             failure = "The task execute failed."
-            return failure, {"input": f"Your name is {self.name}.\n{instruction}", "action_list": [],
+            prior_actions = [{"action": {"tool": e["decision"]["tool_name"],
+                                         "tool_input": e["decision"]["tool_args"]},
+                              "feedback": e.get("feedback", {"status": False})}
+                             for e in segment_events]
+            return failure, {"input": f"Your name is {self.name}.\n{instruction}", "action_list": prior_actions,
                              "final_answer": failure, "chain_input": llmhandler.chain_input,
                              "seralized_input": llmhandler.seralized_input,
+                             "tev1_segment": segment, "tev1_action_events": segment_events,
                              "action_contract": complete_legacy_trace(context, [], contract_events, failure, available_tools)}
         # print(response)
         # print(dumps(response, pretty=True),type(dumps(response, pretty=True)))
-        action_list = []
+        action_list = [{"action": {"tool": e["decision"]["tool_name"],
+                                    "tool_input": e["decision"]["tool_args"]},
+                        "feedback": e.get("feedback", {"status": False,
+                                                        "message": e.get("error_type", e["validation"])})}
+                       for e in segment_events]
         response = json.loads(dumps(response, pretty=True))
-        for step in response["intermediate_steps"]:
-            action_list.append({"action": step[0]["kwargs"], "feedback": step[1]})
+        legacy_actions = [{"action": step[0]["kwargs"], "feedback": step[1]}
+                          for step in response["intermediate_steps"]]
+        action_list.extend(legacy_actions)
         final_answer = response["output"]
         # save the action_list and final_answer
 
@@ -1233,8 +1297,11 @@ class Agent():
             json.dump({"input": response["input"], "action_list": action_list, "final_answer": final_answer}, f,
                       indent=4)
         detail = {"input": response["input"], "action_list": action_list, "final_answer": final_answer,
-                  "action_contract": complete_legacy_trace(context, action_list, contract_events,
+                  "action_contract": complete_legacy_trace(context, legacy_actions, contract_events,
                                                            final_answer, available_tools)}
+        if segment is not None:
+            detail["tev1_segment"] = segment
+            detail["tev1_action_events"] = segment_events
         self.update_history(detail)
         return final_answer, detail
 
@@ -1261,10 +1328,8 @@ if __name__ == "__main__":
     # Agent.base_url = GOOGLE_OPENAI_BASE_URL
     # Agent.api_key_list = api_key_list
 
-    Agent.model = DEFAULT_GEMINI_MODEL
-    Agent.base_url = GOOGLE_OPENAI_BASE_URL
-    Agent.thinking_level = DEFAULT_GEMINI_THINKING_LEVEL
-    Agent.api_key_list = load_google_api_keys()
+    from model.role_models import configure_actor_model, standalone_model_config
+    configure_actor_model(Agent, standalone_model_config())
     agent1 = Agent(name="Alice", local_port=5001, tools=[])
     Agent.launch(host="10.214.180.148", port=25565)
     time.sleep(5)

@@ -5,12 +5,7 @@ from pipeline.data_manager import DataManager
 from pipeline.task_manager import TaskManager
 import json
 from model.init_model import init_language_model
-from model.google_model import (
-    DEFAULT_GEMINI_MODEL,
-    DEFAULT_GEMINI_THINKING_LEVEL,
-    GOOGLE_OPENAI_BASE_URL,
-    load_google_api_keys,
-)
+from model.role_models import configure_actor_model, standalone_model_config
 import random
 import os
 import torch
@@ -86,19 +81,8 @@ def auto_gen_one_task(use_existing_task=False):
     # env = VillagerBench(env_type.auto, task_id=0, _virtual_debug=False, dig_needed=False, host="10.214.180.148", task_name="auto_gen")
     env = VillagerBench(env_type.auto, task_id=0, _virtual_debug=False, dig_needed=False, host="10.192.24.163", task_name="auto_gen")
 
-    api_key_list = load_google_api_keys()
-    base_url = GOOGLE_OPENAI_BASE_URL
-    llm_config = {
-        "api_base": base_url,
-        "api_model": DEFAULT_GEMINI_MODEL,
-        "thinking_level": DEFAULT_GEMINI_THINKING_LEVEL,
-        "api_key_list": api_key_list,
-
-    }
-    Agent.model = DEFAULT_GEMINI_MODEL
-    Agent.base_url = base_url
-    Agent.thinking_level = DEFAULT_GEMINI_THINKING_LEVEL
-    Agent.api_key_list = api_key_list
+    llm_config = standalone_model_config()
+    configure_actor_model(Agent, llm_config)
     
     rl_env = MinecraftRLEnv(
         max_instruction_length = 128,
@@ -374,7 +358,7 @@ def auto_gen_one_task(use_existing_task=False):
         dm.update_database_init(env.get_init_state())
 
         # Set Task Manager
-        tm = TaskManager(silent=False)
+        tm = TaskManager(silent=False, local_only=llm_config["provider"] == "ollama")
 
         # Set Controller
         ctrl = GlobalController(llm_config, tm, dm, env

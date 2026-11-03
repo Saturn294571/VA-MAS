@@ -11,6 +11,7 @@ from typing import Any, Protocol, TypedDict
 from uuid import uuid4
 
 from langchain_core.tools import StructuredTool
+from tracer import current_tracer, safe_emit
 
 
 class ActionContext(TypedDict):
@@ -109,7 +110,8 @@ def validate_action(
 
 
 def guarded_tools(
-    context: ActionContext, tools: list[StructuredTool], events: list[dict[str, Any]]
+    context: ActionContext, tools: list[StructuredTool], events: list[dict[str, Any]],
+    policy: str = "legacy_react",
 ) -> list[StructuredTool]:
     """Keep the existing ReAct loop while validating every executable call."""
     wrapped = []
@@ -123,27 +125,56 @@ def guarded_tools(
             event = {
                 "call_id": f"{context['decision_id']}:call:{len(events) + 1}",
                 "decision": decision, "validation": reason,
-                "policy": "legacy_react", "validation_stage": "before_execution",
+                "policy": policy, "validation_stage": "before_execution",
                 "history_length_before": len(context["history"]),
             }
             events.append(event)
+            safe_emit(current_tracer(), "BA", "action.selected", decision_id=event["call_id"],
+                      tool=_original.name, validation=reason, agent_id=context["agent_name"])
             if not valid:
                 event["execution"] = "not_called"
                 feedback = {"message": f"Action rejected: {reason}", "status": False}
                 context["history"].append({"tool": _original.name, "args": kwargs,
                                            "feedback": feedback})
                 return feedback
+            if policy == "hybrid" and _original.name == "placeBlock":
+                from model.ollama_decision import choose
+                try:
+                    selected = choose({"task": context["task"], "proposed_action": kwargs,
+                                       "recent_feedback": context["history"][-3:]},
+                                      {"place": "Execute the proposed block placement.",
+                                       "defer": "Do not place; request another observation or recovery."})
+                except Exception as exc:
+                    selected = "error"
+                    event["error_type"] = type(exc).__name__
+                event["policy"] = "tev1_placement_gate"
+                event["decision_choice"] = selected
+                safe_emit(current_tracer(), "BA", "decision.selected", decision_id=event["call_id"],
+                          agent_id=context["agent_name"], policy="tev1_placement_gate", reason=selected)
+                if selected != "place":
+                    feedback = {"status": False, "message": "Tev1 did not authorize placement: " + selected}
+                    event.update(execution="not_called", feedback=feedback)
+                    context["history"].append({"tool": _original.name, "args": kwargs, "feedback": feedback})
+                    return feedback
             started = time.monotonic()
+            safe_emit(current_tracer(), "BA", "action.execute.start", decision_id=event["call_id"],
+                      tool=_original.name, agent_id=context["agent_name"])
             try:
                 feedback = _original.run(kwargs)
             except Exception as exc:
                 event["execution"] = "exception"
                 event["error_type"] = type(exc).__name__
+                safe_emit(current_tracer(), "BA", "action.execute.end", decision_id=event["call_id"],
+                          tool=_original.name, result_status="error", error_type=type(exc).__name__,
+                          duration_s=time.monotonic() - started)
                 raise
             finally:
                 event["execution_duration_s"] = time.monotonic() - started
             event["execution"] = "called"
             event["feedback"] = feedback
+            safe_emit(current_tracer(), "BA", "action.execute.end", decision_id=event["call_id"],
+                      tool=_original.name, result_status="ok", duration_s=event["execution_duration_s"],
+                      tool_status=feedback.get("status") if isinstance(feedback, dict) else None)
             context["history"].append({"tool": _original.name, "args": kwargs,
                                        "feedback": feedback})
             return feedback

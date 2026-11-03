@@ -16,6 +16,8 @@
 
 TD/Task Manager의 부분 DAG 계획, SM/Data Manager의 상태·이력, Minecraft 실행 API와 VillagerBench judger는 출발 기준으로 보존한다. 현재 SM은 LLM 요약·환경 질의도 수행하므로 비LLM 모듈이라고 단정하지 않는다. BA의 reflection과 환경 judger 점수도 구분한다. 논문–코드 차이는 [기능 대응표](../architecture_understand/VA_code_paper_map.md)를 따른다.
 
+현재 생성형 기준 모델은 Gemini 외부 API다. 로컬 Qwen과 결정형 모델을 동시에 적재했을 때의 GPU 메모리 제약을 고려한 선택이며, 로컬 생성형 경로는 선택 가능한 비교용 구현으로 남긴다.
+
 | 조건 | AC 작업 배정 | BA/Minecraft Agent의 다음 행동 선택 | 실험 역할 |
 | --- | --- | --- | --- |
 | G/G | 현행 생성형 경로 | 현행 생성형 경로 | 기준선 |

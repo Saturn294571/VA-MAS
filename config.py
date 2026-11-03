@@ -8,6 +8,8 @@ import tqdm
 import logging
 from pipeline.utils import *
 from model.init_model import init_language_model
+from model.role_models import standalone_model_config
+from model.ollama_model import DEFAULT_OLLAMA_MODEL
 from model.openai_models import OpenAILanguageModel
 from model.google_model import (
     DEFAULT_GEMINI_MODEL,
@@ -30,7 +32,8 @@ task_number = 1
 logger = init_logger("TASK_GOAL", dump=False, level=logging.DEBUG, silent=False)
 
 LLM_API_BASE = GOOGLE_OPENAI_BASE_URL
-LLM_API_MODEL = DEFAULT_GEMINI_MODEL
+LLM_API_MODEL = (os.environ.get("VILLAGER_LOCAL_MODEL", DEFAULT_OLLAMA_MODEL)
+                 if os.environ.get("VILLAGER_GENERATION_PROVIDER") == "ollama" else DEFAULT_GEMINI_MODEL)
 LLM_THINKING_LEVEL = DEFAULT_GEMINI_THINKING_LEVEL
 _llm = None
 
@@ -39,14 +42,7 @@ def get_llm():
     """Create the task-rewording model only when generation actually needs it."""
     global _llm
     if _llm is None:
-        api_key_list = load_google_api_keys()
-        _llm = init_language_model({
-            "api_key": api_key_list[0],
-            "api_base": LLM_API_BASE,
-            "api_model": LLM_API_MODEL,
-            "thinking_level": LLM_THINKING_LEVEL,
-            "api_key_list": api_key_list,
-        })
+        _llm = init_language_model(standalone_model_config())
     return _llm
 # task_goal_prompt = "Randomly choose another way to express the following sentence. Try to change the sentence pattern instead of replacing words and try to avoid repetitive sentence patterns as much as possible. Making sure the meaning does not change: "
 task_goal_prompt = """
@@ -93,6 +89,10 @@ template = {
     "port": 25565,
     "task_name": ""
 }
+
+if os.environ.get("VILLAGER_GENERATION_PROVIDER", "gemini") == "ollama":
+    template["model_roles"] = {"default": {"provider": "ollama", "model": LLM_API_MODEL,
+                                            "base_url": os.environ.get("VILLAGER_LOCAL_BASE_URL", "http://127.0.0.1:11434")}}
 
 arg_template = {
     "target": "rabbit_stew",
