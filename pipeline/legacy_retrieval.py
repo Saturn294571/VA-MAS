@@ -131,5 +131,3 @@ def query_from_db(llm, db_dict, db_name, query="", verbose=False, query_type="")
         print(f"[Debug] {text_results[:10]} ... {text_results[-10:]}\n")
 
     return f"{text_results}", unique_docs
-
-

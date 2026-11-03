@@ -115,5 +115,3 @@ class ControllerExecution:
             self.executor.shutdown(wait=False)
             # raise exception
             raise Exception("Interrupted by user")
-
-

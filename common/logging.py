@@ -27,7 +27,7 @@ def init_logger(name: str, level: int = logging.ERROR, dump: bool = False, silen
                 pass
 
         return empty_logger()
-    
+
     logger = logging.getLogger(name)
     logger.propagate = False
     logger.setLevel(level)
@@ -58,7 +58,7 @@ def init_logger(name: str, level: int = logging.ERROR, dump: bool = False, silen
             os.mkdir("logs")
         file_name = f"logs/{name}.log"
         file_handler = logging.FileHandler(
-            file_name, 
+            file_name,
             encoding='utf-8'  # Explicitly specify UTF-8 encoding
         )
         file_handler.setLevel(level)
@@ -66,4 +66,3 @@ def init_logger(name: str, level: int = logging.ERROR, dump: bool = False, silen
         logger.addHandler(file_handler)
 
     return logger
-

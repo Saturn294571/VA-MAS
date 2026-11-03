@@ -67,7 +67,7 @@ def parse_info(text: str, guard_keys: list[str], *, recover_yaml_errors: bool) -
 
     # Initialize an empty string to store the current dictionary text
     dict_text = ''
-    
+
     # Initialize a counter for the number of open braces
     brace_count = 0
 
@@ -125,4 +125,3 @@ def parse_info(text: str, guard_keys: list[str], *, recover_yaml_errors: bool) -
             dict_text += char
 
     return info_list
-
