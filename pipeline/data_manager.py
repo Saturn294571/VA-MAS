@@ -1,15 +1,13 @@
 import datetime
 
 import numpy as np
-from langchain.retrievers.multi_vector import SearchType
+from langchain.docstore.document import Document
 
 from model.openai_models import OpenAILanguageModel
 from pipeline.data_prompt import SOMEONE_NEARBY_INFO_FORMAT, NOONE_NEARBY_INFO_FORMAT, AGENT_INFO_STORE_FORMAT, \
     SUCCESS_DECOMPOSE_PLAN_FORMAT, NOT_SUCCESS_DECOMPOSE_PLAN_FORMAT, PERSON_INFO_FORMAT, ENVIRONMENT_INFO_FORMAT, \
     HISTORY_SUMMARY_PROMPT, \
     SUMMARY_ENVIRONMENT_SYSTEM_PROMPT, SUMMARY_ENVIRONMENT_EXAMPLE_PROMPT
-from type_define.decomposed_summary_system import DecomposeSummarySystem
-from type_define.task_summary_tree import TaskSummaryTree
 from type_define.graph import Task, Graph
 from pipeline.utils import *
 import logging
