@@ -44,7 +44,7 @@ SUPPORTED_GEMINI_MODELS = {
 }
 SUPPORTED_THINKING_LEVELS = {"minimal", "low", "medium", "high"}
 
-_TOKEN_FILE_LOCK = threading.Lock()
+from model.runtime_usage import TOKEN_FILE_LOCK as _TOKEN_FILE_LOCK, ensure_runtime_files as _ensure_runtime_files
 _ACTOR_REQUEST_FILE_LOCK = threading.Lock()
 
 
@@ -147,30 +147,6 @@ def _trace_usage_value(usage, field):
     if usage is None:
         return None
     return usage.get(field) if isinstance(usage, dict) else getattr(usage, field, None)
-
-
-def _ensure_runtime_files():
-    os.makedirs("data", exist_ok=True)
-    os.makedirs(".cache", exist_ok=True)
-    if not os.path.exists("data/google.logs"):
-        with open("data/google.logs", "w", encoding="utf-8") as log_file:
-            log_file.write("")
-    if not os.path.exists("data/tokens.json"):
-        with open("data/tokens.json", "w", encoding="utf-8") as token_file:
-            json.dump(
-                {
-                    "dates": time.strftime("%Y-%m-%d %H:%M:%S", time.localtime()),
-                    "tokens_used": 0,
-                    "prompt_tokens": 0,
-                    "completion_tokens": 0,
-                    "thinking_tokens": 0,
-                    "successful_requests": 0,
-                    "total_cost": 0,
-                    "action_cost": 0,
-                    "model_usage": {},
-                },
-                token_file,
-            )
 
 
 def _record_token_usage(usage, model, thinking_level):

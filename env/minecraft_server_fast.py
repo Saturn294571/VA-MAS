@@ -5,14 +5,20 @@ import argparse
 import time
 from math import floor
 import names
-from fastapi import FastAPI
-from fastapi import Request
-from fastapi.responses import JSONResponse
-from fastapi.encoders import jsonable_encoder
-from fastapi import FastAPI, HTTPException
+import os
+import sys
+sys.path.append(os.getcwd())
+from common.optional import optional_dependencies
+with optional_dependencies("fastapi"):
+    from fastapi import FastAPI
+    from fastapi import Request
+    from fastapi.responses import JSONResponse
+    from fastapi.encoders import jsonable_encoder
+    from fastapi import FastAPI, HTTPException
 from functools import wraps
 from env_api import *
-import uvicorn
+with optional_dependencies("fastapi"):
+    import uvicorn
 
 # sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf8')
 os.environ["REQ_TIMEOUT"] = "1800000"

@@ -8,15 +8,12 @@ from type_define.graph import Task
 from pipeline.data_manager import DataManager
 from pipeline.utils import *
 from model.openai_models import OpenAILanguageModel
-from model.vllm_model import VLLMLanguageModel
 from random import random, randint, choice, sample
 from pipeline.agent_prompt import *
 from pipeline.agent_rl_prompt import *
-from rl_env import *
 from speaking_style import speaking_styles, speaking_styles_zh
 import numpy as np
 import threading
-import torch
 import platform
 from tracer import traced
 from model.utils import extract_info
@@ -112,7 +109,8 @@ class BaseAgent:
         if self.RL_mode != "":
             return self.rl_step(task)
         else:
-            if isinstance(self.llm, VLLMLanguageModel):
+            if any(cls.__module__ == "model.vllm_model" and cls.__name__ == "VLLMLanguageModel"
+                   for cls in type(self.llm).__mro__):
                 return self.local_step(task)
             else:
                 return self.normal_step(task)

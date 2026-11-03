@@ -20,7 +20,7 @@ from langchain_core.messages import AIMessage, BaseMessage
 from langchain_core.outputs import ChatGeneration, ChatResult
 
 from model.abstract_language_model import AbstractLanguageModel
-from model.google_model import _TOKEN_FILE_LOCK, _ensure_runtime_files
+from model.runtime_usage import TOKEN_FILE_LOCK as _TOKEN_FILE_LOCK, ensure_runtime_files as _ensure_runtime_files
 from model.utils import extract_info
 from tracer import current_component, current_tracer, safe_emit
 
@@ -41,7 +41,7 @@ def validate_ollama_base_url(value: str) -> str:
 
 
 def _record_local_usage(model: str, prompt_tokens: Any, completion_tokens: Any) -> None:
-    """Share the Gemini accounting lock; local monetary cost is not estimated."""
+    """Share the provider-neutral accounting lock; local monetary cost is not estimated."""
     _ensure_runtime_files()
     with _TOKEN_FILE_LOCK:
         with open("data/tokens.json", encoding="utf-8") as source:

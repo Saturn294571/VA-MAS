@@ -8,10 +8,13 @@ from model.init_model import init_language_model
 from model.role_models import configure_actor_model, standalone_model_config
 import random
 import os
-import torch
+from common.optional import optional_dependencies
+with optional_dependencies("rl"):
+    import torch
 from datetime import datetime
-from rl_env.minecraft_ppo import PPO
-from rl_env.minecraft_rl_env import MinecraftRLEnv
+with optional_dependencies("rl"):
+    from rl_env.minecraft_ppo import PPO
+    from rl_env.minecraft_rl_env import MinecraftRLEnv
 import re
 
 def convert_sign_command(command):
