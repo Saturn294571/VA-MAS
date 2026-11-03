@@ -157,11 +157,12 @@ class OllamaChecks(unittest.TestCase):
         import model.google_model as google
         Path("result/existing").mkdir(parents=True)
         config = [{"task_name": "existing", "controller_mode": "full",
+                   "decision_policies": {"ba": "generative", "ac": "generative"},
                    "model_roles": {"default": {"provider": "ollama"}}}]
         Path("fixture.json").write_text(json.dumps(config))
         with patch.dict(os.environ, {"VILLAGER_BENCH_CONFIG_PATH": str(Path("fixture.json").resolve())}, clear=True), \
              patch.object(google, "load_google_api_keys", side_effect=AssertionError("key access")):
-            runpy.run_path(str(Path(self.original_cwd) / "start_with_config.py"), run_name="__main__")
+            runpy.run_path(str(Path(__file__).resolve().parents[1] / "start_with_config.py"), run_name="__main__")
 
     def test_control_model_native_options_usage_and_trace(self):
         tracer = Tracer(Path(self.temp.name) / "result" / "run" / "trace")
