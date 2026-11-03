@@ -19,7 +19,7 @@
 
 ## 실행 환경과 재현 기록
 
-이 저장소 루트는 `MineSkynet-VA`이고 Python 환경은 루트의 Conda prefix `.venv`이다. 저장소 루트의 [원본 VA README](../README.md)는 일반 사용법 참고용이며, 현재 연구의 실험 조건·완료 판정은 이 폴더의 문서와 개별 결과 파일을 우선한다. 계획·배정만 볼 때는 [`td_ac_probe.py`](../td_ac_probe.py), benchmark 실행 경로는 [`start_with_config.py`](../start_with_config.py)와 [`agent_demo.py`](../agent_demo.py)를 확인한다. 실행 명령·API 설정은 선택한 과제와 서버 상태를 확인한 뒤 기록에 맞춰 사용한다.
+현재 저장소는 `VA-MAS`로 이동했고 원격은 `Saturn294571/VA-MAS`이다. 새 체크아웃에는 Python 환경이 포함되지 않는다. 환경 준비와 오프라인 검사 안내는 [루트 README](../README.md)를 따른다. 과거 실행에 사용한 `MineSkynet-VA/.venv` 경로는 당시 환경 기록이다. 저장소 루트의 [원본 VA README](../README.md)는 일반 사용법 참고용이며, 현재 연구의 실험 조건·완료 판정은 이 폴더의 문서와 개별 결과 파일을 우선한다. 계획·배정만 볼 때는 [`td_ac_probe.py`](../td_ac_probe.py), benchmark 실행 경로는 [`start_with_config.py`](../start_with_config.py)와 [`agent_demo.py`](../agent_demo.py)를 확인한다. 실행 명령·API 설정은 선택한 과제와 서버 상태를 확인한 뒤 기록에 맞춰 사용한다.
 
 실험을 비교할 때는 코드 commit, model·설정, 월드 종류·난이도·스폰, 과제, 에이전트 수, AC/BA 정책, 반복 번호, 역할별 호출·비용, 원시 로그와 score 경로를 함께 남긴다. 현행 정책을 공통 계약으로 감싼 G/G, BA 행동 선택만 바꾼 G/D, AC 배정만 바꾼 D/G, 둘 다 바꾼 D/D는 **서로 다른 조건**이다. 행동당 결정 지연과 전체 과제 완수 시간을 구분하고, fallback·무효 행동을 숨기지 않는다. VA의 BA reflection과 benchmark judger 점수도 혼용하지 않는다. API 키는 저장소나 연구 문서에 적지 않는다.
 

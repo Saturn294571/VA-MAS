@@ -6,8 +6,6 @@ data/history/*
 */__pycache__/*
 # OS 메타데이터
 */.DS_Store
-# 기존 시험 파일 패턴; 정상 테스트도 제외할 수 있음
-*test*
 # 일회성 자동 생성 스크립트
 atom_generator.py
 # 개인 IDE 설정
@@ -60,12 +58,11 @@ processed_result/*
 .cache/*.cache
 .cache/*.json
 
-# 기존 Node 잠금파일 제외 정책; 재현성 검토 시 주의
-package-lock.json
+# Node 잠금파일은 추적 가능
 # 개인 VS Code 설정
 /.vscode/*
-# 실험별 로컬 설정; 광범위한 패턴이므로 주의
-*config*.json
+# 로컬 실행 설정; examples/의 재현 설정은 추적
+/base_agent_multi_test_config.json
 
 # 루트 Python 바이트코드 캐시
 /__pycache__/*
@@ -91,7 +88,9 @@ dm_info_compression/*
 env_gen/*
 
 # 로컬 Python 환경
-venv/*
+/venv/
+/.venv/
+/.runtime/
 
 # jev 관련 RQ 변경 이전 문서들
 research/doc/legacy
@@ -104,3 +103,8 @@ research/doc/legacy
 # /model/AGENTS.md
 # /data/AGENTS.md
 # /research/AGENTS.md
+
+# Private environment overrides
+.env
+.env.*
+!.env.example

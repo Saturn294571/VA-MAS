@@ -1,3 +1,55 @@
+# VA-MAS
+
+VillagerAgent(VA)와 MineSkynet 연구 코드를 관리하는 저장소입니다. TD(계획), AC(배정), 상태 관리, BA(실행), 환경 judger의 책임과 계측 경계를 구분합니다. 연구 질문·판정은 [연구 안내](research/README.md), 구조 정리의 범위·검증 결과는 [리팩토링 기록](doc/refactoring.md)을 확인하세요. 루트 지침과 연구 문서의 목표 표현 차이는 아직 연구자가 정리해야 할 사항입니다.
+
+## 설치와 선택 기능
+
+현재 코드는 Python 3.10 이상을 기준으로 합니다. 아래 명령은 새 환경을 직접 준비할 때 사용하는 안내이며, 저장소에 환경·Minecraft 서버·모델 가중치가 포함되지는 않습니다.
+
+```bash
+git clone https://github.com/Saturn294571/VA-MAS.git
+cd VA-MAS
+python -m venv .venv
+.venv/bin/python -m pip install -r requirements/base.txt
+npm install
+```
+
+기본 Python 목록은 Gemini·Ollama와 일반 실행/프로브 의존성을 포함합니다. 실제 Construction 실행의 구조 분할에는 추가 임베딩 패키지가 필요합니다. 설치·모델 다운로드는 별도 비용과 환경 준비가 수반됩니다.
+
+| 기능 | 추가 설치 목록 | 기존 진입점·선택 |
+| --- | --- | --- |
+| Construction 임베딩 | `requirements/construction.txt` | Construction judger의 구조 분할 |
+| PPO/DQN | `requirements/rl.txt` | `rl_env`, BA의 `RL_mode`, 자동 과제 생성 |
+| Hugging Face 로컬 추론 | `requirements/huggingface.txt` | 모델 팩토리의 기존 모델명 선택 |
+| Zhipu 등 추가 공급자 | `requirements/providers.txt` | 기존 공급자 어댑터 |
+| FastAPI 대안 서버 | `requirements/fastapi.txt` | `fast_api=True`; 기존 미완성 경로 |
+| 과거 vector-store 검색 | `requirements/retrieval.txt` | 유틸리티의 호환 검색 함수 |
+| 결과·학습 자료 가공 | `requirements/analysis.txt` | `result/`의 기존 분석 스크립트 |
+
+예: `.venv/bin/python -m pip install -r requirements/construction.txt`. 루트 `requirements.txt`는 위 선택 기능을 포함하는 전체 호환 목록입니다. 기존 버전 pin은 유지했지만, 새 환경 설치와 전체 의존성 해석은 이번 리팩토링에서 검증하지 않았습니다. VLLM 어댑터는 OpenAI 호환 HTTP 클라이언트이며 서버 설치를 포함하지 않습니다.
+
+## 실행과 오프라인 검증
+
+- `start_with_config.py`: benchmark 실행. `VILLAGER_BENCH_CONFIG_PATH`로 설정 파일을 지정합니다. `examples/ollama_construction_task6.json`은 기존 예시이며 Minecraft·Ollama 서버가 필요합니다.
+- `tiny_start.py`: 최소 파이프라인 예제. `agent_demo.py`: 수동 actor 행동 예제.
+- `td_ac_probe.py`: 합성 상태에서 TD/AC만 검사하며 Minecraft 완료 점수는 만들지 않습니다.
+- `verification/run_offline.py`: 각 검사를 임시 폴더에서 실행하고 외부 socket 연결을 차단합니다. 기존 로그·월드 초기화나 외부 API 호출 없이 검사합니다.
+
+```bash
+.venv/bin/python -B verification/run_offline.py
+.venv/bin/python -B td_ac_probe.py --self-test --output /tmp/va-probe-example
+```
+
+실행 설정의 `controller_mode`, `assignment_policy`, `model_roles`, `decision_policies`와 기존 기본값은 보존합니다. Full/Tiny Controller의 public import 경로도 유지합니다. Full은 다중 agent·종료 예산을 다루고 Tiny는 직접 배정과 기존 worker 동작을 유지합니다. 현재 AC `decision` 선택은 구현되지 않아 실행기가 거부하며, 리팩토링이 이를 대신 구현하지는 않습니다.
+
+Gemini 키는 환경 변수로만 제공하고 추적 파일에 기록하지 마세요. 모델 cache·token·trace의 경로와 형식, 입력 자산 및 과거 실험 결과는 유지했습니다. 실제 실행은 서버 상태와 기존 증거 보존 여부를 확인한 뒤 진행해야 합니다.
+
+## 원본 VillagerAgent 자료
+
+아래는 [원본 VillagerAgent](https://github.com/cnsdqd-dyb/VillagerAgent)의 소개·사용법입니다. 과거 설치·Docker 안내를 포함하므로 VA-MAS의 현재 실행은 위 안내와 연구 문서를 우선하세요. 제공된 Dockerfile은 존재하지 않는 `run.py`를 가리키며 현재 실행·빌드는 검증하지 않았습니다. `.dockerignore`는 로컬 환경·월드·결과·인증 파일의 빌드 포함을 제한합니다.
+
+---
+
 # 🏰 VillagerAgent: A Graph-Based Multi-Agent Framework for Coordinating Complex Task Dependencies in Minecraft 🌍
 
 <img src="img/VillagerBench.png" width="100%" /> 
