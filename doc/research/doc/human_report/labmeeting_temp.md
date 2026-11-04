@@ -2,7 +2,7 @@
 
 ## 7.27 랩미팅
 
-> 문서 역할: [`report_log.md`](./report_log.md)에 누적된 작업 보고와 날짜별 논의를 선별·다듬어 교수님께 보고하기 위한 임시 문서다. 현재 목표와 완료 조건은 [`milestone_index.md`](../blueprint_milestone/milestone_index.md), 연구 원칙은 [`AGENTS.md`](../../AGENTS.md)를 따르며, 아래 과거 표현은 당시 맥락 보존을 위해 임의로 고치지 않는다.
+> 문서 역할: [`report_log.md`](report_log.md)에 누적된 작업 보고와 날짜별 논의를 선별·다듬어 교수님께 보고하기 위한 임시 문서다. 현재 목표와 완료 조건은 [`milestone_index.md`](../blueprint_milestone/milestone_index.md), 연구 원칙은 [`AGENTS.md`](../../AGENTS.md)를 따르며, 아래 과거 표현은 당시 맥락 보존을 위해 임의로 고치지 않는다.
 
 - ODYSSEY: Empowering Minecraft Agents with Open-World Skills
   - 문제 의식 : 많은 마크 에이전트 연구들이 테크트리(다이아 얻기 등)을 따르도록 설계됨. 이는 LLM의 능력을 제한함

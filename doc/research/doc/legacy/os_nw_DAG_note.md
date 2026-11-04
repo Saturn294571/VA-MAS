@@ -256,7 +256,7 @@ critical-path 작업이 높은 우선순위를 가져도, 그 작업이 필요�
 
 | 자료 | 참고 개념 | 이 문서에서의 사용 |
 |---|---|---|
-| [`컴시기말.pdf`](./컴시기말.pdf), pp. 1, 3–7 | 실행 단위, ready queue, 스케줄링, 동기화, 교착상태의 요약 | DAG와 ready 집합의 구분을 검토하는 출발점; 분해·할당 알고리즘의 직접 근거는 아님 |
+| [`컴시기말.pdf`](컴시기말.pdf), pp. 1, 3–7 | 실행 단위, ready queue, 스케줄링, 동기화, 교착상태의 요약 | DAG와 ready 집합의 구분을 검토하는 출발점; 분해·할당 알고리즘의 직접 근거는 아님 |
 | `2_학습자료/CS_06_Scheduling_handout.pdf`, pp. 1–6 | 고·중·저수준 스케줄링, 과부하 완충, scheduling 목표와 평가 지표, CPU/I/O-bound, 선점·비선점, FCFS/convoy effect, SJF·starvation·aging, HRN, Round Robin, SRT, priority, multilevel feedback queue | 할당 목표, 비교 정책, overload/backpressure, 재할당 비용 |
 | `2_학습자료/CS_05_Process_handout.pdf`, pp. 5–6 | process state, ready/blocked, context switching | actor 상태와 대기 원인 분리 |
 | `2_학습자료/중간/CS_03_Parallelism.pdf`, pp. 1–9 | pipeline, dependency, stall, throughput와 speedup | 작업 DAG, critical path, actor 증가의 비선형 효과 |

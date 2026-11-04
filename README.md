@@ -1,6 +1,8 @@
 # VA-MAS
 
-VillagerAgent(VA)와 MineSkynet 연구 코드를 관리하는 저장소입니다. TD(계획), AC(배정), 상태 관리, BA(실행), 환경 judger의 책임과 계측 경계를 구분합니다. 연구 질문·판정은 [연구 안내](research/README.md), 구조 정리의 범위·검증 결과는 [리팩토링 기록](doc/refactoring.md)을 확인하세요. 루트 지침과 연구 문서의 목표 표현 차이는 아직 연구자가 정리해야 할 사항입니다.
+VillagerAgent(VA)와 MineSkynet 연구 코드를 관리하는 저장소입니다. TD(계획), AC(배정), 상태 관리, BA(실행), 환경 judger의 책임과 계측 경계를 구분합니다. 연구 질문·판정은 [연구 안내](doc/research/README.md), 구조 정리의 범위·검증 결과는 [리팩토링 기록](doc/refactoring.md)을 확인하세요. 현재 RQ는 생성형 계획을 유지한 BA 행동 선택·AC 배정의 결정형 정책 분리이며, 연구자가 2026-11-04에 확정했습니다.
+
+실제 환경 검증은 [2026-11-04 smoke 보고서](doc/live_smoke_2026-11-04.md)에 기록했습니다.
 
 ## 설치와 선택 기능
 

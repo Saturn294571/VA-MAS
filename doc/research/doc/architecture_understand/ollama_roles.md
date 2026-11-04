@@ -6,7 +6,7 @@
 
 현재 로컬 `base_agent_multi_test_config.json`은 `model_roles.default.provider=gemini`다. 해당 파일은 Git 제외 대상이며 기존 `task_name`이 보존된 결과와 같으면 launcher는 실행을 건너뛴다. `model_roles`를 생략해도 Gemini 경로를 사용한다. 기존 최상위 `api_model`은 역할 선택 설정이 아니며, 실제 적용 모델은 `model_roles`와 실행 `manifest.json`에서 확인한다.
 
-로컬 모델을 다시 비교할 때의 전체 설정은 [Task6·3인 Ollama 예시](../../../examples/ollama_construction_task6.json)를 참고한다. 이 예시는 **명시적 로컬 선택**이다. 예시의 `task_name`은 매 실행마다 변경해야 한다. 실제 실행은 Minecraft 월드와 기존 상태 파일을 바꾸므로 실행 전 결과 보존과 서버 조건을 확인한다.
+로컬 모델을 다시 비교할 때의 전체 설정은 [Task6·3인 Ollama 예시](../../../../examples/ollama_construction_task6.json)를 참고한다. 이 예시는 **명시적 로컬 선택**이다. 예시의 `task_name`은 매 실행마다 변경해야 한다. 실제 실행은 Minecraft 월드와 기존 상태 파일을 바꾸므로 실행 전 결과 보존과 서버 조건을 확인한다.
 
 ```json
 "controller_mode": "full",

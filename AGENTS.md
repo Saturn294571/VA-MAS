@@ -1,8 +1,8 @@
-# MineSkynet-VA 작업 지침
+# VA-MAS 작업 지침
 
 ## 프로젝트와 연구 기준
 
-이 저장소는 VillagerAgent(VA) 코드와 MineSkynet 연구 문서를 함께 관리한다. 현재 질문은 **에이전트 수가 증가할 때 협업 효율이 둔화·감소하는 원인을 어디에 귀속할 수 있는가**이다. 작업의 병렬성, Task Decomposer의 계획, Agent Controller의 배정, Base Agent의 실행 간섭, 공통 서비스 비용을 구분한다. 이기종 장치 할당과 Odyssey 이식은 현 단계의 필수 구현이 아니다. 자세한 연구 판단 기준은 [research/AGENTS.md](research/AGENTS.md)를 따른다.
+이 저장소는 VillagerAgent(VA) 코드와 MineSkynet 연구 문서를 함께 관리한다. 현재 질문은 **생성형 계획을 유지하면서 Base Agent의 행동 선택과 Agent Controller의 작업 배정을 결정형 정책으로 분리했을 때 성능·시간·추론 비용이 어떻게 달라지는가**이다. BA 단일 축을 먼저 검증하고 AC는 실제 선택 기회가 확인된 뒤 비교한다. TD·AC·상태 관리·actor 실행·judger 점수를 구분한다. 이기종 장치 할당과 Odyssey 이식은 필수 구현이 아니다. 자세한 연구 판단 기준은 [doc/research/AGENTS.md](doc/research/AGENTS.md)를 따른다.
 
 ## 디렉터리 지도
 
@@ -13,16 +13,16 @@
 | `env/` | Minecraft 접속·행동 API, VillagerBench 실행과 scenario judger |
 | `model/` | LLM 공통 인터페이스, 공급자 어댑터, 모델 생성·사용량 기록 |
 | `data/` | 건설·농업 등 benchmark 입력과 실행 중 생성되는 상태 JSON |
-| `research/` | 연구 질문, 마일스톤, 논문–코드 대응, 실험 보고와 과거 Odyssey 근거 |
+| `doc/research/` | 연구 질문, 마일스톤, 논문–코드 대응, 실험 보고와 과거 Odyssey 근거 |
 | `result/` | 실행별 점수·행동·추론 기록 등 실험 산출물 |
 | `logs/`, `img/` | 실행 로그와 생성된 그래프·시각 자료 |
 | `rl_env/` | 별도 강화학습 실험 코드; 현재 VA 병목 연구의 기본 경로는 아님 |
 | `ui/` | 실험 상태를 보여주는 UI 및 관련 자료 |
-| `doc/` | 원본 프로젝트의 API 설명 자료; `research/doc/`와 구분 |
+| `doc/` | API 설명·리팩토링·smoke 및 연구 문서 |
 | 루트의 `config.py`, `agent_demo.py`, `start_with_config.py`, `tiny_start.py`, `td_ac_probe.py` | 설정·실행 진입점과 actor 없는 계획/배정 프로브 |
 | `.venv/`, `node_modules/`, `.runtime/`, `.cache/` | 로컬 환경·서버·캐시; 소스나 연구 근거의 원본으로 취급하지 않음 |
 
-하위 지침은 `pipeline/`, `type_define/`, `env/`, `model/`, `data/`, `research/`의 `AGENTS.md`에만 둔다. 각 파일은 해당 디렉터리의 고유한 경계만 추가하며, 공통 규칙을 반복하지 않는다.
+하위 지침은 `pipeline/`, `type_define/`, `env/`, `model/`, `data/`, `doc/research/`의 `AGENTS.md`에만 둔다. 각 파일은 해당 디렉터리의 고유한 경계만 추가하며, 공통 규칙을 반복하지 않는다.
 
 ## 코딩 스타일과 설계 패턴
 

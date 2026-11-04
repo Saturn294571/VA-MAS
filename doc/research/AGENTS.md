@@ -1,6 +1,6 @@
 # MineSkynet 연구 작업 원칙
 
-이 문서는 루트 [AGENTS.md](../AGENTS.md)의 공통 규칙에 더해 `research/` 문서의 역할과 서술 기준만 정한다. 현재 질문과 다음 결정은 [연구 청사진](doc/blueprint_milestone/MineSkynet_blueprint.md)과 [마일스톤](doc/blueprint_milestone/milestone_index.md)에 둔다.
+이 문서는 루트 [AGENTS.md](../../AGENTS.md)의 공통 규칙에 더해 `research/` 문서의 역할과 서술 기준만 정한다. 현재 질문과 다음 결정은 [연구 청사진](doc/blueprint_milestone/MineSkynet_blueprint.md)과 [마일스톤](doc/blueprint_milestone/milestone_index.md)에 둔다.
 
 ## 연구 문서의 범위
 

@@ -1,13 +1,13 @@
 # BA/Minecraft Agent 행동 선택 계약 초안
 
-상태: **기존 생성형 경로의 계약 어댑터 구현**. [`env/action_policy.py`](../../../env/action_policy.py)에 입력·출력 형식, 공통 검증기와 기존 ReAct 도구 래퍼가 있다. `ActionPolicy.select()`를 사용하는 독립적인 1회 결정 루프와 결정형 정책은 아직 구현되지 않았다. 목적은 VA의 동일한 작업·관측·도구 제약 아래에서 생성형(G)과 결정형(D)의 **다음 행동 선택**을 비교하는 것이다. BA의 작업 완료 판단, Controller의 배정, Minecraft 실행기와 benchmark judger는 이 계약의 책임이 아니다.
+상태: **기존 생성형 경로의 계약 어댑터 구현**. [`env/action_policy.py`](../../../../env/action_policy.py)에 입력·출력 형식, 공통 검증기와 기존 ReAct 도구 래퍼가 있다. `ActionPolicy.select()`를 사용하는 독립적인 1회 결정 루프와 결정형 정책은 아직 구현되지 않았다. 목적은 VA의 동일한 작업·관측·도구 제약 아래에서 생성형(G)과 결정형(D)의 **다음 행동 선택**을 비교하는 것이다. BA의 작업 완료 판단, Controller의 배정, Minecraft 실행기와 benchmark judger는 이 계약의 책임이 아니다.
 
 ## 1. 실제 코드의 경계
 
 | 단계 | 현재 경로 | 계약에서의 위치 |
 | --- | --- | --- |
-| 작업 수신·문맥 구성 | [`BaseAgent.step()`](../../../pipeline/agent.py) → `normal_step()`이 `Task` 설명·milestones, Data Manager의 환경·이력, 동료 상태를 프롬프트로 구성 | 공통 입력 구성. 정책별 정보량을 달리하지 않음 |
-| 실행 요청 | `BaseAgent.normal_step()` → [`VillagerBench.step()`](../../../env/env.py) → [`Agent.run()`](../../../env/minecraft_client.py) | BA 바깥의 호출·반환 경계 유지 |
+| 작업 수신·문맥 구성 | [`BaseAgent.step()`](../../../../pipeline/agent.py) → `normal_step()`이 `Task` 설명·milestones, Data Manager의 환경·이력, 동료 상태를 프롬프트로 구성 | 공통 입력 구성. 정책별 정보량을 달리하지 않음 |
+| 실행 요청 | `BaseAgent.normal_step()` → [`VillagerBench.step()`](../../../../env/env.py) → [`Agent.run()`](../../../../env/minecraft_client.py) | BA 바깥의 호출·반환 경계 유지 |
 | 행동 결정 | `Agent.run()`이 `STRUCTURED_CHAT_ZERO_SHOT_REACT_DESCRIPTION` 에이전트를 만들어 `self.tools` 중 도구와 인자를 생성 | **교체 대상**: 한 시점의 도구·인자 선택 |
 | 행동 실행·관측 | LangChain 에이전트가 도구를 실행하고 `intermediate_steps`에 행동·피드백을 남김 | 공통 실행기·관측 수집. 선택 결과를 검증한 뒤 실행 |
 | 완료·피드백 | `Agent.run()`의 `final_answer`와 `action_list` → BA의 DB 갱신·`reflect()` → Controller; 별도 judger | 정책이 완료 점수나 reflection을 직접 결정하지 않음 |
@@ -55,7 +55,7 @@ ActionDecision:
 
 첫 단계로 기존 API 생성형 `Agent.run()`의 실제 도구 호출·인자·피드백을 계약 스키마에 매핑했다. 오프라인 도구 fixture와 모의 `Agent.run()`으로 유효 호출, 무효 인자 차단과 기존 반환 형식을 확인했다. **Minecraft 포함 G/G 기준선의 동등성은 아직 검증되지 않았다.** 기존 ReAct 파서 오류나 중간 재시도를 삭제하거나 조용히 유효 행동으로 보정하지 않는다. 다음 단계에서 같은 계약을 사용하는 독립적 1회 선택 루프와 생성형 어댑터를 마련한다.
 
-로컬 생성형 모델로 바꾸는 실행은 *모델과 배포 방식*의 변경이고, 결정 모델로 바꾸는 실행은 *모델과 선택 방식*이 함께 바뀔 수 있다. 두 결과를 정책 형태만의 인과 효과로 해석하지 않는다. TD·AC·SM 및 BA reflection의 모델/설정은 역할별로 명시하고 고정한다. 현 [`Controller.__init__()`](../../../pipeline/controller.py)은 AC와 BA의 reflection에 같은 모델 객체를 전달하고, Minecraft `Agent.run()`은 행동 선택용 모델을 자체 생성하므로 역할별 분리가 필요하다.
+로컬 생성형 모델로 바꾸는 실행은 *모델과 배포 방식*의 변경이고, 결정 모델로 바꾸는 실행은 *모델과 선택 방식*이 함께 바뀔 수 있다. 두 결과를 정책 형태만의 인과 효과로 해석하지 않는다. TD·AC·SM 및 BA reflection의 모델/설정은 역할별로 명시하고 고정한다. 현 [`Controller.__init__()`](../../../../pipeline/controller.py)은 AC와 BA의 reflection에 같은 모델 객체를 전달하고, Minecraft `Agent.run()`은 행동 선택용 모델을 자체 생성하므로 역할별 분리가 필요하다.
 
 ## 5. 최소 오프라인 통과 사례
 

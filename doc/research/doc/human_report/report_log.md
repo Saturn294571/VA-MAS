@@ -112,7 +112,7 @@ E0~E4 gate는 dependency 결함을 격리하는 데 유용했지만, 각 gate의
 
 - [원본 환경·의존성 진단 문서](MVP_report.md) (링크 유실 : 현 디렉토리에서 찾을 수 없음)
 - [E0 원시 증거](E0_test_evidence_2026-08-20.md) (링크 유실 : 현 디렉토리에서 찾을 수 없음)
-- [현대화 마일스톤](milestone_goal/modernization_milestone.md) (링크 유실 : 현 디렉토리에서 찾을 수 없음)
+- [현대화 마일스톤](../legacy/modernization_milestone.md) (링크 유실 : 현 디렉토리에서 찾을 수 없음)
 - [논문–코드–dependency 대응표](../architecture_understand/paper_code_dependency_map.md)
 
 ## 2026-08-20 — E0 Minecraft execution layer 검사 증거
@@ -234,7 +234,7 @@ Minecraft execution layer는 clean install, raw action success와 대표 failure
 - [E0 regression script](../../../MineSkynet-odyssey/Odyssey/scripts/e0_regression.py) (링크 유실 : 현 디렉토리에서 찾을 수 없음)
 - [E0 server profile](../../../MineSkynet-odyssey/Odyssey/server-profile/e0/ops.json) (링크 유실 : 현 디렉토리에서 찾을 수 없음)
 - [환경·dependency 진단 기록](MVP_report.md) (링크 유실 : 현 디렉토리에서 찾을 수 없음)
-- [현대화 마일스톤](milestone_goal/modernization_milestone.md) (링크 유실 : 현 디렉토리에서 찾을 수 없음)
+- [현대화 마일스톤](../legacy/modernization_milestone.md) (링크 유실 : 현 디렉토리에서 찾을 수 없음)
 
 ---
 
@@ -315,7 +315,7 @@ PASS: goto state-based online fixture
 - [Offline primitive fixture](../../../MineSkynet-odyssey/Odyssey/scripts/primitive_runtime_offline.js) (링크 유실 : 현 디렉토리에서 찾을 수 없음)
 - [Online primitive fixture](../../../MineSkynet-odyssey/Odyssey/scripts/primitive_runtime_online.py) (링크 유실 : 현 디렉토리에서 찾을 수 없음)
 - [실행 절차](../README.md#37-primitive-runtime-online-fixture) (링크 유실 : 현 디렉토리에서 찾을 수 없음)
-- [현대화 마일스톤](milestone_goal/modernization_milestone.md) (링크 유실 : 현 디렉토리에서 찾을 수 없음)
+- [현대화 마일스톤](../legacy/modernization_milestone.md) (링크 유실 : 현 디렉토리에서 찾을 수 없음)
 
 ---
 
@@ -424,7 +424,7 @@ Odyssey/.venv/bin/python Odyssey/scripts/semantic_encoder_fixture.py --run-model
 - [Semantic encoder manifest](../../manifest/odyssey_semantic_encoder.json)
 - [Semantic encoder fixture](../../../MineSkynet-odyssey/Odyssey/scripts/semantic_encoder_fixture.py) (링크 유실 : 현 디렉토리에서 찾을 수 없음)
 - [공통 retrieval encoder 설정](../../../MineSkynet-odyssey/Odyssey/odyssey/retrieval_embedding.py) (링크 유실 : 현 디렉토리에서 찾을 수 없음)
-- [현대화 마일스톤](milestone_goal/modernization_milestone.md) (링크 유실 : 현 디렉토리에서 찾을 수 없음)
+- [현대화 마일스톤](../legacy/modernization_milestone.md) (링크 유실 : 현 디렉토리에서 찾을 수 없음)
 - [논문–코드–dependency 대응표](../architecture_understand/paper_code_dependency_map.md)
 
 ---
@@ -496,7 +496,7 @@ Odyssey/.venv/bin/python Odyssey/scripts/semantic_retrieval_smoke.py
 - [Semantic retrieval smoke fixture](../../../MineSkynet-odyssey/Odyssey/scripts/semantic_retrieval_smoke.py) (링크 유실 : 현 디렉토리에서 찾을 수 없음)
 - [Semantic retrieval 실행 로그](../../log/semantic_retrieval_smoke_2026-08-27.json)
 - [공통 retrieval encoder 설정](../../../MineSkynet-odyssey/Odyssey/odyssey/retrieval_embedding.py) (링크 유실 : 현 디렉토리에서 찾을 수 없음)
-- [현대화 마일스톤](milestone_goal/modernization_milestone.md) (링크 유실 : 현 디렉토리에서 찾을 수 없음)
+- [현대화 마일스톤](../legacy/modernization_milestone.md) (링크 유실 : 현 디렉토리에서 찾을 수 없음)
 - [논문–코드–dependency 대응표](../architecture_understand/paper_code_dependency_map.md)
 
 ---
@@ -576,7 +576,7 @@ Odyssey/.venv/bin/python Odyssey/scripts/semantic_retrieval_fixture.py
 - [Top-5·top-10 후보와 reload 실행 로그](../../log/semantic_retrieval_profiles_2026-08-27.json)
 - [Semantic encoder·retrieval manifest](../../manifest/odyssey_semantic_encoder.json)
 - [공통 retrieval profile 설정](../../../MineSkynet-odyssey/Odyssey/odyssey/retrieval_embedding.py) (링크 유실 : 현 디렉토리에서 찾을 수 없음)
-- [현대화 마일스톤](milestone_goal/modernization_milestone.md) (링크 유실 : 현 디렉토리에서 찾을 수 없음)
+- [현대화 마일스톤](../legacy/modernization_milestone.md) (링크 유실 : 현 디렉토리에서 찾을 수 없음)
 - [논문–코드–dependency 대응표](../architecture_understand/paper_code_dependency_map.md)
 
 ---
@@ -1189,13 +1189,13 @@ Batch benchmark는 `config.py`가 생성하는 configuration과 `start_with_conf
 
 ### 6. 근거 파일
 
-- [VillagerAgent 실행 안내](../../../README.md)
-- [최소 QuickStart](../../../tiny_start.py)
-- [Batch 실행 경로](../../../start_with_config.py)
-- [Benchmark configuration 생성](../../../config.py)
-- [Python dependency 선언](../../../requirements.txt)
-- [Node dependency 선언](../../../package.json)
-- [현재 Dockerfile](../../../Dockerfile)
+- [VillagerAgent 실행 안내](../../../../README.md)
+- [최소 QuickStart](../../../../tiny_start.py)
+- [Batch 실행 경로](../../../../start_with_config.py)
+- [Benchmark configuration 생성](../../../../config.py)
+- [Python dependency 선언](../../../../requirements.txt)
+- [Node dependency 선언](../../../../package.json)
+- [현재 Dockerfile](../../../../Dockerfile)
 
 ---
 
@@ -1408,7 +1408,7 @@ VillagerAgent의 *Agent Collaboration and Performance Dynamics*와 Table 6은 ag
 4. actor 수 증가가 action 충돌, retry, state staleness 또는 LLM/API 대기를 늘렸는가?
 5. 성능 저하가 control-plane 정책 문제인지 고정 workload의 정상적인 병렬성 포화인지 구별할 수 있는가?
 
-세부 계측과 원인 분리 실험은 [`agent_efficiency_blueprint.md`](../idea_hypothesis/agent_efficiency_blueprint.md)에 임시 초안으로 유지한다. 이번 랩미팅에서는 benchmark 실행으로 직접 확인된 사실과 아직 추측인 항목을 나누어 보고한다.
+세부 계측과 원인 분리 실험은 [`agent_efficiency_blueprint.md`](../legacy/agent_efficiency_blueprint.md)에 임시 초안으로 유지한다. 이번 랩미팅에서는 benchmark 실행으로 직접 확인된 사실과 아직 추측인 항목을 나누어 보고한다.
 
 ### 4. 산출물과 완료 기준
 
@@ -1758,7 +1758,7 @@ VillagerAgent Table 6에서 Task64의 agent 수별 완료율·효율은 4인까�
 
 ## 2026-10-07 — 작업 DAG와 OS 개념의 연결 범위
 
-VillagerAgent의 과업 할당 병목을 이해하기 위해 [`컴시기말.pdf`](../idea_hypothesis/컴시기말.pdf)의 멀티프로세싱·멀티프로그래밍·멀티스레드, 스케줄링, 동기화, 교착상태 요약을 검토했다. 이 자료는 실행 가능한 작업의 대기·배정과 공유 자원 문제를 구분하는 출발점이지만, 요약본만으로 자연어 목표의 분해, DAG 생성, 다중 에이전트 배정 알고리즘을 설명하거나 특정 실패의 원인을 입증할 수는 없다. 필요한 세부 이론은 이후 OS 교재 및 DAG scheduling 자료에서 해당 부분만 보완한다.
+VillagerAgent의 과업 할당 병목을 이해하기 위해 [`컴시기말.pdf`](../legacy/컴시기말.pdf)의 멀티프로세싱·멀티프로그래밍·멀티스레드, 스케줄링, 동기화, 교착상태 요약을 검토했다. 이 자료는 실행 가능한 작업의 대기·배정과 공유 자원 문제를 구분하는 출발점이지만, 요약본만으로 자연어 목표의 분해, DAG 생성, 다중 에이전트 배정 알고리즘을 설명하거나 특정 실패의 원인을 입증할 수는 없다. 필요한 세부 이론은 이후 OS 교재 및 DAG scheduling 자료에서 해당 부분만 보완한다.
 
 핵심 구분은 **작업 그래프와 ready queue의 역할**이다. DAG의 노드는 subtask, 간선은 선행관계이고, Controller가 배정할 수 있는 것은 선행조건을 만족한 ready task의 부분집합이다. 따라서 `목표 → Decomposer의 작업 DAG → ready task 집합 → Controller의 agent 배정 → actor 실행·피드백`으로 보아야 한다. CPU의 ready queue가 선형 리스트로 표현되더라도 이는 실행 가능 작업을 보관하는 구현 형태이지 원래 작업 사이의 의존관계나 FIFO 정책을 뜻하지 않는다. 멀티프로세싱·멀티스레드는 병렬 실행 방식에 관한 설명으로, 목표를 subtask로 어떻게 분할·통합할지는 별도 문제다. 현재 공개 코드의 `Graph.edge`는 선행 노드 쌍이며 수치 가중치는 없고, Controller는 predecessor와 가용 candidate를 확인한 후 배정한다. 기존 단일-agent 검증 로그에는 간선이 없어 DAG 의존성의 병목을 관찰한 증거도 아니다.
 
@@ -1809,7 +1809,7 @@ G/D는 BA 전체를 교체한다는 뜻이 아니다. 우선 같은 관측과 �
 
 [행동 계약 문서](../architecture_understand/BA_action_policy_contract.md)에 작업·관측·이력·허용 도구·예산을 입력으로, 도구와 인자 또는 종료·보류를 출력으로 하는 1회 선택 경계를 정리했다. 행동 종류뿐 아니라 좌표·아이템·대상 등 실행 인자의 생성 주체를 정하고, 유효성 검사와 환경 피드백 및 최종 judger 판정을 구분한다.
 
-이후 기존 생성형 경로를 계약 형식에 연결했다. [BaseAgent](../../../pipeline/agent.py)는 작업과 관측 문맥을 전달하고, [Minecraft Agent](../../../env/minecraft_client.py)는 기존 ReAct 루프의 도구 호출을 [공통 계약·검증기](../../../env/action_policy.py)로 감싼다. 허용 도구·agent·인자를 검사하고 선택·검증·실행·피드백을 `action_contract`에 기록하며 기존 `feedback`, `action_list`, `final_answer` 반환 경로를 유지한다. `Agent.run()`과 별도 1회 행동 경로 `Agent.step()`에 적용했지만, 주 BA 경로는 전자를 사용한다.
+이후 기존 생성형 경로를 계약 형식에 연결했다. [BaseAgent](../../../../pipeline/agent.py)는 작업과 관측 문맥을 전달하고, [Minecraft Agent](../../../../env/minecraft_client.py)는 기존 ReAct 루프의 도구 호출을 [공통 계약·검증기](../../../../env/action_policy.py)로 감싼다. 허용 도구·agent·인자를 검사하고 선택·검증·실행·피드백을 `action_contract`에 기록하며 기존 `feedback`, `action_list`, `final_answer` 반환 경로를 유지한다. `Agent.run()`과 별도 1회 행동 경로 `Agent.step()`에 적용했지만, 주 BA 경로는 전자를 사용한다.
 
 **검증 수준:** 오프라인 fixture에서 유효 호출과 잘못된 agent 인자의 호출 차단, 알려지지 않은 도구 기록을 확인했다. 모의 `Agent.run()`으로 기존 반환 형식과 계약 기록을 확인했고 Python 구문 검사와 `git diff --check`도 통과했다. 해당 검사는 외부 API·Minecraft 없이 수행한 단발성 검사이며 별도의 benchmark 결과 파일은 생성하지 않았다. 도구 검증이 기준선 동작을 바꿀 수 있으므로, 계약 적용 전후의 실제 Minecraft G/G 과제 성능·행동 경로 동등성은 아직 확인되지 않았다.
 
@@ -1843,7 +1843,7 @@ launcher 기준 wall-clock은 약 128.17초다. judger의 `use_time=7`초는 행
 
 **목적:** TD·SM의 Gemini 경로를 유지하면서 BA 행동 선택·reflection과 AC 생성형 배정의 모델을 각기 로컬 Qwen으로 선택할 수 있게 한다. 기존 Gemini 설정은 선택지로 유지한다. 이는 생성형 모델·배포 환경을 바꾼 비교 준비이며 결정형 정책의 구현이나 우위 검증이 아니다.
 
-`model_roles` 설정에서 `ac`와 `ba`의 공급자를 별도로 고르도록 했고, 로컬 경로는 [Ollama adapter](../../../model/ollama_model.py)를 사용한다. `ba=ollama`는 Minecraft Agent의 행동 선택과 BaseAgent reflection, `ac=ollama`는 full Controller의 생성형 배정·협업 분해에 적용된다. 두 역할의 모델 객체는 별도로 만들고 TD·SM에는 기존 Gemini 설정을 전달한다. 모델 역할 설정을 생략하면 기존 경로를 유지하며, 로컬 모델 오류 시 외부 API로 자동 fallback하지 않는다. 설정 예시와 실행 범위는 [Ollama 역할 문서](../architecture_understand/ollama_roles.md)에 있다.
+`model_roles` 설정에서 `ac`와 `ba`의 공급자를 별도로 고르도록 했고, 로컬 경로는 [Ollama adapter](../../../../model/ollama_model.py)를 사용한다. `ba=ollama`는 Minecraft Agent의 행동 선택과 BaseAgent reflection, `ac=ollama`는 full Controller의 생성형 배정·협업 분해에 적용된다. 두 역할의 모델 객체는 별도로 만들고 TD·SM에는 기존 Gemini 설정을 전달한다. 모델 역할 설정을 생략하면 기존 경로를 유지하며, 로컬 모델 오류 시 외부 API로 자동 fallback하지 않는다. 설정 예시와 실행 범위는 [Ollama 역할 문서](../architecture_understand/ollama_roles.md)에 있다.
 
 실제 서버에 설치된 `qwen3.8:27b` 모델 ID는 `aaee06c39dcf`였다. 로컬 OpenAI 호환 endpoint에 `think=false`를 전달한 32토큰 단문 검사는 내용 없이 `length`로 끝났고, native `/api/chat`의 `think: false` 단문 검사는 `OK`를 반환했다. 이에 로컬 adapter는 native 경로를 사용한다. 이 검사는 두 endpoint의 모든 모델·설정에 대한 일반 비교가 아니다.
 
@@ -1855,7 +1855,7 @@ launcher 기준 wall-clock은 약 128.17초다. judger의 `use_time=7`초는 행
 
 ## 2026-10-28 — 생성형 호출 전체의 로컬 Qwen 통일
 
-이전의 BA·AC 로컬 선택에서 나아가 TD·SM·AC·BA와 Minecraft actor의 생성형 호출을 같은 `qwen3.8:27b`로 구성했다. `model_roles.default`에 Ollama를 지정하면 네 역할 모두 적용되며, BA reflection·actor ReAct와 AC의 협업 분해 호출도 각 역할의 로컬 모델을 사용한다. 현재 로컬 실행 설정과 [Task6 예시](../../../examples/ollama_construction_task6.json)에 전체 로컬 선택을 추가했다. `model_roles`의 역할별 override와 기존 Gemini 어댑터는 보존했고, Gemini 역할이 하나라도 선택된 경우에만 키를 읽는다. 변경된 설정의 상세는 [역할별 모델 문서](../architecture_understand/ollama_roles.md)에 둔다.
+이전의 BA·AC 로컬 선택에서 나아가 TD·SM·AC·BA와 Minecraft actor의 생성형 호출을 같은 `qwen3.8:27b`로 구성했다. `model_roles.default`에 Ollama를 지정하면 네 역할 모두 적용되며, BA reflection·actor ReAct와 AC의 협업 분해 호출도 각 역할의 로컬 모델을 사용한다. 현재 로컬 실행 설정과 [Task6 예시](../../../../examples/ollama_construction_task6.json)에 전체 로컬 선택을 추가했다. `model_roles`의 역할별 override와 기존 Gemini 어댑터는 보존했고, Gemini 역할이 하나라도 선택된 경우에만 키를 읽는다. 변경된 설정의 상세는 [역할별 모델 문서](../architecture_understand/ollama_roles.md)에 둔다.
 
 코드 조사에서 Construction judger가 미리 생성된 blueprint 설명을 찾지 못하면 별도 OpenAI 호출을 시도하는 예외 경로를 확인했다. 전체 로컬 실행에서는 이 경로도 TD와 같은 Ollama 모델을 사용한다. TaskManager의 선택적 semantic retrieval은 기본 경로에서 문서 경로 탐색과 별개이며, 전체 로컬 실행에서 Google embedding으로 빠지지 않도록 해당 embedding 호출을 명시적으로 차단했다. 별도 `tiny_start.py`, `agent_demo.py`, `auto_gen_gpt_task.py`, `config.py` 생성 경로와 직접 Minecraft Agent도 기본 로컬로 설정했다. 해당 독립 경로의 Gemini 사용은 환경 변수로 명시한다. tiny Controller의 직접 배정은 모델을 호출하지 않으므로, 이전 기록과 달리 로컬 AC 설정 자체는 허용하되 미사용을 알린다.
 
@@ -1879,7 +1879,7 @@ localhost HTTP 통신, Ollama 서버 대기·모델 로딩·동시 요청의 GPU
 
 ### 적용 경계와 후보 생성
 
-현재 실행 경로는 `BaseAgent.normal_step()` → `VillagerBench.step()` → `Agent.run()`이며, 마지막 단계에서 생성형 ReAct가 여러 도구 선택과 실행을 수행한다. [행동 계약](../architecture_understand/BA_action_policy_contract.md)과 [검증기](../../../env/action_policy.py)는 존재하지만 현재 ReAct 호출을 감싸는 방식이고, `ActionPolicy.select()`에 기반한 독립 선택·실행 루프와 결정형 정책은 아직 없다. 우선 TD·AC·SM, BA reflection, Minecraft 도구 및 최종 judger는 유지하고 actor의 다음 행동 선택만 비교하는 방향을 고려한다. 별도 `Agent.step()` 경로를 현재 주 실행 경로와 동일시하지 않는다.
+현재 실행 경로는 `BaseAgent.normal_step()` → `VillagerBench.step()` → `Agent.run()`이며, 마지막 단계에서 생성형 ReAct가 여러 도구 선택과 실행을 수행한다. [행동 계약](../architecture_understand/BA_action_policy_contract.md)과 [검증기](../../../../env/action_policy.py)는 존재하지만 현재 ReAct 호출을 감싸는 방식이고, `ActionPolicy.select()`에 기반한 독립 선택·실행 루프와 결정형 정책은 아직 없다. 우선 TD·AC·SM, BA reflection, Minecraft 도구 및 최종 judger는 유지하고 actor의 다음 행동 선택만 비교하는 방향을 고려한다. 별도 `Agent.step()` 경로를 현재 주 실행 경로와 동일시하지 않는다.
 
 Tev1은 상태와 질문, 선택지를 받아 선택하는 모델이다. Ollama는 `/v1/systemone` 경로를 안내하며, Together AI는 4B 모델을 Qwen3.5 기반 결정 모델로 설명한다. [Ollama 모델 문서](https://ollama.com/library/tev1), [Together AI 저장소](https://github.com/togethercomputer/tev1). 생성형 actor가 도구 이름뿐 아니라 좌표·아이템·방향 등 인자를 만드는 것과 달리, Tev1을 행동 선택에 쓰려면 **누가 실행 가능한 후보와 전체 인자를 구성할지** 먼저 정해야 한다. 예를 들어 건설에서는 블록 장착, 특정 좌표에 배치, 상태 관측, 후보 없음/보류를 후보로 둘 수 있다. 작업 명세와 관측에서 인자를 만드는 방법, 후보가 하나뿐일 때의 처리, 후보 누락과 잘못된 후보의 검출을 별도로 검토한다. 후보 생성 실패와 모델의 후보 선택 실패는 다른 원인이다.
 
@@ -1912,7 +1912,7 @@ Tev1은 상태와 질문, 선택지를 받아 선택하는 모델이다. Ollama�
 
 ### 상위 계획·배정: 무엇을 누구에게 맡기는가
 
-전체 목표가 주어지면 Task Manager의 TD 역할이 환경·작업 이력을 참고해 하위 작업과 선행관계, 완료 조건을 생성하고 작업 그래프로 관리한다. Controller는 선행조건과 작업 상태, 후보와 가용 agent를 고려해 실행 가능한 작업을 배정한다. 상황에 따라 직접 배정하거나 LLM에 배정을 요청하고 응답을 검증한다. Data Manager는 환경·agent 이력 등을 제공하며 실행 결과를 갱신한다. 실행 결과에 따라 작업 상태가 바뀌고, 이후 계획과 배정에 피드백된다. [Task Manager](../../../pipeline/task_manager.py), [Controller](../../../pipeline/controller.py), [Data Manager](../../../pipeline/data_manager.py).
+전체 목표가 주어지면 Task Manager의 TD 역할이 환경·작업 이력을 참고해 하위 작업과 선행관계, 완료 조건을 생성하고 작업 그래프로 관리한다. Controller는 선행조건과 작업 상태, 후보와 가용 agent를 고려해 실행 가능한 작업을 배정한다. 상황에 따라 직접 배정하거나 LLM에 배정을 요청하고 응답을 검증한다. Data Manager는 환경·agent 이력 등을 제공하며 실행 결과를 갱신한다. 실행 결과에 따라 작업 상태가 바뀌고, 이후 계획과 배정에 피드백된다. [Task Manager](../../../../pipeline/task_manager.py), [Controller](../../../../pipeline/controller.py), [Data Manager](../../../../pipeline/data_manager.py).
 
 ```text
 목표 → TD의 하위 작업·그래프 → AC의 유효 작업/agent 배정
@@ -1923,14 +1923,14 @@ Tev1은 상태와 질문, 선택지를 받아 선택하는 모델이다. Ollama�
 
 ### BA에서 행동 정책이 정해지는 과정
 
-1. **작업 문맥 구성:** Controller가 worker에 작업을 맡기면 [BaseAgent.step() 및 normal_step()](../../../pipeline/agent.py)은 task 설명·milestone, 환경 정보, agent 이력, 다른 agent 상태, 관련 데이터, Minecraft 지식 카드 등을 조합한 자연어 지시를 만든다. 단일·협업 작업의 프롬프트가 다르며, 성격·말투도 일부 무작위 선택한다. 별도 `action_context`에도 작업과 관측을 넣어 전달한다.
-2. **Minecraft actor로 전달:** [VillagerBench.step()](../../../env/env.py)은 이름에 맞는 Minecraft Agent를 찾아 `Agent.run()`을 호출한다. 일반 경로의 `max_turn` 기본값은 7이며 `Agent.run()`에는 이 값이 최대 반복 횟수로 전달된다. RL 등의 별도 경로와 구별해야 한다.
-3. **생성형 행동 선택:** [Minecraft Agent.run()](../../../env/minecraft_client.py)은 설정된 생성형 모델과 허용 도구를 LangChain의 `STRUCTURED_CHAT_ZERO_SHOT_REACT_DESCRIPTION`으로 연결한다. 모델은 작업 문맥과 도구 설명, 이전 행동의 피드백을 바탕으로 다음 도구와 그 인자를 생성하거나 최종 응답을 낸다. 즉 고정된 작업별 행동 순서표가 아니라 **프롬프트·도구 스키마·관측·이력에 조건부인 생성형 ReAct 정책**이다. 한 `run()` 안에서 여러 행동을 할 수 있고, 반복·실행시간 제한과 파싱 오류 처리가 있다.
-4. **공통 검사와 실행:** 현재 [행동 계약 래퍼](../../../env/action_policy.py)는 생성된 호출의 도구 허용 여부, 해당 agent 이름, 필수 인자와 타입, 일부 허용값을 검사한 뒤 실제 도구를 실행한다. 환경상의 모든 선행조건이나 성공을 보증하지는 않는다. 이는 기존 ReAct를 감싼 검증이며, 계약의 독립 `select()` 루프가 구현됐다는 뜻은 아니다.
-5. **도구에서 봇으로:** 예를 들어 모델이 `placeBlock(player_name, item_name, x, y, z, facing, ...)`을 선택하면 Python 도구가 해당 봇의 `/post_place`에 HTTP 요청을 보낸다. 서버는 인자를 확인하고 [환경 API](../../../env/env_api.py)의 블록·인벤토리 확인과 이동 등 절차를 호출해 결과를 반환한다. 이동은 Mineflayer pathfinder, 채굴 등은 Mineflayer bot API를 사용한다. 따라서 LLM이 저수준 움직임을 한 틱씩 생성하는 구조가 아니라, **높은 수준의 도구 호출과 인자를 결정하고 기존 실행 코드가 세부 동작을 수행**한다.
+1. **작업 문맥 구성:** Controller가 worker에 작업을 맡기면 [BaseAgent.step() 및 normal_step()](../../../../pipeline/agent.py)은 task 설명·milestone, 환경 정보, agent 이력, 다른 agent 상태, 관련 데이터, Minecraft 지식 카드 등을 조합한 자연어 지시를 만든다. 단일·협업 작업의 프롬프트가 다르며, 성격·말투도 일부 무작위 선택한다. 별도 `action_context`에도 작업과 관측을 넣어 전달한다.
+2. **Minecraft actor로 전달:** [VillagerBench.step()](../../../../env/env.py)은 이름에 맞는 Minecraft Agent를 찾아 `Agent.run()`을 호출한다. 일반 경로의 `max_turn` 기본값은 7이며 `Agent.run()`에는 이 값이 최대 반복 횟수로 전달된다. RL 등의 별도 경로와 구별해야 한다.
+3. **생성형 행동 선택:** [Minecraft Agent.run()](../../../../env/minecraft_client.py)은 설정된 생성형 모델과 허용 도구를 LangChain의 `STRUCTURED_CHAT_ZERO_SHOT_REACT_DESCRIPTION`으로 연결한다. 모델은 작업 문맥과 도구 설명, 이전 행동의 피드백을 바탕으로 다음 도구와 그 인자를 생성하거나 최종 응답을 낸다. 즉 고정된 작업별 행동 순서표가 아니라 **프롬프트·도구 스키마·관측·이력에 조건부인 생성형 ReAct 정책**이다. 한 `run()` 안에서 여러 행동을 할 수 있고, 반복·실행시간 제한과 파싱 오류 처리가 있다.
+4. **공통 검사와 실행:** 현재 [행동 계약 래퍼](../../../../env/action_policy.py)는 생성된 호출의 도구 허용 여부, 해당 agent 이름, 필수 인자와 타입, 일부 허용값을 검사한 뒤 실제 도구를 실행한다. 환경상의 모든 선행조건이나 성공을 보증하지는 않는다. 이는 기존 ReAct를 감싼 검증이며, 계약의 독립 `select()` 루프가 구현됐다는 뜻은 아니다.
+5. **도구에서 봇으로:** 예를 들어 모델이 `placeBlock(player_name, item_name, x, y, z, facing, ...)`을 선택하면 Python 도구가 해당 봇의 `/post_place`에 HTTP 요청을 보낸다. 서버는 인자를 확인하고 [환경 API](../../../../env/env_api.py)의 블록·인벤토리 확인과 이동 등 절차를 호출해 결과를 반환한다. 이동은 Mineflayer pathfinder, 채굴 등은 Mineflayer bot API를 사용한다. 따라서 LLM이 저수준 움직임을 한 틱씩 생성하는 구조가 아니라, **높은 수준의 도구 호출과 인자를 결정하고 기존 실행 코드가 세부 동작을 수행**한다.
 6. **결과와 재판단:** 도구의 상태·메시지와 환경 이벤트가 ReAct의 다음 판단에 전달되고, `intermediate_steps`가 `action_list`와 최종 응답으로 정리된다. BA는 환경 상태와 행동 내역을 Data Manager에 반영한다. 이후 별도의 BA `reflect()`가 행동 이력 등으로 작업 성공 여부를 추정하며 Controller가 이를 사용한다. 이 reflection과 실제 월드를 기준으로 한 benchmark judger의 최종 점수는 다르다.
 
-**실행 경로상 주의:** 일반 서버의 [`/post_place`](../../../env/minecraft_server.py)는 조건 확인 후 `/setblock` 등 관리자 명령을 사용하는 분기가 있으며, [fast 서버](../../../env/minecraft_server_fast.py)는 별도의 `place_axis` 경로를 사용한다. 따라서 모든 배치를 일반 플레이어의 `bot.placeBlock`이라고 설명하면 부정확하다. 서버 경로·권한과 실제 월드 결과를 실험별로 기록해야 한다.
+**실행 경로상 주의:** 일반 서버의 [`/post_place`](../../../../env/minecraft_server.py)는 조건 확인 후 `/setblock` 등 관리자 명령을 사용하는 분기가 있으며, [fast 서버](../../../../env/minecraft_server_fast.py)는 별도의 `place_axis` 경로를 사용한다. 따라서 모든 배치를 일반 플레이어의 `bot.placeBlock`이라고 설명하면 부정확하다. 서버 경로·권한과 실제 월드 결과를 실험별로 기록해야 한다.
 
 ---
 

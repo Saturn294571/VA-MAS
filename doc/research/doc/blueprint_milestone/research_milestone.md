@@ -20,7 +20,7 @@
 
 ## 1. BA 행동 선택의 교체 가능성 판정 `[ ]`
 
-- [ ] [BaseAgent](../../../pipeline/agent.py)에서 작업 수신·reflection과 실제 행동 선택을 분리해 설명한다. [Minecraft Agent](../../../env/minecraft_client.py)의 관측→ReAct 추론→도구·인자→실행→피드백 경계를 추적한다.
+- [ ] [BaseAgent](../../../../pipeline/agent.py)에서 작업 수신·reflection과 실제 행동 선택을 분리해 설명한다. [Minecraft Agent](../../../../env/minecraft_client.py)의 관측→ReAct 추론→도구·인자→실행→피드백 경계를 추적한다.
 - [ ] 두 정책이 받을 동일한 작업·관측·허용 행동 집합을 정의한다. 행동 **종류뿐 아니라 좌표·아이템·대상 등의 인자**를 생성 또는 제한할 책임을 명시한다.
 - [ ] `ActionPolicy`의 입력·출력 스키마, 유효성 검사, 무효 선택·타임아웃·fallback 계약을 정한다. 기존 생성형 행동과 결정형 행동 모두 같은 외부 계약을 따르되 결과를 조용히 보정하지 않는다.
 - [ ] 일부 작업에 열린 자연어 추론이나 새 인자 생성이 불가피하면 생성형 역할로 남기거나 첫 과제·행동 집합을 더 좁힌다.
@@ -47,7 +47,7 @@
 
 ## 4. D/G: AC 단일 축 비교 `[ ]`
 
-- [ ] [Task Manager](../../../pipeline/task_manager.py)의 후보 설정과 [Controller](../../../pipeline/controller.py)의 직접 배정·LLM 배정을 분리 계측한다. 유효한 대안이 둘 이상인 결정 시점이 충분한지 확인한다.
+- [ ] [Task Manager](../../../../pipeline/task_manager.py)의 후보 설정과 [Controller](../../../../pipeline/controller.py)의 직접 배정·LLM 배정을 분리 계측한다. 유효한 대안이 둘 이상인 결정 시점이 충분한지 확인한다.
 - [ ] `AssignmentPolicy`의 ready 작업·후보·가용성·필요 인원 입력과 배정/보류 출력을 정의한다. 선행조건·중복·인원·가용성 검증은 양쪽에서 동일하게 수행한다.
 - [ ] BA는 G로 고정한 채 G/G와 D/G를 비교한다. 현재 Controller 주도 배정은 full Controller·Construction·동질 agent에 한정되므로 Farm-to-Table로 확장한다면 그 호환성 변경부터 별도 검증한다.
 - [ ] 직접 배정으로 정책 선택이 없었던 경우를 모델 성과에 합산하지 않는다. 배정 지연·유효성·재할당·전체 과제 성능·비용을 함께 보고한다.
