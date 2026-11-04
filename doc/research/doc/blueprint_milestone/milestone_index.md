@@ -12,8 +12,8 @@ VillagerAgent(VA)를 기준으로 **생성형 계획을 유지하면서 제한�
 
 | 단계 | 상태 | 확인된 범위와 다음 판단 |
 | --- | --- | --- |
-| VA 기준 실행 경로 | 확인 | 원본 `controller.py`로 작은 Construction 경로를 실행했다. Task20·3인 개선 후 한 실행은 [12/12 블록과 완료 점수](../../../result/gemini-3.8-flash_construction_task20_3p_controller_llm_flat_20261007_trial2_feedback1024/score.json)를 남겼다. 새 정책 비교·원 논문 수치의 완전 재현은 아님 |
-| TD/AC 첫 라운드 프로브 | 확인 | [Task25 프로브](../../../result/td_ac_probe_task25_20261007/probe.json)는 합성 snapshot·actor 0회 조건에서 3 node·0 edge·유효 배정 3개를 확인했다. 과제 완주·배정 병목 증거는 아님 |
+| VA 기준 실행 경로 | 확인 | 원본 `controller.py`로 작은 Construction 경로를 실행했다. Task20·3인 개선 후 한 실행은 [12/12 블록과 완료 점수](/home/pluto2479/Documents/MineSkynet-VA/result/gemini-3.8-flash_construction_task20_3p_controller_llm_flat_20261007_trial2_feedback1024/score.json)를 남겼다. 새 정책 비교·원 논문 수치의 완전 재현은 아님 |
+| TD/AC 첫 라운드 프로브 | 확인 | [Task25 프로브](/home/pluto2479/Documents/MineSkynet-VA/result/td_ac_probe_task25_20261007/probe.json)는 합성 snapshot·actor 0회 조건에서 3 node·0 edge·유효 배정 3개를 확인했다. 과제 완주·배정 병목 증거는 아님 |
 | BA 행동 결정 경계·계측 | **다음 단계** | 현행 ReAct 도구 호출의 관측, 후보·인자, 선택, 실행, 피드백을 구별하고 공통 정책 계약이 가능한지 판단 |
 | G/G 기준선 → G/D 단일 축 | 미시작 | 같은 과제·월드·TD/AC/SM·도구 제약으로 생성형/결정형 행동 정책의 효과 비교 |
 | AC 배정 기회 → D/G 단일 축 | 보류 | 직접 배정과 LLM 배정의 빈도·의미 있는 대안부터 확인. 현재 Controller 주도 배정 경로는 Construction·동질 agent로 제한됨 |

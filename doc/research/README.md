@@ -11,12 +11,14 @@
 3. [마일스톤 인덱스](doc/blueprint_milestone/milestone_index.md): 확인된 범위와 다음 결정
 4. [연구 마일스톤](doc/blueprint_milestone/research_milestone.md): 단계별 완료 기준
 
-문서는 목적에 따라 나뉜다. `blueprint_milestone/`은 현재 질문·계획, `architecture_understand/`는 논문–코드 대응, `idea_hypothesis/`는 검증 전 가설·개념 메모, `human_report/`는 날짜별 기록과 발표 초안이다. 자세한 논문–코드 대응은 [VA 구조 지도](doc/architecture_understand/VA_code_paper_map.md), 실험 경과는 [리포트 로그](doc/human_report/report_log.md), 다음 랩미팅용 논점은 [임시 보고](doc/human_report/labmeeting_temp.md)를 본다. [OS·DAG 메모](doc/legacy/os_nw_DAG_note.md)는 이전 병목 질문의 개념 탐색 자료이며 현재 필수 이론 과제가 아니다. [Odyssey 관련 대응표](doc/architecture_understand/paper_code_dependency_map.md)는 과거 경로를 확인할 때만 참조한다.
+문서는 목적에 따라 나뉜다. `blueprint_milestone/`은 현재 질문·계획, `architecture_understand/`는 논문–코드 대응, `idea_hypothesis/`는 검증 전 가설·개념 메모, `human_report/`는 날짜별 기록과 발표 초안이다. 자세한 논문–코드 대응은 [VA 구조 지도](doc/architecture_understand/VA_code_paper_map.md), 실험 경과는 [리포트 로그](doc/human_report/report_log.md), 다음 랩미팅용 논점은 [임시 보고](doc/human_report/labmeeting_temp.md)를 본다. [OS·DAG 메모](doc/legacy/os_nw_DAG_note.md)는 이전 병목 질문의 개념 탐색 자료이며 현재 필수 이론 과제가 아니다. `Odyssey 관련 대응표`(과거 자료; 현재 트리에 포함되지 않음)는 과거 경로를 확인할 때만 참조한다.
+
+과거 Task20 점수와 Task25 프로브의 원시 기록은 이전 프로젝트의 `result/`에 남아 있어 아래 링크가 그 보존본을 가리킨다. 이는 문서 근거이며 핵심 실행의 파일 의존성이 아니다.
 
 ## 현재 확인된 범위
 
-- VA의 원본 `controller.py`를 사용한 작은 Construction 경로를 확인했다. 평지·Peaceful 월드의 Task20·3인 한 실행은 actor 출력·파서·피드백 개선 후 **12/12 블록, `complete task`**로 끝났다. [Task20 점수](../result/gemini-3.8-flash_construction_task20_3p_controller_llm_flat_20261007_trial2_feedback1024/score.json)
-- [Task25 TD/AC 프로브](../result/td_ac_probe_task25_20261007/probe.json)는 합성 snapshot에서 첫 계획·배정만 확인했다. 노드 3개·간선 0개, 첫 라운드 명시 블록 9/15개와 유효 배정 3개였으며 actor 실행·전체 과제 완료는 검사하지 않았다.
+- VA의 원본 `controller.py`를 사용한 작은 Construction 경로를 확인했다. 평지·Peaceful 월드의 Task20·3인 한 실행은 actor 출력·파서·피드백 개선 후 **12/12 블록, `complete task`**로 끝났다. [Task20 점수](/home/pluto2479/Documents/MineSkynet-VA/result/gemini-3.8-flash_construction_task20_3p_controller_llm_flat_20261007_trial2_feedback1024/score.json)
+- [Task25 TD/AC 프로브](/home/pluto2479/Documents/MineSkynet-VA/result/td_ac_probe_task25_20261007/probe.json)는 합성 snapshot에서 첫 계획·배정만 확인했다. 노드 3개·간선 0개, 첫 라운드 명시 블록 9/15개와 유효 배정 3개였으며 actor 실행·전체 과제 완료는 검사하지 않았다.
 - **생성형/결정형 정책을 공통 계약으로 비교한 결과는 아직 없다.** Farm-to-Table은 주력 benchmark 후보, Construction은 기존 기준 과제, Escape Room은 후속 후보이다. BA 행동 선택의 경계·유효한 행동 및 인자 집합을 확인하는 것이 다음 단계다.
 
 ## 실행 환경과 재현 기록

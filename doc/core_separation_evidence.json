@@ -131,5 +131,47 @@
       "check": "td_ac_probe.py",
       "exit_code": 0
     }
-  ]
+  ],
+  "clean_checkout_validation": [
+    {
+      "check": "assignment_contract_checks.py",
+      "exit_code": 0
+    },
+    {
+      "check": "core_boundary_checks.py",
+      "exit_code": 0
+    },
+    {
+      "check": "gemini_flash_lite_checks.py",
+      "exit_code": 0
+    },
+    {
+      "check": "hybrid_placement_checks.py",
+      "exit_code": 0
+    },
+    {
+      "check": "ollama_model_checks.py",
+      "exit_code": 0
+    },
+    {
+      "check": "repeated_placement_checks.py",
+      "exit_code": 0
+    },
+    {
+      "check": "structure_checks.py",
+      "exit_code": 0
+    },
+    {
+      "check": "tracer_checks.py",
+      "exit_code": 0
+    },
+    {
+      "check": "td_ac_probe.py",
+      "exit_code": 0
+    }
+  ],
+  "clean_checkout_tested_commit": "972186e",
+  "unittest_count": 42,
+  "preserved_input_result_count": 179,
+  "merge_strategy": "fast-forward only to local main; no remote push"
 }

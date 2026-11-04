@@ -45,4 +45,10 @@
 
 ## 완료 기록
 
-검증 및 main 반영 후 확정한다.
+- 전체 기능 체크포인트 `ea1e9c7`의 검사 8항목 통과.
+- 핵심 체크포인트 `972186e`를 `/tmp/va-mas-core-checkout`에 깨끗하게 checkout한 뒤 검사 9항목 모두 통과: unittest 42개, 행동 assertion 스크립트 2개, TD/AC self-test.
+- 검사에서는 제거된 SDK·모듈 import를 차단했고 Construction/Farming/Escape의 실행·judger 연결을 대역으로 확인했다. 새 실제 모델·서버 실행은 하지 않았다.
+- 로컬 import 누락 0건, 유지 함수 12개 AST 일치, 제거 파일 33개가 보존 체크포인트에 존재함을 확인했다.
+- benchmark 입력과 기존 원시 결과 179개 SHA-256 보존. 제거한 3개 결과 가공 소스는 별도의 보존 기능 목록에 포함한다.
+- 결과 가공 소스 제거로 새 checkout에서 `result/`가 사라지지 않도록 `.gitkeep`만 남겼다. 기존 raw 결과를 강제 추적하거나 덮어쓰지 않는다.
+- 이 검증된 핵심과 문서 정리 커밋을 로컬 main에 fast-forward 반영한다. merge 후 main/refactor 동등성과 보존 ref 불변, 작업 트리 상태를 확인한다. 원격 push는 하지 않는다.

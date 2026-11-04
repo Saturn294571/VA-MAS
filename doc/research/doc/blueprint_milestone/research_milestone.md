@@ -13,8 +13,8 @@
 ## 0. 이전 VA 실행 기반 `[x]`
 
 - [x] 원본 `controller.py`로 작은 Construction 실행 경로를 확인했다.
-- [x] 평지·Peaceful 조건의 Task20·3인에서 actor 출력·파서·피드백 문제를 다룬 후 한 실행이 12/12 블록·`complete task`로 끝났다. [점수](../../../result/gemini-3.8-flash_construction_task20_3p_controller_llm_flat_20261007_trial2_feedback1024/score.json)
-- [x] [Task25 TD/AC 프로브](../../../result/td_ac_probe_task25_20261007/probe.json)는 합성 환경의 첫 라운드에서 3 node·0 edge와 유효 배정 3개를 확인했다.
+- [x] 평지·Peaceful 조건의 Task20·3인에서 actor 출력·파서·피드백 문제를 다룬 후 한 실행이 12/12 블록·`complete task`로 끝났다. [점수](/home/pluto2479/Documents/MineSkynet-VA/result/gemini-3.8-flash_construction_task20_3p_controller_llm_flat_20261007_trial2_feedback1024/score.json)
+- [x] [Task25 TD/AC 프로브](/home/pluto2479/Documents/MineSkynet-VA/result/td_ac_probe_task25_20261007/probe.json)는 합성 환경의 첫 라운드에서 3 node·0 edge와 유효 배정 3개를 확인했다.
 
 이 근거는 VA의 실행·분리 검사이지 새 정책 성능, agent 수 효과 또는 원 논문 전체 benchmark의 재현이 아니다. 이전의 병목 전면 귀속 계획은 별도 역사적 맥락이며 아래의 선행 통과 조건이 아니다. 실행·진단 세부 기록은 [리포트 로그](../human_report/report_log.md)에 둔다.
 
