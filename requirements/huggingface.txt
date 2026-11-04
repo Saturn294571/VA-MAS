@@ -1,5 +1,0 @@
--r base.txt
-transformers
-torch
-optimum
-auto-gptq

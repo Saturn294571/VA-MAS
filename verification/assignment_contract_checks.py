@@ -88,7 +88,6 @@ class AssignmentContractChecks(unittest.TestCase):
 
     def test_existing_controllers_dispatch_only_validated_work(self):
         from pipeline.controller import GlobalController
-        from pipeline.controller_tiny import GlobalController as TinyController
 
         def make_controller(cls):
             ctrl = cls.__new__(cls)
@@ -116,13 +115,6 @@ class AssignmentContractChecks(unittest.TestCase):
         self.assertEqual(ctrl.task_queue[0][0].name, "Alice")
         self.assertEqual(self.first.status, Task.running)
 
-        self.second.number = 2
-        tiny = make_controller(TinyController)
-        tiny.execute_assignments([{"task_instance": self.second, "agent_instances": self.agents}])
-        self.assertEqual(tiny.task_queue, [])
-        self.second.number = 1
-        tiny.execute_assignments([{"task_instance": self.second, "agent_instances": [self.agents[1]]}])
-        self.assertEqual(tiny.task_queue[0][0].name, "Bob")
 
 
 if __name__ == "__main__":

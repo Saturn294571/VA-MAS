@@ -16,10 +16,7 @@ class env_type:
     construction = 0
     farming = 1
     puzzle = 2
-    auto = 3
 
-    meta = 10
-    gen = 13
 
 class VillagerBench:
     '''
@@ -36,6 +33,8 @@ class VillagerBench:
     - _virtual_debug: bool, whether the environment is in virtual debug mode
     '''
     def __init__(self, env_type, task_id: int, dig_needed: bool, host: str = "0.0.0.0", port: int = 25565, max_task_num: int = 1, task_name: str = "test", _virtual_debug: bool = False):
+        if env_type not in (-1, 0, 1, 2):
+            raise ValueError("Core supports none, Construction, Farming and Escape; see archive/full-features-20261104")
         self.env_type = env_type
         self.task_id = task_id
         self.host = host
@@ -89,6 +88,8 @@ class VillagerBench:
           
     @contextmanager
     def run(self, server_debug: bool = False, fast_api=False):
+        if fast_api:
+            raise ValueError("FastAPI server is preserved on archive/full-features-20261104")
         try:
             if not self._virtual_debug:
                 self.launch(debug=server_debug, fast_api=fast_api)
@@ -318,15 +319,6 @@ class VillagerBench:
         elif self.env_type == env_type.puzzle:
             subprocess.Popen(["python", "env/escape_room_judger.py", "--idx", str(self.task_id), "--host", self.host, "--port" , str(self.port), "--max_task_num", str(self.max_task_num), "--agent_num", str(len(self.agent_pool)), "--agent_names", agent_names_str, "--task_name", self.task_name], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
             self.logger.debug(f"python env/escape_room_judger.py --idx {self.task_id} --host {self.host} --port {self.port} --max_task_num {self.max_task_num} --agent_num {len(self.agent_pool)} --agent_names {agent_names_str} --task_name {self.task_name}")
-        elif self.env_type == env_type.auto:
-            subprocess.Popen(["python", "env/auto_judger.py", "--idx", str(self.task_id), "--host", self.host, "--port" , str(self.port), "--agent_num", str(len(self.agent_pool)), "--agent_names", agent_names_str, "--task_name", self.task_name, "--op_path", self.op_path], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
-            self.logger.debug(f"python env/auto_judger.py --idx {self.task_id} --host {self.host} --port {self.port} --agent_num {len(self.agent_pool)} --agent_names {agent_names_str} --task_name {self.task_name} --op_path {self.op_path}")
-        elif self.env_type == env_type.meta:
-            subprocess.Popen(["python", "env/meta_judger.py", "--idx", str(self.task_id), "--host", self.host, "--port" , str(self.port), "--agent_num", str(len(self.agent_pool)), "--agent_names", agent_names_str, "--task_name", self.task_name], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
-            self.logger.debug(f"python env/meta_judger.py --idx {self.task_id} --host {self.host} --port {self.port} --agent_num {len(self.agent_pool)} --agent_names {agent_names_str} --task_name {self.task_name}")
-        elif self.env_type == env_type.gen:
-            subprocess.Popen(["python", "env/llm_gen_judger.py", "--host", self.host, "--port" , str(self.port), "--agent_num", str(len(self.agent_pool)), "--agent_names", agent_names_str, "--task_name", self.task_name], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
-            self.logger.debug(f"python env/llm_gen_judger.py --host {self.host} --port {self.port} --agent_num {len(self.agent_pool)} --agent_names {agent_names_str} --task_name {self.task_name}")
         elif self.env_type == env_type.none:
             with open(".cache/load_status.cache", "w") as f:
                 json.dump({"status": "loaded"}, f, indent=4)

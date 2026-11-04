@@ -1,0 +1,135 @@
+{
+  "archive_branch": "archive/full-features-20261104",
+  "archive_commit": "ea1e9c766107713419fd0fe784a237d2508cd3f1",
+  "retained_benchmarks": [
+    "construction",
+    "farming",
+    "puzzle"
+  ],
+  "retained_providers": [
+    "gemini",
+    "ollama"
+  ],
+  "retained_decision_adapter": "model/ollama_decision.py",
+  "removed_files": [
+    "agent_demo.py",
+    "auto_gen_gpt_task.py",
+    "auto_monitor.py",
+    "config.py",
+    "Dockerfile",
+    "pipeline/agent_rl_prompt.py",
+    "pipeline/controller_tiny.py",
+    "pipeline/legacy_retrieval.py",
+    "env/auto_judger.py",
+    "env/meta_judger.py",
+    "env/llm_gen_judger.py",
+    "env/minecraft_server_fast.py",
+    "env/zhipu.py",
+    "model/huggingface_model.py",
+    "model/openai_models.py",
+    "model/vllm_model.py",
+    "model/zhipu_model.py",
+    "result/action_extract.py",
+    "result/format_convert.py",
+    "result/result_filter.py",
+    "rl_env/__init__.py",
+    "rl_env/minecraft_dqn.py",
+    "rl_env/minecraft_ppo.py",
+    "rl_env/minecraft_rl_env.py",
+    "rl_env/minecraft_trainer.py",
+    "rl_env/replay_buffer.py",
+    "rl_env/rl_utils.py",
+    "requirements/retrieval.txt",
+    "requirements/fastapi.txt",
+    "requirements/providers.txt",
+    "requirements/analysis.txt",
+    "requirements/rl.txt",
+    "requirements/huggingface.txt"
+  ],
+  "retained_behavior_ast_comparisons": {
+    "pipeline/agent.py:normal_step": true,
+    "pipeline/agent.py:reflect": true,
+    "pipeline/agent.py:action_format": true,
+    "pipeline/agent.py:other_agents": true,
+    "pipeline/task_manager.py:init_task": true,
+    "pipeline/task_manager.py:update_task": true,
+    "pipeline/data_manager.py:update_database": true,
+    "pipeline/data_manager.py:query_env_with_task": true,
+    "model/google_model.py:create_google_chat_model": true,
+    "model/google_model.py:few_shot_generate_thoughts": true,
+    "model/ollama_model.py:ollama_chat": true,
+    "model/ollama_model.py:create_ollama_chat_model": true
+  },
+  "baseline_validation": [
+    {
+      "check": "assignment_contract_checks.py",
+      "exit_code": 0
+    },
+    {
+      "check": "gemini_flash_lite_checks.py",
+      "exit_code": 0
+    },
+    {
+      "check": "hybrid_placement_checks.py",
+      "exit_code": 0
+    },
+    {
+      "check": "ollama_model_checks.py",
+      "exit_code": 0
+    },
+    {
+      "check": "repeated_placement_checks.py",
+      "exit_code": 0
+    },
+    {
+      "check": "structure_checks.py",
+      "exit_code": 0
+    },
+    {
+      "check": "tracer_checks.py",
+      "exit_code": 0
+    },
+    {
+      "check": "td_ac_probe.py",
+      "exit_code": 0
+    }
+  ],
+  "core_validation": [
+    {
+      "check": "assignment_contract_checks.py",
+      "exit_code": 0
+    },
+    {
+      "check": "core_boundary_checks.py",
+      "exit_code": 0
+    },
+    {
+      "check": "gemini_flash_lite_checks.py",
+      "exit_code": 0
+    },
+    {
+      "check": "hybrid_placement_checks.py",
+      "exit_code": 0
+    },
+    {
+      "check": "ollama_model_checks.py",
+      "exit_code": 0
+    },
+    {
+      "check": "repeated_placement_checks.py",
+      "exit_code": 0
+    },
+    {
+      "check": "structure_checks.py",
+      "exit_code": 0
+    },
+    {
+      "check": "tracer_checks.py",
+      "exit_code": 0
+    },
+    {
+      "check": "td_ac_probe.py",
+      "exit_code": 0
+    }
+  ]
+}

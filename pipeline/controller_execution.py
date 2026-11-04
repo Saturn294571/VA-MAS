@@ -1,4 +1,4 @@
-"""Shared Controller execution mechanics; assignment semantics stay in each Controller."""
+"""Full Controller execution mechanics; assignment and execution remain separate."""
 import threading
 import time
 from concurrent.futures import ThreadPoolExecutor
@@ -8,7 +8,7 @@ from tracer import current_tracer, safe_emit
 
 
 class ControllerExecution:
-    """Internal runtime shared by the legacy Full and Tiny public classes."""
+    """Internal runtime for the Full Controller."""
 
     def _initialize_execution(self, max_workers: int) -> None:
         """Allocate execution state; invalid executor sizes raise ValueError."""

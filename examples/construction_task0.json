@@ -1,0 +1,26 @@
+[
+  {
+    "host": "localhost",
+    "port": 25565,
+    "task_idx": 0,
+    "task_type": "construction",
+    "task_goal": "Using the provided blueprint, collaborate to place every required block in Minecraft. Use inventory or supply chest materials. Finish when the blueprint is fully built.",
+    "agent_num": 1,
+    "dig_needed": false,
+    "max_task_num": 1,
+    "task_name": "construction_task0_new_unique_run",
+    "document_file": "data/map_description.json",
+    "role": "same",
+    "controller_mode": "full",
+    "assignment_policy": "controller",
+    "model_roles": {
+      "default": {
+        "provider": "gemini"
+      }
+    },
+    "decision_policies": {
+      "ba": "generative",
+      "ac": "generative"
+    }
+  }
+]

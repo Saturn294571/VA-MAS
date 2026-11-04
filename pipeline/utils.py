@@ -134,30 +134,6 @@ def smart_truncate(data, max_length):
     return json_str
 
 
-def dict2document(dict: dict, db_name: str):
-    """Compatibility entrypoint; missing optional search packages raise ImportError."""
-    from common.optional import optional_dependencies
-    with optional_dependencies("retrieval"):
-        from pipeline.legacy_retrieval import dict2document as implementation
-        return implementation(dict, db_name)
-
-
-def load_db_name(db_name, update=False, verbose=False, json_path="", query_type="ParentDocument"):
-    """Compatibility entrypoint; missing optional search packages raise ImportError."""
-    from common.optional import optional_dependencies
-    with optional_dependencies("retrieval"):
-        from pipeline.legacy_retrieval import load_db_name as implementation
-        return implementation(db_name, update, verbose, json_path, query_type)
-
-
-def query_from_db(llm, db_dict, db_name, query="", verbose=False, query_type=""):
-    """Compatibility entrypoint; missing optional search packages raise ImportError."""
-    from common.optional import optional_dependencies
-    with optional_dependencies("retrieval"):
-        from pipeline.legacy_retrieval import query_from_db as implementation
-        return implementation(llm, db_dict, db_name, query, verbose, query_type)
-
-
 def flatten_json(y, threshold=200):
     # This function converts any JSON file into a 1D dict for easier retrieval search
     out = {}

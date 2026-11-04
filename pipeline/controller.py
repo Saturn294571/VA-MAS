@@ -34,7 +34,7 @@ class GlobalController(ControllerExecution):
     
     '''
     def __init__(self, llm_config: dict, task_manager: TaskManager, data_manager: DataManager, env: VillagerBench,
-                 silent: bool = False, max_workers=4, RL_mode="", rl_env=None, rl_model=None,
+                 silent: bool = False, max_workers=4,
                  ac_llm_config=None, base_agent_config=None, tm_llm_config=None, dm_llm_config=None):
         self.task_manager = task_manager
 
@@ -54,7 +54,7 @@ class GlobalController(ControllerExecution):
         llm = init_language_model(ac_llm_config or llm_config)
         base_llm = (llm if ac_llm_config is None and base_agent_config is None
                     else init_language_model({**(base_agent_config or llm_config), "role_name": "BaseAgent"}))
-        self.agent_list = [BaseAgent(base_llm, env, data_manager, name=a.name, silent=False, RL_mode=RL_mode, rl_env=rl_env, rl_model=rl_model) for a in env.agent_pool]
+        self.agent_list = [BaseAgent(base_llm, env, data_manager, name=a.name, silent=False) for a in env.agent_pool]
         self.task_manager.agent_list = self.agent_list
         self.task_manager.agent_describe = env.get_all_agent_description_tiny()
         self.assignment = {}
@@ -84,8 +84,6 @@ class GlobalController(ControllerExecution):
         # start time
         self.start_time = time.time()
 
-        self.rl_env = rl_env
-        self.rl_model = rl_model
 
     def set_stop_condition(self, max_execution_time: int, stop_after_fail_times: int, stop_after_success_times: int):
         self.max_execution_time = max_execution_time

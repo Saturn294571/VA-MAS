@@ -3,7 +3,7 @@ import datetime
 import numpy as np
 from langchain.docstore.document import Document
 
-from model.openai_models import OpenAILanguageModel
+from model.abstract_language_model import AbstractLanguageModel
 from pipeline.data_prompt import SOMEONE_NEARBY_INFO_FORMAT, NOONE_NEARBY_INFO_FORMAT, AGENT_INFO_STORE_FORMAT, \
     SUCCESS_DECOMPOSE_PLAN_FORMAT, NOT_SUCCESS_DECOMPOSE_PLAN_FORMAT, PERSON_INFO_FORMAT, ENVIRONMENT_INFO_FORMAT, \
     HISTORY_SUMMARY_PROMPT, \
@@ -372,33 +372,18 @@ class DataManager:
         self._logger.info(f"Summarizing history {history['name']}...")
         # self._logger.debug(f"Using {model}")
 
-        if isinstance(self.llm, OpenAILanguageModel):
-            if history["name"] not in self._history_data.keys():
-                prompt = HISTORY_SUMMARY_PROMPT.format(name=history["name"],
-                                                       summary_so_far="",
-                                                       latest_development=history)
-            else:
-                prompt = HISTORY_SUMMARY_PROMPT.format(name=history["name"],
-                                                       summary_so_far=self._history_data[history["name"]],
-                                                       latest_development=history)
-            response = self.llm.few_shot_generate_thoughts(system_prompt="You are a helpful assistant in Minecraft.",
-                                                           example_prompt=prompt,
-                                                           cache_enabled=False,
-                                                           max_tokens=512)
-            
+        if history["name"] not in self._history_data.keys():
+            prompt = HISTORY_SUMMARY_PROMPT.format(name=history["name"],
+                                                   summary_so_far="",
+                                                   latest_development=history)
         else:
-            if history["name"] not in self._history_data.keys():
-                prompt = HISTORY_SUMMARY_PROMPT.format(name=history["name"],
-                                                       summary_so_far="",
-                                                       latest_development=history)
-            else:
-                prompt = HISTORY_SUMMARY_PROMPT.format(name=history["name"],
-                                                       summary_so_far=self._history_data[history["name"]],
-                                                       latest_development=history)
-            response = self.llm.few_shot_generate_thoughts(system_prompt="You are a helpful assistant in Minecraft.",
-                                                           example_prompt=prompt,
-                                                           cache_enabled=False,
-                                                           max_tokens=512)
+            prompt = HISTORY_SUMMARY_PROMPT.format(name=history["name"],
+                                                   summary_so_far=self._history_data[history["name"]],
+                                                   latest_development=history)
+        response = self.llm.few_shot_generate_thoughts(system_prompt="You are a helpful assistant in Minecraft.",
+                                                       example_prompt=prompt,
+                                                       cache_enabled=False,
+                                                       max_tokens=512)
         self._logger.debug(f"Update history: {response}")
         self.update_history_log("You are a helpful assistant in Minecraft.", prompt, response)
         self._history_data[history["name"]] = response
@@ -484,16 +469,10 @@ class DataManager:
                                                        task=task + str(self._env_data["sign_info"]))
         self._logger.debug(f"System prompt: {system_prompt}")
         self._logger.debug(f"Example prompt: {example_prompt}")
-        if isinstance(self.llm, OpenAILanguageModel):
-            response = self.llm.few_shot_generate_thoughts(system_prompt=system_prompt,
-                                                           example_prompt=example_prompt,
-                                                           cache_enabled=False,
-                                                           max_tokens=256)
-        else:
-            response = self.llm.few_shot_generate_thoughts(system_prompt=system_prompt,
-                                                           example_prompt=example_prompt,
-                                                           cache_enabled=False,
-                                                           max_tokens=256)
+        response = self.llm.few_shot_generate_thoughts(system_prompt=system_prompt,
+                                                       example_prompt=example_prompt,
+                                                       cache_enabled=False,
+                                                       max_tokens=256)
         # print(example_prompt)
         # print(response)
         self._logger.debug(f"Response: {response}")

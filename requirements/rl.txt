@@ -1,4 +1,0 @@
--r base.txt
-gymnasium
-torch
-transformers

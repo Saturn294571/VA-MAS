@@ -1,0 +1,26 @@
+[
+  {
+    "host": "localhost",
+    "port": 25565,
+    "task_idx": 0,
+    "task_type": "farming",
+    "task_goal": "Collaborate to craft the requested cake using the provided ingredients and sources.",
+    "agent_num": 1,
+    "dig_needed": false,
+    "max_task_num": 1,
+    "task_name": "farming_task0_new_unique_run",
+    "document_file": "",
+    "role": "same",
+    "controller_mode": "full",
+    "assignment_policy": "decomposer",
+    "model_roles": {
+      "default": {
+        "provider": "gemini"
+      }
+    },
+    "decision_policies": {
+      "ba": "generative",
+      "ac": "generative"
+    }
+  }
+]

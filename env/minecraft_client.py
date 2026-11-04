@@ -54,16 +54,6 @@ def filter_emoji_from_dict(obj):
     else:
         return obj
 
-def qwen_non_thinking_model_kwargs(model: str, base_url: str) -> dict:
-    model_name = (model or "").lower()
-    base_url = (base_url or "").lower()
-    local_model = "localhost" in base_url or "127.0.0.1" in base_url
-    if local_model and ("qwen3" in model_name or model_name == "default"):
-        return {"extra_body": {"chat_template_kwargs": {"enable_thinking": False}}}
-    if "qwen3" in model_name:
-        return {"extra_body": {"enable_thinking": False}}
-    return {}
-
 
 def timeit(func):
     @wraps(func)
@@ -310,26 +300,18 @@ class Agent():
 
     @staticmethod
     def launch(host="10.21.31.18", port=25565, world="world", verbose=False, ignore_name=[], debug=False, fast=False):
+        if fast:
+            raise ValueError("FastAPI server is preserved on archive/full-features-20261104")
         Agent.port = port
         if verbose:
             print("launch ...")
         for key, value in Agent.name2port.items():
             if key in ignore_name:
                 continue
-            if fast:
-                try:
-                    Agent.agent_process[key] = subprocess.Popen(
-                        [sys.executable, "env/minecraft_server_fast.py", "-H", host, "-P", str(port), "-LP", str(value), "-U", key, "-W",
-                    world, "-D", str(debug)], shell=False, env=env)
-                    print(f"{sys.executable} env/minecraft_server_fast.py -H \"{host}\" -P {port} -LP {value} -U \"{key}\" -W \"{world}\" -D {debug}")
-                except Exception as e:
-                    print(f"An error occurred: {e}")
-                    print(f"{sys.executable} env/minecraft_server_fast.py -H \"{host}\" -P {port} -LP {value} -U \"{key}\" -W \"{world}\" -D {debug}")
-            else:
-                Agent.agent_process[key] = subprocess.Popen(
-                    [sys.executable, "env/minecraft_server.py", "-H", host, "-P", str(port), "-LP", str(value), "-U", key, "-W",
-                 world, "-D", str(debug)], shell=False, env=env)
-                print(f"{sys.executable} env/minecraft_server.py -H \"{host}\" -P {port} -LP {value} -U \"{key}\" -W \"{world}\" -D {debug}")
+            Agent.agent_process[key] = subprocess.Popen(
+                [sys.executable, "env/minecraft_server.py", "-H", host, "-P", str(port), "-LP", str(value), "-U", key, "-W",
+             world, "-D", str(debug)], shell=False, env=env)
+            print(f"{sys.executable} env/minecraft_server.py -H \"{host}\" -P {port} -LP {value} -U \"{key}\" -W \"{world}\" -D {debug}")
             if not Agent.wait_until_ready(key):
                 raise TimeoutError(f"Agent server for {key} did not become ready on localhost:{value}.")
         if verbose:
@@ -970,27 +952,14 @@ class Agent():
 
     def step(self, instruction: str, actions=[], observations=[], player_name_list=[], max_try_turn=2, max_iterations=1, tools=[], recommended_actions=[]):
         # return the (action, observation), details.
+        if Agent.model_provider not in {"gemini", "ollama"}:
+            raise ValueError("Unsupported actor provider; see archive/full-features-20261104")
         if Agent.model_provider != "ollama":
             assert len(self.api_key_list) > 0, "Please set the api_key_list in Agent class."
         if Agent.model_provider == "ollama":
             self.llm = create_ollama_chat_model(model=self.model, base_url=Agent.ollama_base_url,
                                                 actor_name=self.name, max_tokens=Agent.max_tokens,
                                                 num_ctx=Agent.ollama_num_ctx, timeout=Agent.ollama_timeout)
-        elif 'qwen' in self.model:
-            from langchain_community.chat_models.tongyi import ChatTongyi
-            self.llm = ChatTongyi(model=self.model, temperature=0, max_tokens=256, dashscope_api_key=random.choice(Agent.api_key_list), base_url=Agent.base_url,model_kwargs={"enable_thinking": False})
-        elif "default" in self.model:
-            from langchain.llms import OpenAI
-            self.llm = OpenAI(model=self.model, temperature=0, max_tokens=256, openai_api_key=random.choice(Agent.api_key_list), base_url=Agent.base_url, model_kwargs=qwen_non_thinking_model_kwargs(self.model, Agent.base_url))
-        elif "deepseek" in self.model:
-            from openai import OpenAI
-            self.llm = OpenAI(model=self.model, temperature=0, max_token=256, openai_api_key=random.choice(Agent.api_key_list), base_url=Agent.base_url)
-        elif "instruct" in self.model and "gpt" in self.model:
-            from langchain.llms import OpenAI
-            self.llm = OpenAI(model=self.model, temperature=0, max_tokens=256, openai_api_key=random.choice(Agent.api_key_list), base_url=Agent.base_url)
-        elif "gpt" in self.model:
-            from langchain.chat_models import ChatOpenAI
-            self.llm = ChatOpenAI(model=self.model, temperature=0,  max_tokens=256, openai_api_key=random.choice(Agent.api_key_list), base_url=Agent.base_url)
         elif "gemini" in self.model:
             self.llm = create_google_chat_model(
                 api_model=self.model,
@@ -1000,13 +969,8 @@ class Agent():
                 temperature=0,
                 actor_name=self.name,
             )
-        elif "glm" in self.model:
-            from zhipu import ChatZhipuAI
-            self.llm = ChatZhipuAI(model_name=self.model, temperature=0.01, api_key=random.choice(Agent.api_key_list))
-        # elif "default" in self.model:
-        #     from openai import OpenAI
-        #     self.llm = OpenAI(model=self.model, openai_api_key=random.choice(Agent.api_key_list), base_url=Agent.base_url, model_kwargs={"encoding": "utf-8"})
-        
+        else:
+            raise ValueError("Core actor supports Gemini and Ollama; see archive/full-features-20261104")
         for act, obs in zip(actions, observations):
             instruction += f"\n{act['log']}\n{obs}"
         
@@ -1129,6 +1093,8 @@ class Agent():
                 marker = Path(trace_dir) / "policy_abort.json"
                 marker.write_text(json.dumps({"agent": self.name, "reason": reason}), encoding="utf-8")
             return detail["final_answer"], detail
+        if Agent.model_provider not in {"gemini", "ollama"}:
+            raise ValueError("Unsupported actor provider; see archive/full-features-20261104")
         if Agent.model_provider != "ollama":
             assert len(self.api_key_list) > 0, "Please set the api_key_list in Agent class."
         # dynamic api key
@@ -1137,18 +1103,6 @@ class Agent():
             self.llm = create_ollama_chat_model(model=self.model, base_url=Agent.ollama_base_url,
                                                 actor_name=self.name, max_tokens=Agent.max_tokens,
                                                 num_ctx=Agent.ollama_num_ctx, timeout=Agent.ollama_timeout)
-        elif 'qwen' in self.model:
-            from langchain_community.chat_models.tongyi import ChatTongyi
-            self.llm = ChatTongyi(model=self.model, temperature=0, max_tokens=256, dashscope_api_key=random.choice(Agent.api_key_list), base_url=Agent.base_url,model_kwargs={"enable_thinking": False})
-        elif "default" in self.model:
-            from langchain.llms import OpenAI
-            self.llm = OpenAI(model=self.model, temperature=0, max_tokens=256, openai_api_key=random.choice(Agent.api_key_list), base_url=Agent.base_url, model_kwargs=qwen_non_thinking_model_kwargs(self.model, Agent.base_url))
-        elif ("instruct" in self.model and "gpt" in self.model):
-            from langchain.llms import OpenAI
-            self.llm = OpenAI(model=self.model, temperature=0, max_tokens=256, openai_api_key=random.choice(Agent.api_key_list), base_url=Agent.base_url)
-        elif "gpt" in self.model or "NAS" in self.model or "llama" in self.model:
-            from langchain.chat_models import ChatOpenAI
-            self.llm = ChatOpenAI(model=self.model, temperature=0,  max_tokens=256, openai_api_key=random.choice(Agent.api_key_list), base_url=Agent.base_url)
         elif "gemini" in self.model:
             self.llm = create_google_chat_model(
                 api_model=self.model,
@@ -1158,14 +1112,8 @@ class Agent():
                 temperature=0,
                 actor_name=self.name,
             )
-        elif "glm" in self.model:
-            from zhipu import ChatZhipuAI
-            self.llm = ChatZhipuAI(model_name=self.model, temperature=0.01, api_key=random.choice(Agent.api_key_list))
-        elif "deepseek" in self.model:
-            from langchain.chat_models import ChatOpenAI
-            self.llm = ChatOpenAI(model=self.model, temperature=0,  max_tokens=256, openai_api_key=random.choice(Agent.api_key_list), base_url=Agent.base_url)
         else:
-            raise NotImplementedError(f"Model {self.model} not implemented.")
+            raise ValueError("Core actor supports Gemini and Ollama; see archive/full-features-20261104")
         available_tools = self.tools if len(tools) == 0 else tools
         actor_input = action_context or {
             "task": {"id": "direct-run", "description": "direct actor request", "milestones": []},
@@ -1367,4 +1315,3 @@ if __name__ == "__main__":
     #     actions.append(act)
     #     observations.append(obs)
     #     input()
-    

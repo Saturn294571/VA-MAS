@@ -1,4 +1,0 @@
--r base.txt
-zhipuai==2.0.1
-mistralai==0.0.12
-dashscope

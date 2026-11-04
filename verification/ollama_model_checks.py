@@ -156,7 +156,7 @@ class OllamaChecks(unittest.TestCase):
     def test_launcher_main_does_not_load_keys_for_all_local(self):
         import model.google_model as google
         Path("result/existing").mkdir(parents=True)
-        config = [{"task_name": "existing", "controller_mode": "full",
+        config = [{"task_name": "existing", "task_type": "construction", "controller_mode": "full",
                    "decision_policies": {"ba": "generative", "ac": "generative"},
                    "model_roles": {"default": {"provider": "ollama"}}}]
         Path("fixture.json").write_text(json.dumps(config))

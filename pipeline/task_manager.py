@@ -6,7 +6,7 @@ from tracer import current_tracer, safe_emit, traced
 from pipeline.task_prompt import *
 from pipeline.data_manager import DataManager
 from pipeline.retriever import LocalOnlyEmbeddingGuard, Retriever
-from model.openai_models import OpenAILanguageModel
+from model.abstract_language_model import AbstractLanguageModel
 from pipeline.utils import *
 from typing import Union
 import random
@@ -199,9 +199,6 @@ class TaskManager:
         # query state
         # query experience
         self.status = TaskManager.running
-        if isinstance(self.llm, OpenAILanguageModel):
-            # print(self.llm.api_base)
-            pass
         self.logger.debug("="*20 + " Task Manager Init Task " + "="*20)
         
         self.task_document = document
@@ -528,8 +525,6 @@ class TaskManager:
         # query experience
 
         self.status = TaskManager.running
-        if isinstance(self.llm, OpenAILanguageModel):
-            pass
             # print(self.llm.api_base)
         self.logger.debug("="*20 + " Task Manager Update Task " + "="*20)
         self.logger.debug(f"trace: {self.task_trace_description}")

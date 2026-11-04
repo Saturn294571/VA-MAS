@@ -1,8 +1,2 @@
-# Full legacy feature set; install requirements/base.txt for the core path.
+# Core runtime for Construction, Farming and Escape.
 -r requirements/construction.txt
--r requirements/rl.txt
--r requirements/huggingface.txt
--r requirements/providers.txt
--r requirements/fastapi.txt
--r requirements/retrieval.txt
--r requirements/analysis.txt

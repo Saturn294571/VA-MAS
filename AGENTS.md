@@ -16,11 +16,12 @@
 | `doc/research/` | 연구 질문, 마일스톤, 논문–코드 대응, 실험 보고와 과거 Odyssey 근거 |
 | `result/` | 실행별 점수·행동·추론 기록 등 실험 산출물 |
 | `logs/`, `img/` | 실행 로그와 생성된 그래프·시각 자료 |
-| `rl_env/` | 별도 강화학습 실험 코드; 현재 VA 병목 연구의 기본 경로는 아님 |
-| `ui/` | 실험 상태를 보여주는 UI 및 관련 자료 |
+| `ui/logs/` | 모델 어댑터가 기록하는 실행 로그 |
 | `doc/` | API 설명·리팩토링·smoke 및 연구 문서 |
-| 루트의 `config.py`, `agent_demo.py`, `start_with_config.py`, `tiny_start.py`, `td_ac_probe.py` | 설정·실행 진입점과 actor 없는 계획/배정 프로브 |
+| 루트의 `start_with_config.py`, `tiny_start.py`, `td_ac_probe.py`와 `examples/` | Full 실행·최소 예제·actor 없는 프로브와 benchmark 설정 |
 | `.venv/`, `node_modules/`, `.runtime/`, `.cache/` | 로컬 환경·서버·캐시; 소스나 연구 근거의 원본으로 취급하지 않음 |
+
+전체 부가 기능은 `archive/full-features-20261104` 브랜치에 보존한다. 핵심은 Gemini·Ollama·Tev1, Full Controller, Construction·Farming·Escape이며 제거한 기능으로 fallback하지 않는다. 이상점은 귀속 보고서에 기록하고 동작 변경은 별도 판단으로 둔다.
 
 하위 지침은 `pipeline/`, `type_define/`, `env/`, `model/`, `data/`, `doc/research/`의 `AGENTS.md`에만 둔다. 각 파일은 해당 디렉터리의 고유한 경계만 추가하며, 공통 규칙을 반복하지 않는다.
 

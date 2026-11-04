@@ -1,0 +1,167 @@
+{
+  "old_project": "/home/pluto2479/Documents/MineSkynet-VA",
+  "current_before_separation_commit": "60f6afb85a64c7e1ad5c33453fc3afbeb5969bab",
+  "files_scanned": 813,
+  "actor_records": 165,
+  "finish_counts": {
+    "stop": 164,
+    "length": 1
+  },
+  "malformed_function_files": [],
+  "length_events": [
+    {
+      "file": "result/20261028_hybrid_tev1_task20_3p_run3/trace/events.jsonl",
+      "component": "SM",
+      "model": "gemini-3.8-flash"
+    },
+    {
+      "file": "result/hybrid_tev1_task20_recording_20261028_retry1/trace/events.jsonl",
+      "component": "SM",
+      "model": "gemini-3.8-flash"
+    },
+    {
+      "file": "result/20261028_tev1_construction_task20_3p_trial3/trace/events.jsonl",
+      "component": "SM",
+      "model": "gemini-3.8-flash"
+    },
+    {
+      "file": "result/20261028_tev1_construction_task20_3p_trial1/trace/events.jsonl",
+      "component": "SM",
+      "model": "gemini-3.8-flash"
+    },
+    {
+      "file": "result/20261028_tev1_construction_task20_3p_trial1/trace/events.jsonl",
+      "component": "BA",
+      "model": "gemini-3.8-flash"
+    },
+    {
+      "file": "result/20261028_hybrid_tev1_task20_3p_run1/trace/events.jsonl",
+      "component": "SM",
+      "model": "gemini-3.8-flash"
+    },
+    {
+      "file": "result/20261028_tev1_construction_task20_3p_trial2/trace/events.jsonl",
+      "component": "SM",
+      "model": "gemini-3.8-flash"
+    }
+  ],
+  "unclosed_requests": [
+    {
+      "file": "result/hybrid_tev1_task20_recording_20261028_124738/trace/events.jsonl",
+      "start_count": 4,
+      "end_count": 3,
+      "unclosed_components": {
+        "BA": 1
+      }
+    },
+    {
+      "file": "result/20261028_hybrid_tev1_task20_3p_run3/trace/events.jsonl",
+      "start_count": 30,
+      "end_count": 29,
+      "unclosed_components": {
+        "TD": 1
+      }
+    },
+    {
+      "file": "result/hybrid_tev1_task20_recording_20261028_retry1/trace/events.jsonl",
+      "start_count": 26,
+      "end_count": 25,
+      "unclosed_components": {
+        "BA": 1
+      }
+    },
+    {
+      "file": "result/20261028_hybrid_tev1_task20_3p_run2/trace/events.jsonl",
+      "start_count": 29,
+      "end_count": 28,
+      "unclosed_components": {
+        "BA": 1
+      }
+    },
+    {
+      "file": "result/20261028_tev1_construction_task20_3p_trial3/trace/events.jsonl",
+      "start_count": 26,
+      "end_count": 25,
+      "unclosed_components": {
+        "BA": 1
+      }
+    },
+    {
+      "file": "result/20261028_tev1_construction_task20_3p_trial1/trace/events.jsonl",
+      "start_count": 30,
+      "end_count": 29,
+      "unclosed_components": {
+        "BA": 1
+      }
+    },
+    {
+      "file": "result/20261028_hybrid_tev1_task20_3p_run1/trace/events.jsonl",
+      "start_count": 26,
+      "end_count": 25,
+      "unclosed_components": {
+        "BA": 1
+      }
+    },
+    {
+      "file": "result/20261028_tev1_construction_task20_3p_trial2/trace/events.jsonl",
+      "start_count": 26,
+      "end_count": 24,
+      "unclosed_components": {
+        "BA": 2
+      }
+    },
+    {
+      "file": "result/20261028_005349_construction_task0_1p_full_controller_contract_smoke_retry1/trace/events.jsonl",
+      "start_count": 26,
+      "end_count": 25,
+      "unclosed_components": {
+        "BA": 1
+      }
+    }
+  ],
+  "source_comparisons": [
+    {
+      "path": "env/minecraft_client.py",
+      "old_sha256": "c16a1b85b848b837bb1878e280a6c7b3a8b1420f2a6dda781f7ba36b82c76c1f",
+      "current_sha256": "c16a1b85b848b837bb1878e280a6c7b3a8b1420f2a6dda781f7ba36b82c76c1f",
+      "identical_file": true,
+      "identical_functions": {}
+    },
+    {
+      "path": "env/env.py",
+      "old_sha256": "b1c35d40f9cef8e2e0c59f764d1aa43e0bbf074b6e7f3b8663a1c19d8eacc5b6",
+      "current_sha256": "b1c35d40f9cef8e2e0c59f764d1aa43e0bbf074b6e7f3b8663a1c19d8eacc5b6",
+      "identical_file": true,
+      "identical_functions": {
+        "run": true
+      }
+    },
+    {
+      "path": "env/build_judger.py",
+      "old_sha256": "40acd826016aa9ac3ed17a42f41d0cf8c86cac35fab2112f21484e6872bec39a",
+      "current_sha256": "40acd826016aa9ac3ed17a42f41d0cf8c86cac35fab2112f21484e6872bec39a",
+      "identical_file": true,
+      "identical_functions": {
+        "calculate_action_time": true
+      }
+    },
+    {
+      "path": "model/google_model.py",
+      "old_sha256": "f91502c16486dec4e947bb152e64c7835d253a6ace87612311deb19dce6040af",
+      "current_sha256": "af013a6536c8b9c93e31f279b519922d7df505e56d8a70229e1bfd91a92fe377",
+      "identical_file": false,
+      "identical_functions": {
+        "create_google_chat_model": true,
+        "_new_client": true,
+        "few_shot_generate_thoughts": true
+      }
+    }
+  ],
+  "limitations": [
+    "Historical files are surviving artifacts, not an exhaustive record of every request.",
+    "The model changed from Gemini 3.8 Flash to Gemini 3.1 Flash-Lite; unmatched conditions cannot establish causation.",
+    "No new network/API/Minecraft run was performed during this audit."
+  ],
+  "scanned_file_index_sha256": "c4de11f182958566c62c5950953b95a0cb0d633fd4ee2418ee343f2d3e7f27f2",
+  "archived_checkpoint": "ea1e9c766107713419fd0fe784a237d2508cd3f1"
+}

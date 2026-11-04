@@ -14,7 +14,6 @@ from unittest.mock import Mock, patch
 from model.utils import extract_info as model_extract
 from pipeline.utils import extract_info as pipeline_extract
 from pipeline.controller import GlobalController as Full
-from pipeline.controller_tiny import GlobalController as Tiny
 from type_define.graph import Graph, Task
 
 
@@ -49,10 +48,10 @@ from pathlib import Path
 class Block(importlib.abc.MetaPathFinder):
     def find_spec(self, fullname, path=None, target=None):
         blocked = {"torch", "transformers", "FlagEmbedding", "chromadb", "zhipuai", "gymnasium", "fastapi", "uvicorn", "optimum", "auto_gptq", "mistralai", "dashscope"}
-        if fullname.split(".")[0] in blocked or fullname in {"model.huggingface_model", "model.vllm_model", "model.zhipu_model"}:
+        if fullname.split(".")[0] in blocked or fullname in {"model.huggingface_model", "model.vllm_model", "model.zhipu_model", "model.openai_models", "pipeline.controller_tiny", "pipeline.legacy_retrieval", "rl_env"}:
             raise ModuleNotFoundError("blocked optional package", name=fullname)
 sys.meta_path.insert(0, Block())
-import model.init_model, start_with_config, env.utils, rl_env
+import model.init_model, start_with_config, env.utils
 assert not any(Path(p).exists() for p in ["data", ".cache", "logs", "result"])
 try:
     env.utils.split_structure([])
@@ -61,17 +60,11 @@ except ImportError as exc:
 else:
     raise AssertionError("missing Construction dependency was not reported")
 try:
-    rl_env.PPO
-except ImportError as exc:
-    assert "requirements/rl.txt" in str(exc)
-else:
-    raise AssertionError("missing RL dependency was not reported")
-try:
     model.init_model.init_language_model({"api_model": "unsupported-hf"})
-except ImportError as exc:
-    assert "requirements/huggingface.txt" in str(exc)
+except ValueError as exc:
+    assert "archive/full-features-20261104" in str(exc)
 else:
-    raise AssertionError("missing HF dependency was not reported")
+    raise AssertionError("removed model was not rejected")
 '''
         with tempfile.TemporaryDirectory() as directory:
             result = subprocess.run([sys.executable, "-B", "-c", script], cwd=directory,
@@ -103,17 +96,13 @@ assert utils.init_logger.__module__ == 'common.logging'
 
     def test_factory_dispatch_does_not_load_other_adapters(self):
         from model.init_model import init_language_model
-        adapters = {"google_model": "GoogleLanguageModel", "openai_models": "OpenAILanguageModel",
-                    "zhipu_model": "ZhipuLanguageModel", "huggingface_model": "HFLanguageModel",
-                    "vllm_model": "VLLMLanguageModel", "ollama_model": "OllamaLanguageModel"}
+        adapters = {"google_model": "GoogleLanguageModel", "ollama_model": "OllamaLanguageModel"}
         modules = {}
         for module, name in adapters.items():
             fake = ModuleType("model." + module)
             setattr(fake, name, lambda _module=module, **args: (_module, args))
             modules["model." + module] = fake
-        cases = [("gemini-x", "google_model"), ("qwen-x", "openai_models"),
-                 ("glm-x", "zhipu_model"), ("llama-x", "vllm_model"),
-                 ("local-hf", "huggingface_model"), ("qwen3.8:27b", "ollama_model")]
+        cases = [("gemini-x", "google_model"), ("qwen3.8:27b", "ollama_model")]
         with patch.dict(sys.modules, modules):
             for model, expected in cases:
                 args = {"api_model": model, "role_name": "fixture"}
@@ -133,8 +122,8 @@ assert utils.init_logger.__module__ == 'common.logging'
         ctrl.stop_after_success_times = 10
         return ctrl
 
-    def test_full_and_tiny_keep_distinct_queue_shutdown_behavior(self):
-        for cls, expected in [(Full, 1), (Tiny, 2)]:
+    def test_full_keeps_queue_shutdown_behavior(self):
+        for cls, expected in [(Full, 1)]:
             ctrl = self.controller(cls)
             agent = SimpleNamespace(name="Alice", step=lambda task: None)
             tasks = [Task("first", {}), Task("second", {})]
@@ -147,7 +136,7 @@ assert utils.init_logger.__module__ == 'common.logging'
                 ctrl.worker()
             self.assertEqual(len(ctrl.result_queue), expected)
             self.assertEqual(ctrl.executor.submit.call_count, expected)
-            self.assertEqual(sleep.call_count, 1 if cls is Full else 0)
+            self.assertEqual(sleep.call_count, 1)
             self.assertEqual([entry[2] for entry in ctrl.result_queue], tasks[:expected])
 
     def test_full_time_and_failure_limits_and_offline_effects(self):
@@ -158,16 +147,16 @@ assert utils.init_logger.__module__ == 'common.logging'
             ctrl.env.agents_ping = Mock(side_effect=AssertionError("should stop before ping"))
             with patch("time.time", return_value=1):
                 ctrl.worker()
-        for cls in [Full, Tiny]:
+        for cls in [Full]:
             ctrl = self.controller(cls)
             ctrl.env.agents_ping = lambda: {"status": False}
             with patch("time.time", return_value=1):
                 ctrl.worker()
             self.assertTrue(ctrl.shutdown)
-            self.assertEqual(ctrl.max_execution_time, 0 if cls is Full else 100)
+            self.assertEqual(ctrl.max_execution_time, 0)
 
     def test_task_status_and_interrupt_cleanup(self):
-        for cls in [Full, Tiny]:
+        for cls in [Full]:
             ctrl = self.controller(cls)
             task = Task("fixture", {})
             graph = Graph()

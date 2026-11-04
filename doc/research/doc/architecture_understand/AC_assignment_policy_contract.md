@@ -4,7 +4,7 @@
 
 ## 기존 코드와 경계
 
-[`TaskManager`](../../../../pipeline/task_manager.py)는 작업과 후보를 생성하고 [`Graph`](../../../../type_define/graph.py)에 선행관계를 저장한다. [`GlobalController`](../../../../pipeline/controller.py)는 선행관계와 유휴 agent를 확인해 후보 수가 필요 인원과 같으면 직접 배정하고, 나머지 선택지에 LLM 제안을 받을 수 있다. [`controller_tiny.py`](../../../../pipeline/controller_tiny.py)는 직접 배정 경로를 사용한다. 배정된 작업의 실행·reflection·환경 judger는 별도의 책임이다.
+[`TaskManager`](../../../../pipeline/task_manager.py)는 작업과 후보를 생성하고 [`Graph`](../../../../type_define/graph.py)에 선행관계를 저장한다. [`GlobalController`](../../../../pipeline/controller.py)는 선행관계와 유휴 agent를 확인해 후보 수가 필요 인원과 같으면 직접 배정하고, 나머지 선택지에 LLM 제안을 받을 수 있다. 과거 Tiny Controller의 직접 배정 구현은 `archive/full-features-20261104` 브랜치에 보존한다. 핵심에는 Full만 남긴다. 배정된 작업의 실행·reflection·환경 judger는 별도의 책임이다.
 
 기존 LLM 응답의 `task_id`는 Controller `task_list`의 **0-based 인덱스**이며, `Task.id`는 실행 중 UUID다. 정책 계약은 UUID를 사용하고 기존 LLM 입출력과 맞닿는 어댑터만 인덱스를 UUID로 변환한다. `Task.to_json()`에는 UUID가 없으므로 별도 기록한다. TD가 후보를 미리 제한한 경우 AC의 후보 범위를 임의로 넓히지 않는다.
 

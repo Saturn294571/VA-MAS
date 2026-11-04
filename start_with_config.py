@@ -13,7 +13,6 @@ from model.role_models import configure_actor_model, resolve_role_models
 
 start_time = time.time()
 from pipeline.controller import GlobalController as FullController
-from pipeline.controller_tiny import GlobalController as TinyController
 from pipeline.data_manager import DataManager
 from pipeline.task_manager import TaskManager
 import json
@@ -32,10 +31,23 @@ CONFIG_PATH = os.environ.get("VILLAGER_BENCH_CONFIG_PATH", "base_agent_multi_tes
 print(f"pipeline Time taken: {time.time() - start_time}")
 start_time = time.time()
 
-def run(api_model: str, api_base: str, api_key_list: list, thinking_level: str, task_type: str, task_idx: int, agent_num: int, dig_needed: bool, max_task_num: int, task_goal: str, document_file: str, host: str, port: int, task_name: str, role: str = "same", document: dict = {}, controller_mode: str = "tiny", assignment_policy: str = "decomposer", model_roles=None):
+def validate_run_options(task_type: str, controller_mode: str = "full",
+                         assignment_policy: str = "decomposer", role: str = "same") -> None:
+    """Validate the retained run modes before I/O; unsupported choices raise ValueError."""
+    archive = "archive/full-features-20261104"
+    if controller_mode != "full":
+        raise ValueError(f"Core uses Full Controller; other modes are on {archive}")
+    if task_type not in {"construction", "farming", "puzzle"}:
+        raise ValueError(f"Core supports Construction, Farming and Escape (puzzle); see {archive}")
+    if assignment_policy not in {"decomposer", "controller"}:
+        raise ValueError("assignment_policy must be decomposer or controller")
+    if assignment_policy == "controller" and (task_type != "construction" or role != "same"):
+        raise ValueError("Controller assignment currently requires homogeneous Construction agents")
+
+
+def run(api_model: str, api_base: str, api_key_list: list, thinking_level: str, task_type: str, task_idx: int, agent_num: int, dig_needed: bool, max_task_num: int, task_goal: str, document_file: str, host: str, port: int, task_name: str, role: str = "same", document: dict = {}, controller_mode: str = "full", assignment_policy: str = "decomposer", model_roles=None):
     start_time = time.time()
-    if assignment_policy == "controller" and (controller_mode != "full" or task_type != "construction" or role != "same"):
-        raise ValueError("Controller assignment currently requires the full Controller and homogeneous Construction agents")
+    validate_run_options(task_type, controller_mode, assignment_policy, role)
 
     api_key_list = api_key_list or []
     llm_config = {"api_key": api_key_list[0] if api_key_list else "", "api_base": api_base, "api_model": api_model,
@@ -44,8 +56,6 @@ def run(api_model: str, api_base: str, api_key_list: list, thinking_level: str, 
     if any(config["provider"] == "gemini" for config in role_configs.values()) and not api_key_list:
         raise ValueError("Gemini credentials are required by the selected model roles")
     all_local = all(config["provider"] == "ollama" for config in role_configs.values())
-    if role_configs["ac"]["provider"] == "ollama" and controller_mode == "tiny":
-        print("Tiny Controller uses direct assignment; the configured AC model will not be called.")
     ba_config = role_configs["ba"]
     configure_actor_model(Agent, ba_config)
 
@@ -56,10 +66,6 @@ def run(api_model: str, api_base: str, api_key_list: list, thinking_level: str, 
         env = VillagerBench(env_type=env_type.farming, task_id=task_idx, dig_needed=False, host=host, port=port, max_task_num=max_task_num, task_name=task_name, _virtual_debug=False)
     elif task_type == "puzzle":
         env = VillagerBench(env_type=env_type.puzzle, task_id=task_idx, dig_needed=False, host=host, port=port, max_task_num=max_task_num, task_name=task_name, _virtual_debug=False)
-    elif task_type == "meta":
-        env = VillagerBench(env_type=env_type.meta, task_id=task_idx, dig_needed=False, host=host, port=port, max_task_num=max_task_num, task_name=task_name, _virtual_debug=False)
-    elif task_type == "gen":
-        env = VillagerBench(env_type=env_type.gen, task_id=task_idx, dig_needed=False, host=host, port=port, max_task_num=max_task_num, task_name=task_name, _virtual_debug=False)
     else:
         raise NotImplementedError
 
@@ -76,13 +82,6 @@ def run(api_model: str, api_base: str, api_key_list: list, thinking_level: str, 
     elif task_type == "puzzle":
         agent_tool = [Agent.placeBlock, Agent.fetchContainerContents, Agent.MineBlock, Agent.scanNearbyEntities, Agent.equipItem,
                       Agent.navigateTo, Agent.withdrawItem, Agent.ToggleAction, Agent.handoverBlock]
-    elif task_type == "meta" or task_type == "gen":
-        agent_tool = [Agent.scanNearbyEntities, Agent.navigateTo, Agent.attackTarget, Agent.useItemOnEntity, Agent.useItemOnBlock,
-                      Agent.MineBlock, Agent.placeBlock, Agent.equipItem, Agent.handoverBlock, Agent.SmeltingCooking, Agent.withdrawItem, 
-                      Agent.storeItem, Agent.craftBlock, Agent.eat, Agent.fetchContainerContents, Agent.wake, Agent.talkTo, Agent.waitForFeedback,
-                      Agent.openContainer, Agent.performMovement, 
-                      Agent.sleep, Agent.startFishing, Agent.ToggleAction, 
-                      Agent.read, Agent.mountEntity, Agent.dismountEntity]
     else:
         raise NotImplementedError
 
@@ -107,11 +106,7 @@ def run(api_model: str, api_base: str, api_key_list: list, thinking_level: str, 
                       Agent.handoverBlock]
         env.agent_register(agent_tool=agent_tool, agent_number=1, name_list=[name_list[2]])
     else:
-        action = document.get("action", None)
-        if action == "chat" or action == "handover":
-            env.agent_register(agent_tool=agent_tool, agent_number=agent_num+1, name_list=name_list[:agent_num+1])
-        else:
-            env.agent_register(agent_tool=agent_tool, agent_number=agent_num, name_list=name_list[:agent_num])
+        env.agent_register(agent_tool=agent_tool, agent_number=agent_num, name_list=name_list[:agent_num])
 
     with env.run(fast_api=False):  # Added a new parameter to control whether to use the fastapi server
         # Start DM
@@ -134,21 +129,11 @@ def run(api_model: str, api_base: str, api_key_list: list, thinking_level: str, 
         base_llm_config = ba_config if model_roles is not None else llm_config
 
 
-        if controller_mode == "full":
-            ctrl = FullController(llm_config, tm, dm, env,
-                                  ac_llm_config=role_configs["ac"] if model_roles is not None else None,
-                                  base_agent_config=base_llm_config if model_roles is not None else None,
-                                  tm_llm_config=tm_llm_config if model_roles is not None else None,
-                                  dm_llm_config=dm_llm_config if model_roles is not None else None)
-        elif controller_mode == "tiny":
-            ctrl = TinyController(llm_config, tm, dm, env,
-                                  tm_llm_config=tm_llm_config,
-                                  dm_llm_config=dm_llm_config,
-                                  base_agent_config=base_llm_config,
-                                  ac_llm_config=role_configs["ac"] if model_roles is not None else None,
-                                  all_tools=agent_tool)
-        else:
-            raise ValueError(f"Unsupported controller_mode: {controller_mode}")
+        ctrl = FullController(llm_config, tm, dm, env,
+                              ac_llm_config=role_configs["ac"] if model_roles is not None else None,
+                              base_agent_config=base_llm_config if model_roles is not None else None,
+                              tm_llm_config=tm_llm_config if model_roles is not None else None,
+                              dm_llm_config=dm_llm_config if model_roles is not None else None)
         print(f"Controller mode: {controller_mode}; assignment policy: {assignment_policy}")
 
 
@@ -185,6 +170,9 @@ if __name__ == "__main__":
     # launch_config = random.sample(launch_config, len(launch_config))
     for i, config in enumerate(launch_config):
 
+        validate_run_options(config.get("task_type"), config.get("controller_mode", "full"),
+                             config.get("assignment_policy", "decomposer"), config.get("role", "same"))
+
         policies = config.get("decision_policies")
         if not isinstance(policies, dict) or set(policies) != {"ba", "ac"}:
             raise ValueError("Set decision_policies with explicit ba and ac values")
@@ -208,7 +196,7 @@ if __name__ == "__main__":
         tracer = Tracer(trace_dir, run_id=config["task_name"])
         all_local = all(role["provider"] == "ollama" for role in role_configs.values())
         uniform_models = {role["api_model"] for role in role_configs.values()}
-        trace_settings = {**config, "model": next(iter(uniform_models)) if len(uniform_models) == 1 else "mixed",
+        trace_settings = {**config, "controller_mode": "full", "model": next(iter(uniform_models)) if len(uniform_models) == 1 else "mixed",
                           "thinking_level": "disabled" if all_local else LLM_THINKING_LEVEL,
                           "td_provider": role_configs["td"]["provider"],
                           "td_model": role_configs["td"]["api_model"],
@@ -231,8 +219,7 @@ if __name__ == "__main__":
         print("config:", config)
         with open(".cache/meta_setting.json", "w") as f:
             json.dump(config, f, indent=4)
-        if config["task_type"] != "meta":
-            config.pop("evaluation_arg", None) # Avoid information from evaluation_arg affecting execution
+        config.pop("evaluation_arg", None) # Scenario-specific scoring arguments are not actor input
         with open(".cache/load_status.cache", "w") as f:
             json.dump({"status": "start"}, f, indent=4)
         if os.path.exists(".cache/heart_beat.cache"):
@@ -263,7 +250,7 @@ if __name__ == "__main__":
                                                 config["task_name"],
                                                 config.get("role", "same"),
                                                 config.get("evaluation_arg", {}),
-                                                config.get("controller_mode", "tiny"),
+                                                config.get("controller_mode", "full"),
                                                 config.get("assignment_policy", "decomposer"),
                                                 config.get("model_roles")
                                             )

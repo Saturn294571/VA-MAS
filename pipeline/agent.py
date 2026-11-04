@@ -7,12 +7,10 @@ from env.env import VillagerBench
 from type_define.graph import Task
 from pipeline.data_manager import DataManager
 from pipeline.utils import *
-from model.openai_models import OpenAILanguageModel
+from model.abstract_language_model import AbstractLanguageModel
 from random import random, randint, choice, sample
 from pipeline.agent_prompt import *
-from pipeline.agent_rl_prompt import *
 from speaking_style import speaking_styles, speaking_styles_zh
-import numpy as np
 import threading
 import platform
 from tracer import traced
@@ -42,15 +40,16 @@ class BaseAgent:
     to_json: return the json format of the agent
     '''
     _virtual_debug = False
-    def __init__(self, llm:OpenAILanguageModel , env:VillagerBench, data_manager:DataManager, name:str, logger:logging.Logger = None, silent = False, 
-    RL_mode = "", rl_env = None, rl_model = None, all_tools = [], **kwargs):
+    def __init__(self, llm:AbstractLanguageModel , env:VillagerBench, data_manager:DataManager, name:str, logger:logging.Logger = None, silent = False,
+    all_tools = [], **kwargs):
+        if {"RL_mode", "rl_env", "rl_model"} & kwargs.keys():
+            raise ValueError("RL actor settings are preserved on archive/full-features-20261104")
         self.env = env
         self.name = name
         self.data_manager = data_manager
         self.llm = llm
         self.history_action_list = ["No action yet"]
         self.reflect_info = {"prompt": [], "response": []}
-        self.RL_mode = RL_mode
         self.logger = logger
         self.all_tools = all_tools
         if not env.running:
@@ -59,10 +58,6 @@ class BaseAgent:
         if self.logger is None:
             self.logger = init_logger("BaseAgent", dump=True, silent=silent)
         
-        if self.RL_mode == "PPO":
-            self.rl_env = rl_env
-            self.rl_model = rl_model
-
         self.instruction_history = []  # New: save history instructions
         self.state_history = []        # New: save history state
 
@@ -106,127 +101,7 @@ class BaseAgent:
         if BaseAgent._virtual_debug:
             return self.virtual_step(task)
 
-        if self.RL_mode != "":
-            return self.rl_step(task)
-        else:
-            if any(cls.__module__ == "model.vllm_model" and cls.__name__ == "VLLMLanguageModel"
-                   for cls in type(self.llm).__mro__):
-                return self.local_step(task)
-            else:
-                return self.normal_step(task)
-        
-    def rl_step(self, task:Task) -> (str, dict):
-        # Build base prompt and status
-        instruction = format_string(task_prompt, {
-            "task_description": task.description,
-            "milestone_description": task.milestones,
-        })
-        
-        basic_state = format_string(state_prompt, {
-            "env": self.data_manager.query_env_with_task(task.description, agent_query=True),
-            "relevant_data": smart_truncate(task.content, max_length=4096), 
-        })
-
-        max_rl_steps = 5
-        actions = []
-        observations = []
-        current_state = basic_state
-        task_status = False
-
-        while max_rl_steps > 0:
-            # Build current status string
-            current_context = f"{instruction}\n{current_state}"
-            if actions and observations:
-                action_history = "\n".join([f"Action: {a}\nObservation: {o}" for a, o in zip(actions, observations)])
-                current_context += f"\nHistory:\n{action_history}"
-
-            if self.env.agents_ping()["status"] == False:
-                self.logger.info("Some agents are offline!")
-                break 
-            
-            best_act, best_obs = None, None
-            best_reward = -np.inf
-            print(f"# max_rl_steps: {max_rl_steps}")
-            k_step = 30
-            while k_step > 0:
-                # Get model action
-                # try:
-                if self.env.agents_ping()["status"] == False:
-                    self.logger.info("Some agents are offline!")
-                    break 
-                rl_action = self.rl_model.take_action(current_context)
-                assert rl_action < len(self.rl_env.available_actions) and rl_action >= 0, f"{rl_action} must in 0-{len(self.rl_env.available_actions)}"
-                rl_api = self.rl_env._get_available_actions()[rl_action]
-                print(f"{rl_action} - {rl_api}")
-                
-                
-                (act, obs), detail = self.env.iter_step(self.name, current_context + "You need try to use the tool, do not use Final Answer.", 
-                                                    actions=actions, 
-                                                    observations=observations, 
-                                                    recommended_actions=[rl_api])
-                if act is None:
-                    continue
-                    
-                # Update state
-                current_state = f"{basic_state}\nLast Action: {act}\nLast Observation: {obs}"
-                
-                # Calculate reward and task status
-                reward, task_status = self.rl_one_step_reflect(
-                    task.description, 
-                    task.milestones,
-                    actions=actions,
-                    observations=observations,
-                    act=act,
-                    obs=obs,
-                )
-
-                # Build transformation dictionary
-                transition_dict = {
-                    "states": current_context,
-                    "actions": rl_action,
-                    "rewards": reward,
-                    "next_states": f"{instruction}\n{current_state}",
-                    "dones": task_status
-                }
-
-                # Update model
-                self.rl_model.update(transition_dict)
-                
-                if self.RL_mode == "PPO":
-                    self.rl_model.train_step()
-
-                if reward > best_reward:
-                    best_reward = reward
-                    best_act, best_obs = act, obs
-
-                k_step -= 1
-
-                # except KeyboardInterrupt:
-                #     self.logger.info("KeyboardInterrupt")
-                #     raise KeyboardInterrupt
-                # except ConnectionError:
-                #     self.logger.error("ConnectionError")
-                #     raise ConnectionError
-                # except ConnectionRefusedError:
-                #     self.logger.error("ConnectionRefusedError")
-                #     raise ConnectionRefusedError
-                # except Exception as e:
-                #     self.logger.error(f"Error: {e}")
-
-            actions.append(best_act)
-            observations.append(best_obs)
-            max_rl_steps -= 1
-
-        status = self.env.agent_status(self.name)
-        self.data_manager.update_database(AgentFeedback(task, detail, status).to_json())
-        
-        if task_status:
-            summary = f"successfully done {task.description}."
-            task.status = Task.success
-        else:
-            summary = f"failed to do {task.description}."
-            task.status = Task.failure
-        return summary, detail
+        return self.normal_step(task)
 
     def start_idle_thread(self):
         '''
@@ -430,143 +305,13 @@ class BaseAgent:
         # self.data_manager.save()
         return feedback, detail
     
-    def local_step(self, task:Task) -> (str, dict):
-        self.logger.warning("=" * 20 + " LOCAL Step " + "=" * 20)
-        self.logger.warning(f"agent {self.name}")
-        self.logger.warning("=" * 20 + " LOCAL Step " + "=" * 20)
-        if random() < 0.5:
-            speech_style = sample(list(speaking_styles.keys()), 1)[0]
-            personality = speaking_styles[speech_style]['personality']
-            traits = speaking_styles[speech_style]['traits']
-            example = speaking_styles[speech_style]['example']
-        else:
-            speech_style = sample(list(speaking_styles_zh.keys()), 1)[0]
-            personality = speaking_styles_zh[speech_style]['性格']
-            traits = speaking_styles_zh[speech_style]['特征']
-            example = speaking_styles_zh[speech_style]['示例']
-
-        if platform.system().lower() != "linux":
-            agent_prompt = agent_prompt_wo_emoji
-        else:
-            agent_prompt = agent_prompt_w_emoji
-
-        if len(task._agent) == 1:
-            task_str = format_string(agent_prompt, {"task_description": task.description, "milestone_description": task.milestones, 
-                                    "env": self.data_manager.query_env_with_task(task.description, agent_query=True),
-                                    "relevant_data": smart_truncate(task.content, max_length=4096), # TODO: change to "relevant_data": task.content
-                                    "agent_name": self.name,
-                                    "agent_state": self.data_manager.query_history(self.name),
-                                    "personality": personality,
-                                    "example": example,
-                                    "traits": traits,
-                                    "other_agents": self.other_agents(),
-                                    "agent_action_list": self.history_action_list,
-                                    "minecraft_knowledge_card": minecraft_knowledge_card})
-        else:
-            task_str = format_string(agent_cooper_prompt, {"task_description": task.description, "milestone_description": task.milestones, 
-                                    "env": self.data_manager.query_env_with_task(task.description, agent_query=True),
-                                    "relevant_data": smart_truncate(task.content, max_length=4096), # TODO: change to "relevant_data": task.content
-                                    "agent_name": self.name,
-                                    "agent_state": self.data_manager.query_history(self.name),
-                                    "other_agents": self.other_agents(),
-                                    "agent_action_list": self.history_action_list,
-                                    "team_members": ", ".join(task._agent),
-                                    "minecraft_knowledge_card": minecraft_knowledge_card})
-            
-        self.logger.info(f"{self.history_action_list}")
-        self.logger.info(f"other agents: {self.other_agents()}")
-        self.logger.info(f"{self.name} status:\n {self.data_manager.query_history(self.name)}")
-        max_retry = 3
-
-        instruction = f"Your name is {self.name}.\n{task_str}"
-        system_prompt = "You are Minecraft BaseAgent. You need to complete the task by following the environment feedback."
-
-        prompts = [instruction]    
-
-        action_list = []
-
-        max_steps = 5
-        self.IDLE = False
-        while max_steps > 0:
-            # try:
-            response = self.llm.few_shot_generate_thoughts(system_prompt, prompts, temperature=0.2, cache_enabled=False, max_tokens=8000, json_check=False)
-        
-            raw_response = response
-
-            response = response.split("Action: ")[-1].strip()
-            from ast import literal_eval
-            def parse_json_3(json_str):
-                try:
-                    return literal_eval(json_str)
-                except (ValueError, SyntaxError) as e:
-                    print(f"解析错误: {e}")
-                    return None
-            # print(response)
-            response = parse_json_3(response)
-            if response is None:
-                self.logger.error(f"Error: {raw_response}")
-                continue
-
-            func_name = response["tool"]
-            tool_input = response["tool_input"]
-            print(response)
-            # print(func_name)
-            # print(tool_input)
-            final_answer = None
-            if func_name == 'stop':
-                max_steps = 0
-                final_answer = tool_input['final_answer']
-                break
-            
-            target_tool = None
-            for tool in self.all_tools:
-                if tool.name == func_name:
-                    target_tool = tool
-                    break
-            if target_tool is None:
-                continue
-            feedback = target_tool(tool_input)
-            time.sleep(100)
-
-            # except KeyboardInterrupt:
-            #     self.logger.info("KeyboardInterrupt")
-            #     raise KeyboardInterrupt
-            # except ConnectionError:
-            #     self.logger.error("ConnectionError")
-            #     raise ConnectionError
-            # except ConnectionRefusedError:
-            #     self.logger.error("ConnectionRefusedError")
-            #     raise ConnectionRefusedError
-            # except Exception as e:
-            #     self.logger.error(f"Error: {e}")
-            #     continue
-
-            prompts.append(raw_response)
-            user = f"Feedback: {feedback.get('message')}\nStatus: {feedback.get('status')}\nNew Events: {feedback.get('new_events')}"
-            
-            action_list.append({"action": response, "feedback": feedback.get('message')})
-
-            prompts.append(user)
-            print(feedback)
-            final_answer = user
-                
-            max_steps -= 1
-
-
-        self.IDLE = True
-        status = self.env.agent_status(self.name)
-
-        detail = {"input": instruction, "action_list": action_list, "final_answer": final_answer}
-        self.data_manager.update_database(AgentFeedback(task, detail, status).to_json())
-
-        # self.data_manager.save()
-        return feedback, detail
     def other_agents(self) -> [str]:
         '''
         return the feedback of other agent's pretask
         '''
         return self.data_manager.query_other_agent_state(self.name)
     
+
     def action_format(self, action:dict) -> str:
         action_str = '''{{message}}'''
         feedback = action.get("feedback", {})
@@ -582,36 +327,8 @@ class BaseAgent:
             feedback["message"] = ""
 
         return format_string(action_str, feedback)
-    
-    def rl_one_step_reflect(self, task_description, milestone_description, actions, observations, act, obs):
-        '''
-        One step reflect
-        '''
-        act_obs = ""
-        for act, obs in zip(actions, observations):
-            act_obs += f"\n{act['log']}\n{obs}"
-        
-        if obs["status"] == False:
-            return -1, False
 
-        prompt = format_string(one_step_reflect_prompt,
-            {
-                "task_description": task_description,
-                "milestone_description": milestone_description,
-                "action_observation": act_obs,
-                "act": act,
-                "obs": obs,
-            })
-        
-        response = self.llm.few_shot_generate_thoughts(reflect_system_prompt, prompt, cache_enabled=False, max_tokens=256, json_check=True,
-                                                    check_tags=["task_status", "reward"])
-        print(response)
-        result = extract_info(response)[0]
-        task_status = result["task_status"]
-        reward = result["reward"]
-        print(f"rl_action: {act}, reward: {reward}")
-        return reward, task_status
-    
+
     def filter_emoji(self, text: str) -> str:
         ret_str = []
         for c in text:
@@ -633,28 +350,16 @@ class BaseAgent:
         action_history = detail["action_list"]
         global reflect_system_prompt, reflect_user_prompt
         # print("before llm")
-        if isinstance(self.llm, OpenAILanguageModel):
-            prompt = format_string(reflect_user_prompt,
-                                   {
-                                       "task_description": task_description,
-                                       "milestone_description": milestone_description,
-                                       "state": self.data_manager.query_history(self.name),
-                                       "action_history": action_history
-                                   })
-            prompt = self.filter_emoji(prompt)
-            # print("before response")
-            response = self.llm.few_shot_generate_thoughts(reflect_system_prompt, prompt, cache_enabled=False, max_tokens=512, json_check=True)
-        else:
-            prompt = format_string(reflect_user_prompt,
-                                   {
-                                       "task_description": task_description,
-                                       "milestone_description": milestone_description,
-                                       "state": self.data_manager.query_history(self.name),
-                                       "action_history": action_history
-                                   })
-            prompt = self.filter_emoji(prompt)
-            # print("before response")
-            response = self.llm.few_shot_generate_thoughts(reflect_system_prompt, prompt, cache_enabled=False, max_tokens=512, json_check=True)
+        prompt = format_string(reflect_user_prompt,
+                               {
+                                   "task_description": task_description,
+                                   "milestone_description": milestone_description,
+                                   "state": self.data_manager.query_history(self.name),
+                                   "action_history": action_history
+                               })
+        prompt = self.filter_emoji(prompt)
+        # print("before response")
+        response = self.llm.few_shot_generate_thoughts(reflect_system_prompt, prompt, cache_enabled=False, max_tokens=512, json_check=True)
         # print(response)
         # print("before filter emoji")
         response = self.filter_emoji(response)
