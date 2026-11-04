@@ -467,39 +467,23 @@ Planner와 실행 node의 물리적 분리는 유지한 채, 작업 할당과 �
 $$
 \begin{array}{r l}
 & \textbf{Convert Task List to Graph} \\
-
-\\
-
 1: & G \leftarrow (V,E),\; V \leftarrow \emptyset,\; E \leftarrow \emptyset \\
-
 2: & L \leftarrow [N_1,N_2,\ldots,N_n]
 \quad \triangleright \text{Input list} \\
-
 3: & \textbf{for } i \leftarrow 1 \textbf{ to } n \textbf{ do} \\
-
 4: & \hspace{1em} V \leftarrow V \cup \{N_i\}
 \quad \triangleright \text{Add element as a node} \\
-
 5: & \hspace{1em} \textbf{if } P(N_i) \neq \emptyset \textbf{ then} \\
-
 6: & \hspace{2em} \textbf{for all } p_j \in P(N_i) \textbf{ do} \\
-
 7: & \hspace{3em} E \leftarrow E \cup \{(p_j,N_i)\}
 \quad \triangleright \text{Add edges from predecessors} \\
-
 8: & \hspace{2em} \textbf{end for} \\
-
 9: & \hspace{1em} \textbf{else if } i > 1 \textbf{ then} \\
-
 10: & \hspace{2em} \textbf{for all } p_k \in P(N_{i-1}) \textbf{ do} \\
-
 11: & \hspace{3em} E \leftarrow E \cup \{(p_k,N_i)\}
 \quad \triangleright \text{Share predecessors with previous element} \\
-
 12: & \hspace{2em} \textbf{end for} \\
-
 13: & \hspace{1em} \textbf{end if} \\
-
 14: & \textbf{end for}
 \end{array}
 $$
