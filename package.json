@@ -11,5 +11,8 @@
     "prismarine-viewer": "^1.28.0",
     "socks5-client": "^1.2.8",
     "vec3": "^0.1.10"
+  },
+  "engines": {
+    "node": ">=22"
   }
 }

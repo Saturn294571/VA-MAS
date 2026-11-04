@@ -39,6 +39,9 @@ DEFAULT_GEMINI_EMBEDDING_MODEL = os.environ.get(
 PRICING_AS_OF = "2026-09-23"
 
 SUPPORTED_GEMINI_MODELS = {
+    # Gemini 3.1 Flash-Lite standard text pricing, verified 2026-11-04:
+    # https://ai.google.dev/gemini-api/docs/pricing#gemini-3.1-flash-lite
+    "gemini-3.1-flash-lite": {"thinking_level": "minimal", "input": 0.25, "output": 1.50, "pricing_as_of": "2026-11-04"},
     "gemini-3.8-flash": {"thinking_level": "low", "input": 0.75, "output": 3.75},
     "gemini-3.5-flash-lite": {"thinking_level": "minimal", "input": 0.30, "output": 2.50},
 }
@@ -188,7 +191,7 @@ def _record_token_usage(usage, model, thinking_level):
             model,
             {
                 "thinking_level": thinking_level,
-                "pricing_as_of": PRICING_AS_OF,
+                "pricing_as_of": price.get("pricing_as_of", PRICING_AS_OF),
                 "pricing_usd_per_million_tokens": {
                     "input": price["input"],
                     "output": price["output"],

@@ -10,9 +10,9 @@ import json
 import os
 from model.role_models import configure_actor_model, standalone_model_config
 
-MINECRAFT_HOST = "localhost"
-MINECRAFT_PORT = 25565
-TASK_NAME = "tiny_start_single_task"
+MINECRAFT_HOST = os.environ.get("MINECRAFT_HOST", "localhost")
+MINECRAFT_PORT = int(os.environ.get("MINECRAFT_PORT", "25565"))
+TASK_NAME = os.environ.get("VILLAGER_TASK_NAME", "tiny_start_single_task")
 TASK_DESCRIPTION = "Alice talk with yubo"
 
 if __name__ == "__main__":
