@@ -1999,3 +1999,70 @@ Minecraft 1.19.2 평지·Peaceful, Construction Task20, 3인, full Controller의
 연구자 `saturn294571`이 서버에 접속한 상태에서 Construction Task20·3인, full Controller, Gemini 생성형과 Tev1 배치 판단의 혼합 BA를 실행했다. [재시도 결과](../../../result/hybrid_tev1_task20_recording_20261028_retry1/)는 judger block hit rate·view hit rate 1.0, `complete task`; Tev1은 12회 모두 `place`를 선택했다. wall-clock 약 69.1초, 완료된 Gemini 요청 25회 및 코드 가격표 기준 약 $0.08995다. 실제 청구액과 미완료 요청을 보장하지 않는다. 이는 생성형이 제안한 배치 인자에 대한 판단이며 Tev1 단독 행동 생성 검증은 아니다.
 
 [첫 시도](../../../result/hybrid_tev1_task20_recording_20261028_124738/)에서는 judger 준비 이벤트가 지연돼 재시작했으나 heartbeat timeout으로 actor 실행 초기에 중단됐다. 별도 결과 폴더에서 정상 judger 수명주기로 재시도했으며 두 실행을 동일한 반복으로 합치지 않는다. 실험 전 월드·로그는 [백업](../../../result/pre_hybrid_recording_20261028_124738/)에 보존했고, 실험용 judger 및 Alice·Bob·Cindy의 임시 OP를 회수했다. 연구자 계정은 유지했다.
+
+---
+
+## 2026-11-04 — VA-MAS 구조 정리·실제 smoke·과거 이상점 귀속 및 핵심 main 반영
+
+VA 논문의 TD·AC·상태 관리·BA와 환경 judger의 책임을 유지하면서, 생성형/결정형 정책을 비교할 실행 기반과 계측 경계를 정리했다. 논문 개념과 구현의 대응은 [VA 구조 지도](../architecture_understand/VA_code_paper_map.md)를 따른다. 이번 작업은 구조·연결·계약 검증이며 **결정형 정책의 성능 향상이나 agent 수 효과를 입증한 비교 실험은 아니다.** 연구자가 현재 RQ를 생성형 계획을 유지한 BA 행동 선택·AC 배정의 결정형 정책 분리 비교로 확정했고, BA 단일 축을 먼저 다루며 AC는 실제 선택 기회를 확인한 뒤 비교하기로 했다.
+
+### 구조 정리와 보존 경계
+
+프로젝트가 `/home/pluto2479/Documents/VA-MAS`, 원격 `Saturn294571/VA-MAS`로 이동한 뒤, `03737a8`을 기준으로 `refactor/project-structure`에서 공통 로거·파서·모델 기록을 추출하고 선택 의존성을 지연 로드했다. Full/Tiny의 공통 실행 기반을 추출하되 기존 배정·worker 동작 차이를 보존했다. 첫 정리는 `60f6afb`까지의 로컬 커밋으로 남겼다. 상세는 [리팩토링 기록](../../../refactoring.md)에 있다.
+
+이후 전체 부가 기능을 **`archive/full-features-20261104` → `ea1e9c766107713419fd0fe784a237d2508cd3f1`**에 먼저 보존했다. 사용자 연구 문서의 `doc/research/` 이동, 링크 갱신, smoke 지원과 설치 잠금파일도 이 체크포인트에 포함했다. 핵심에서는 RL·VLLM actor·추가 공급자·Tiny Controller·Meta/자동 과제 생성·FastAPI·과거 검색/학습 자료 가공 등 파일 33개와 연결 import·실행 분기를 제거했다. 제거된 설정은 보존 브랜치를 안내하는 오류로 거부하며 fallback하지 않는다.
+
+Gemini·Ollama·Tev1, Full Controller, Construction·Farming·Escape, 공통 행동/배정 계약과 trace를 핵심에 남겼다. `tiny_start.py`는 Full을 사용하는 최소 예제다. baseline 프롬프트에 사용되는 speaking style, 세 benchmark의 공통 행동 API와 Escape 생성 구조는 유지했다. **핵심 `972186e`와 최종 문서 정리 `0df79c3`을 검증한 뒤 로컬 main에 fast-forward merge했다.** 당시 main과 refactor 브랜치는 `0df79c3`으로 같았고 작업 트리는 깨끗했다. 원격 push는 하지 않았다. [기능 분리·검증 기록](../../../core_separation.md), [보존 파일 목록](../../../core_separation_evidence.json).
+
+### 새 경로의 실제 환경 smoke
+
+smoke는 `60f6afb` 기준의 작업 트리에 Gemini 3.1 지원·Tiny 실행 이름/주소 override·셋업 변경을 적용한 상태에서 수행했다. 이 상태는 이후 전체 기능 보존 체크포인트에 커밋했다. Miniforge 도구로 기존 Python 3.10.20 환경을 새 `.venv`로 재배치하고 mamba로 실행했다. 과거 Conda cache가 없어 일반 offline clone은 실패했으며 tar 재배치로 복구했다. 기존 환경을 복제한 약 6.5GB 환경이므로, 최소 requirements의 새 설치 재현을 검증한 것은 아니다.
+
+Node 의존성은 새로 설치했다. 최신 Mineflayer가 Node >=22를 요구해 프로젝트 내부 Node 22.23.4를 준비했고 잠금파일과 요구 버전을 기록했다. 기존 월드와 분리한 **Vanilla Minecraft 1.19.2·Java 17·새 flat/Peaceful/Survival 월드**를 localhost:25565에서 사용했다. 모델은 TD·SM·AC·BA 모두 **`gemini-3.1-flash-lite`, thinking minimal**, actor 출력 상한 1024였으며 BA/AC 정책은 generative였다. 실제 Tev1 성능을 측정한 실행이 아니다.
+
+| 실행·증거 | 조건·결과 | 프로세스 시간 | 기록된 응답 / 추정 비용 |
+| --- | --- | ---: | ---: |
+| [Tiny 기본 진단](../../../../result/gemini31lite_tiny_smoke_20261104_031004_retry1/smoke_execution.json) | Alice 1인, `Alice talk with yubo`; 이동·탐색 후 첫 하위 작업 성공으로 종료. 대화는 미실행 | 31.47초 | 8 / $0.00639775 |
+| [Tiny 가까운 대상 첫 진단](../../../../result/gemini31lite_tiny_smoke_20261104_031004_retry1_nearby/smoke_execution.json) | 대상 위치를 가까이 변경. 빈 `MALFORMED_FUNCTION_CALL`, 행동 0회·reflection 실패이나 exit 0 | 15.99초 | 6 / $0.00295725 |
+| [Tiny 가까운 대상 재시도](../../../../result/gemini31lite_tiny_smoke_20261104_031004_retry1_nearby_retry1/smoke_execution.json) | 같은 정책·종료 설정에서 재시도. navigateTo·talkTo 성공과 실제 관찰 bot의 채팅 수신 확인 | 20.25초 | 8 / $0.00565300 |
+| [Full Construction Task0](../../../../result/gemini31lite_full_task0_1p_smoke_20261104_031004/score.json) | Alice 1인, `assignment_policy=controller`, dig 불필요; **3/3, BHR/VHR=1.0, complete task** | 46.34초 | 14 / $0.01250725 |
+
+Full의 cut_sandstone·terracotta·torch 세 블록은 [독립 Mineflayer 월드 조회](../../../../result/gemini31lite_full_task0_1p_smoke_20261104_031004/world_verification.json)에서도 모두 일치했다. Tiny의 [실제 서버 채팅](../../../../result/gemini31lite_tiny_smoke_20261104_031004_retry1_nearby_retry1/server_chat_evidence.json)은 메시지 전달 근거이며, 여러 차례 대화·사람의 응답 또는 judger 점수의 증거는 아니다. 네 실행은 대상 위치·상태 등이 달라 동일 조건 반복으로 합치지 않는다. 시작 전 mamba 옵션 오류로 exit 2였던 setup 시도도 별도 폴더에 보존했다.
+
+네 실행의 기록 비용은 약 $0.02751525이며 짧은 API 사전 확인 1회를 더하면 약 **$0.02751950**이다. Full은 요청 start 15/end 14여서 완료 시 진행 중인 요청의 청구액은 포함되지 않을 수 있다. 가격표 기반 추정과 실제 청구를 구분한다. Full 배정은 direct 3회여서 **AC LLM의 여러 후보 선택은 미관찰**이다. `efficiency=101.3401`, `use_time=3초`는 기존 행동 시간 산식이며 총 시간이나 완료 백분율로 해석하지 않는다.
+
+원시 console·trace·manifest·행동·token·서버 로그와 조건/코드 해시는 [smoke 결과 인덱스](../../../../result/live_smoke_20261104_031004/run_comparison.json)에 연결했다. 테스트 서버는 모든 dimension을 저장한 뒤 정지했다. 실패 복제본과 중간 tar만 정리했으며 새 환경·테스트 월드·기존 증거는 보존했다. 인증 값은 이 보고서에 기록하지 않는다. [실제 smoke 상세](../../../live_smoke_2026-11-04.md).
+
+### 과거 이상점과 리팩토링 회귀의 구분
+
+과거 `/home/pluto2479/Documents/MineSkynet-VA`의 로그 산출물 **813개**, actor termination 기록 **165개**를 읽기 전용으로 조사했다. 상태/actor의 length, 완료 시 미종료 요청(trace 9개), Tiny의 성공·실패 1회 종료, 1인 Task0의 직접 배정, 큰 efficiency 값은 이전에도 있었다. 환경 예외를 기록한 뒤 정상 반환할 수 있는 구조도 기존 코드와 같았다. 실제 관찰과 정적 가능성을 구분하며, 과거 같은 빈 응답에서 exit 0이 관찰됐다고 확대하지 않는다.
+
+`MALFORMED_FUNCTION_CALL`은 조사한 과거 기록에서는 발견되지 않았다. 그러나 과거와 분리 전 보존 체크포인트의 Minecraft client 전체 및 Gemini actor 생성·호출 함수가 동일하고 모델도 3.8에서 3.1 Flash-Lite로 바뀌었다. 따라서 **새 조건에서 처음 관찰했지만 리팩토링 원인으로 입증되지 않음**으로 분류했다. 로그 미발견을 발생 불가능의 증거로 쓰지 않는다. 이번에는 빈 응답·종료 코드·출력 상한·미완료 호출 처리 동작을 고치지 않았다. [귀속 보고서](../../../historical_anomalies_2026-11-04.md), [기계 판독 근거](../../../historical_anomalies_evidence.json).
+
+### 오프라인 검증과 다음 판단
+
+보존 체크포인트의 검사 8항목이 통과했다. 핵심은 `/tmp`의 깨끗한 checkout에서도 **9항목 전부 통과**했다: unittest 42개, 행동 assertion 스크립트 2개와 TD/AC self-test. 세 benchmark의 실행 구성·judger subprocess 인자는 대역으로 확인했으며, 제거 모듈·SDK import를 차단해 숨은 의존성을 검사했다. 로컬 import 누락 0건, 유지 함수 12개 AST 일치, 입력·기존 결과 179개 SHA-256 보존도 확인했다. 이는 정적/fixture 검증이며 **핵심 분리 후 새 actor 포함 재실행·Farming/Escape 완주·반복 비교는 하지 않았다.**
+
+현재 확보한 것은 정책 비교를 시작할 수 있는 실행·계약 기반과 실패 사례의 보존이다. 생성형 대비 결정형의 성능·지연·비용 이득은 이번 작업으로 판정하지 않는다. 후속 판단은 같은 관측·유효 행동/인자 집합 아래 BA 교체 비교를 설계하는 것과, 빈 응답·상위 목표 종료·미완료 호출 기록을 별도 조건으로 보완할지를 결정하는 것이다. 현재 판정·단계별 완료 기준의 소유 문서는 [청사진](../blueprint_milestone/MineSkynet_blueprint.md)과 [마일스톤](../blueprint_milestone/milestone_index.md)이며 이 로그는 날짜별 근거로 남긴다.
+
+---
+
+## 2026-11-04 — S1-MAS를 참고한 역할 분리 논의
+
+**목적과 근거 수준:** 생성형 계획을 유지하면서 제한된 선택을 결정형 모델에 맡기는 분업을 [S1-MAS 논문](../../paper/s1-mas.pdf)과 대조했다. 아래는 연구자와 합의한 설계 방향 및 탐색 결과이며 구현 완료나 성능 비교 결과가 아니다. 기존 VA 논문과 코드의 책임 대응은 [기능 대응표](../architecture_understand/VA_code_paper_map.md)를 따른다.
+
+### 역할 경계
+
+- TD는 최종 목표를 하위 작업과 선후관계로 분해하고 필요할 때 계획을 갱신한다. AC는 작업과 agent의 상태 및 제약을 바탕으로 실행 가능한 작업의 선정과 배정을 담당한다. BA는 배정된 작업에 대해 VA API를 선택하고 세부 인자를 구성·검증해 Minecraft에서 수행한다. 실행 보고와 benchmark judger의 최종 점수는 구분한다.
+- BA의 후보 설계로 Tev1이 API를 선택하고 경량 생성형 모델이 좌표 등 인자를 구성하는 방식을 검토한다. 이는 가설이며 모델 두 번의 직렬 호출이 전체 지연을 줄인다고 가정하지 않는다. 구조화된 정보나 단순 계산으로 인자를 구성할 수 있는 경우도 비교할 여지가 있다.
+- SM은 깊은 추론·계획·배정을 맡기보다 원본 상호작용 기록과 상태에서 요청에 관련된 정보를 찾아 AC·BA에 전달하는 정보 접근 계층으로 구상한다. 요약과 원본을 구분하고 가능한 경우 출처·관측 시점을 보존하며, 누락되거나 오래된 정보를 현재 사실로 단정하지 않는다. 선택과 판단은 정보를 받는 모듈의 책임이다.
+
+S1-MAS는 System One controller의 제한된 조정 결정, 관련 근거를 찾는 경량 reader, 열린 추론을 수행하는 LLM worker를 분리한다. 이를 VA의 AC·SM·BA에 대응시키는 것은 설계 해석이다. 논문의 통신 그래프와 VA 작업의 선후관계 DAG는 의미가 다르며, 실제 Minecraft agent의 가용성과 환경 실행은 별도로 다뤄야 한다. AC가 결정할 범위는 실행 가능한 작업과 유효한 배정 대상으로 제한하는 방향을 논의했다. 구체적인 전달 계약과 선택 절차는 아직 확정하지 않았다.
+
+### Tev1 일회용 합성 확인과 한계
+
+로컬 `tev1:4b-q4_K_M`의 System One 선택 인터페이스에 행동 선택, 동쪽으로 세 칸 이동한 좌표 선택과 후보 순서 반전, 좌표 불일치 판정, agent 배정, 정보 부족 시 보류를 각각 한 번씩 질문했다. 여섯 응답 모두 기대한 선택이었다. 첫 요청은 약 2.59초, 이후 요청은 약 35~41ms였으나 적재 상태를 분리하지 않은 소규모 탐색이다. 원시 결과 파일은 별도로 저장하지 않았다. Minecraft·actor·judger나 외부 API는 사용하지 않았다.
+
+좌표 문제에는 정답을 포함한 후보가 제공됐다. 따라서 이는 제한된 후보에서의 간단한 수치 관련 선택 사례이며, 후보 없는 인자 생성 능력이나 실제 BA·AC의 정확도와 속도 개선을 입증하지 않는다. 자유 생성 인터페이스는 시험하지 않았다. [Ollama Tev1 문서](https://ollama.com/library/tev1)는 선택·참거짓·등급 판단을 설명하며, 선택 confidence를 정답 확률로 보장하지 않는다. 앞선 혼합 BA 실행은 생성형 모델이 제안한 인자에 대한 승인 판단이었다.
+
+기존 연구 순서대로 BA 단일 축을 먼저 검증하고 AC는 실제 선택 기회가 확인된 뒤 비교한다. SM 정보 제공 방식의 효과도 별도로 분리해 평가할 필요가 있다. 구체적인 비교군·지표·성공 기준 변경은 연구자가 결정한다.

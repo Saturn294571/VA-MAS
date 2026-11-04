@@ -699,3 +699,140 @@ $$
     - 사소하지만 깃/깃허브 레포지토리도 브랜치가 상당히 꼬여서 저자 포크에서 독립 레포로 분리 필요
 - S1-MAS 및 JEV-liteMAS 논문 탐독 후 구현 및 도입 아이디어 정리
 - 부분적으로 구현한 BA 내 결정형 요소를 점진적으로 확대해서 BA를 선택형 모델로 교체할 수 있게끔
+
+## 11.4 랩미팅
+
+### VA MAS lifecycle 추상화
+
+#### 전체 파이프라인 개요
+
+- **연구 개념:** S1-MAS의 제한된 조정 결정과 근거 제공을 참고해, 생성형 계획은 유지하고 AC의 배정과 BA의 행동 선택을 분리한다. 아래는 논의 중인 VA-MAS의 **가상 시나리오와 개념 수도코드**이며 현재 구현이나 실제 실험 결과가 아니다. [VA 논문–코드 대응](../architecture_understand/VA_code_paper_map.md)
+- **시나리오:** Alice·Bob·Cindy가 바닥과 양쪽 벽으로 된 작은 구조물을 건설한다. 재료 준비 → 바닥 건설 → 양쪽 벽 병렬 건설 → 완성 확인의 선후관계를 가정한다. 기존 benchmark의 특정 Task가 이 DAG를 생성했다고 주장하는 것은 아니다.
+
+```text
+재료 준비 → 바닥 건설 → 왼쪽 벽 건설 ─┐
+                        └→ 오른쪽 벽 건설 ─┴→ 완성 확인
+```
+
+```python
+# start_with_config.py — 실제 run()의 흐름을 축약
+env = VillagerBench(...)                 # 환경과 Minecraft agent 등록
+env.agent_register(...)
+with env.run():                          # 환경·judger 수명주기
+    dm = DataManager(...)
+    dm.update_database_init(env.get_init_state())
+    tm = TaskManager(...)
+    ctrl = GlobalController(..., tm, dm, env)  # 내부에서 BaseAgent 생성
+    tm.init_task(description=goal, document=document)
+    ctrl.run()                           # 배정·worker·결과 처리 시작
+    env.get_score()                      # 기록된 환경 점수 조회
+```
+
+각 블록은 실제 호출 순서 전체를 재현하지 않은 수도코드다. **실제**는 저장소에 존재하는 함수, **가상**은 설명을 위해 임의로 지은 미구현 함수다. 인자와 반환값도 개념적 표현이며 실제 서명과 다를 수 있다. 배정 후보 구성과 재계획 시 실행 중 작업의 처리는 추가 논의가 필요하다.
+
+#### Controller 실행과 병렬 처리
+
+`GlobalController`가 상속받은 `ControllerExecution.run()`은 세 스레드를 시작하고 종료를 기다린다. 배정된 작업은 큐를 거쳐 실행기에 제출되므로, 독립된 작업은 가용 agent와 실행 조건에 따라 병렬 수행될 수 있다.
+
+```python
+# pipeline/controller_execution.py — 실제 run()과 worker()를 축약
+start_thread(self.execute_tasks)            # 작업 확인·배정
+start_thread(self.worker)                   # 작업 큐 소비
+start_thread(self.process_completed_tasks)  # 결과 수집
+join_threads()
+
+agent, task = self.task_queue.pop(0)
+future = self.executor.submit(agent.step, task)  # 실제 BA 호출
+self.result_queue.append((future, agent, task, start_time))
+```
+
+`start_thread`, `join_threads`는 `threading.Thread` 생성·시작·대기를 묶어 표현한 가상 이름이다. 두 코드 부분은 각각 다른 메서드에서 실행된다.
+
+#### TD
+
+- 생성형 모델이 건설 목표를 하위 작업과 선후관계가 있는 계획으로 분해한다. 예를 들어 양쪽 벽은 바닥 완료 후 시작할 수 있다. 실패나 환경 변화 시 재계획을 요청받을 수 있다.
+
+```python
+# start_with_config.py / pipeline/task_manager.py — 호출과 동작을 축약
+tm.init_task(description=goal, document=document)  # 시작 파일이 호출
+# init_task 내부: dm.query_env_with_task(...) → 생성형 모델 → 작업 그래프
+# 이후 Controller가 tm.query_subtask_list(), tm.feedback_task(...) 등을 호출
+```
+
+#### AC
+
+- SM이 제공한 상태를 참고해 실행 가능한 작업과 가용 agent를 배정한다. 제약을 검증한 선택지에서 결정형 모델이 선택하도록 하는 방향을 검토한다. 실제 여러 선택지가 발생하는지는 별도로 확인한다.
+
+```python
+# pipeline/controller.py — execute_tasks() 내부 흐름을 축약
+tasks = self.task_manager.query_subtask_list()
+available = self.check_task_list_available()
+proposal = self.generate_prompt_and_get_response(env, experience, agent_state)
+self.assign_tasks_to_agents(proposal)  # 검증 후 execute_assignments 호출
+# execute_assignments는 (agent, task)를 task_queue에 넣음
+```
+
+실제 코드는 조건에 따라 직접 배정 경로도 사용한다. `generate_prompt_and_get_response`는 현재 생성형 경로다. 결정형 AC는 미구현이며, 유효 후보를 구성해 Tev1이 선택하는 방식은 향후 설계 후보이다.
+
+#### BA
+
+- 배정받은 작업을 수행하며 관측을 바탕으로 VA API를 선택하고 세부 인자를 구성·검증한 뒤 실행한다. Tev1의 API 선택과 경량 생성형 모델의 인자 구성은 검증할 후보이며 구현이나 성능 향상을 전제하지 않는다.
+
+```python
+# pipeline/agent.py — BaseAgent의 일반 실행을 축약
+def step(self, task):
+    return self.normal_step(task)  # 실제 코드에는 가상 디버그 분기도 있음
+
+def normal_step(self, task):
+    context = self.data_manager.query_env_with_task(task.description, agent_query=True)
+    # 실제 코드는 이력 등을 함께 조합해 task_str과 action_context 구성
+    return self.env.step(self.name, task_str, action_context=action_context)
+```
+
+환경에서 actor로 이어지는 실제 경로는 아래와 같다. `select_api_with_tev1`과 `generate_arguments` 같은 별도 함수는 현재 확정된 인터페이스가 아닌 제안이다.
+
+```python
+# env/env.py / env/minecraft_client.py — 호출 관계를 축약
+agent = find_agent_by_name(self.agent_pool, agent_name)  # 가상: 실제 코드는 순회
+feedback, detail = agent.run(action, ...)                # 실제: MinecraftAgent.run
+# actor가 설정된 도구와 정책을 사용해 행동을 수행
+```
+
+#### SM
+
+- 상태와 원본 상호작용 기록에서 요청에 관련된 근거를 찾아 TD·AC·BA에 제공한다. 출처와 관측 시점을 보존하고, 정보 부족은 명시한다. 배정·행동 선택·계획은 담당 모듈이 결정한다. S1-MAS reader의 근거 접근 아이디어를 참고한 설계다.
+
+```python
+# pipeline/agent.py / pipeline/controller.py — 각 호출 지점을 축약
+environment = self.data_manager.query_env_with_task(task.description)  # BA·TD
+history = self.data_manager.query_history(agent_name)                  # BA
+agents = self.data_manager.query_agent_list(agent_names)               # AC
+# 가상 제안: retrieve_grounded_evidence(...)로 출처·시점이 있는 근거 제공
+```
+
+현재 `DataManager`는 다른 모듈이 필요할 때 조회하는 공유 객체다. 출처·시점이 보존된 reader는 제안이며 기존 조회 함수가 이를 제공한다고 가정하지 않는다.
+
+#### 결과 처리와 피드백
+
+```python
+# pipeline/controller.py — process_completed_tasks()를 축약
+if future.done():
+    _, detail = future.result()
+    self.update_feedback(task, agent, detail)  # 실제: 결과와 작업 상태 처리
+```
+
+실제 함수는 예외·시간 초과와 협업 작업도 처리한다. BA의 결과 보고가 곧 환경 judger의 성공 점수는 아니다.
+
+#### villager bench
+
+- 시나리오와 환경의 수명주기를 관리하고 실제 건설 결과를 채점한다. BA의 수행 보고, AC의 작업 상태와 환경 judger 점수는 서로 구분한다.
+
+```python
+# start_with_config.py / env/env.py — 실제 호출 관계를 축약
+with env.run():                      # VillagerBench가 환경·judger 수명주기 관리
+    ctrl.run()
+    score = env.get_score()          # 기록된 점수 조회
+# Construction의 실제 환경 채점 로직: env/build_judger.py
+```
+
+- 검증 순서: BA 단일 축을 먼저 비교하고, AC는 실제 선택 기회가 확인된 뒤 비교한다. SM 정보 제공 방식의 영향도 별도로 평가한다.
